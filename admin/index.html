@@ -60,6 +60,7 @@
         <button type="button" class="admin-btn admin-btn-action" id="btnOpsLogs">過去24時間の動作ログ</button>
         <button type="button" class="admin-btn admin-btn-action" id="btnRaceSim">展開シミュレーション</button>
         <button type="button" class="admin-btn admin-btn-action" id="btnManualDownload">取り扱い説明書PDF</button>
+        <button type="button" class="admin-btn admin-btn-action" id="btnAccessData">アクセスデータ</button>
         <button type="button" class="admin-btn admin-btn-secondary" id="btnLogout">ログアウト</button>
       </nav>
       <p class="admin-status" id="menuStatus" role="status" aria-live="polite"></p>
@@ -69,6 +70,18 @@
         <dl class="admin-data-status-list" id="dataStatusList">
           <div class="admin-data-status-row"><dt>読み込み中…</dt><dd></dd></div>
         </dl>
+      </div>
+
+      <div class="admin-data-status" id="accessDataBox" hidden>
+        <h3 class="admin-data-status-title">アクセスデータ</h3>
+        <p class="admin-hint">
+          閲覧サイトは GitHub Pages で配信しており、専用のアクセス解析は未導入です。
+          暫定的に GitHub の「Insights &gt; Traffic」（直近14日分の訪問数・参照元）で確認できます。
+          恒久的なアクセス解析（独自ドメイン化＋Cloudflare Web Analytics等）の導入は別途検討事項です。
+        </p>
+        <p class="admin-hint">
+          <a href="https://github.com/t-orz/keiba-mystery-viewer/graphs/traffic" target="_blank" rel="noopener noreferrer">GitHub Insights &gt; Traffic を開く（要リポジトリ閲覧権限）</a>
+        </p>
       </div>
     </section>
 

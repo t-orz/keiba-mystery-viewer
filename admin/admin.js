@@ -29,6 +29,8 @@
   const btnLogsClose = document.getElementById("btnLogsClose");
   const btnRaceSim = document.getElementById("btnRaceSim");
   const btnManualDownload = document.getElementById("btnManualDownload");
+  const btnAccessData = document.getElementById("btnAccessData");
+  const accessDataBox = document.getElementById("accessDataBox");
   const raceSimPanel = document.getElementById("raceSimPanel");
   const raceSimId = document.getElementById("raceSimId");
   const raceSimWeather = document.getElementById("raceSimWeather");
@@ -870,6 +872,12 @@
       btnManualDownload.disabled = false;
     }
   });
+
+  if (btnAccessData && accessDataBox) {
+    btnAccessData.addEventListener("click", () => {
+      accessDataBox.hidden = !accessDataBox.hidden;
+    });
+  }
 
   btnRaceSim.addEventListener("click", () => {
     if (raceSimPanel) raceSimPanel.hidden = false;
