@@ -28,6 +28,7 @@
   const btnLogsRefresh = document.getElementById("btnLogsRefresh");
   const btnLogsClose = document.getElementById("btnLogsClose");
   const btnRaceSim = document.getElementById("btnRaceSim");
+  const btnManualDownload = document.getElementById("btnManualDownload");
   const raceSimPanel = document.getElementById("raceSimPanel");
   const raceSimId = document.getElementById("raceSimId");
   const raceSimWeather = document.getElementById("raceSimWeather");
@@ -827,6 +828,48 @@
       }
     });
   }
+
+  btnManualDownload.addEventListener("click", async () => {
+    const token = getToken();
+    if (!token) {
+      await forceLogout("セッションがありません。再ログインしてください。");
+      return;
+    }
+    // 通常の <a href> は Authorization ヘッダを送れないため、Bearer 付き fetch で
+    // Blob 取得してからダウンロードさせる。
+    btnManualDownload.disabled = true;
+    setStatus(menuStatus, "取り扱い説明書PDFを取得しています…");
+    try {
+      const base = await resolveApiBase();
+      const res = await fetch(`${base}/admin/manual`, {
+        headers: { Authorization: `Bearer ${token}` },
+        mode: "cors",
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        let msg = `PDF取得に失敗しました (HTTP ${res.status})`;
+        try {
+          const j = await res.json();
+          if (j && j.message) msg = j.message;
+        } catch {}
+        throw new Error(msg);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ai_manual.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus(menuStatus, "取り扱い説明書PDFをダウンロードしました。");
+    } catch (e) {
+      setStatus(menuStatus, e.message || String(e), "error");
+    } finally {
+      btnManualDownload.disabled = false;
+    }
+  });
 
   btnRaceSim.addEventListener("click", () => {
     if (raceSimPanel) raceSimPanel.hidden = false;
