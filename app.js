@@ -253,6 +253,7 @@
       ハ: "ハンター",
       ホプ: "ホプキンス",
       "ハ/ホプ": "ハンター",
+      ベ: "ベイカー",
     };
     return map[s] || s;
   }
@@ -264,6 +265,7 @@
       if (s === "モーリアティ" || s === "モリ" || s.includes("モーリ")) return "モーリアティ";
       if (s === "ホプキンス" || s === "ホプ" || s.includes("ホプキンス") || s.includes("新馬")) return "ホプキンス";
       if (s === "ハンター" || s === "ハ" || s.includes("ハンター") || s.includes("夏")) return "ハンター";
+      if (s === "ベイカー" || s === "ベ" || s.includes("ベイカー")) return "ベイカー";
       // 旧スナップショットの買/様子ラベルはモーリアティ列由来とみなす
       if (s.includes("買") || s.includes("様子") || s.includes("見送")) return "モーリアティ";
       return "";
@@ -276,8 +278,10 @@
     const candidates = [
       row && row["モ"],
       row && (row["ハ/ホプ"] || row["ハ"] || row["ホプ"]),
+      row && row["ベ"],
       row && row.cells && (row.cells["モ"] || row.cells["モーリアティ"]),
       row && row.cells && (row.cells["ハ/ホプ"] || row.cells["ハンター"] || row.cells["ホプキンス"]),
+      row && row.cells && (row.cells["ベ"] || row.cells["ベイカー"]),
     ];
     for (const c of candidates) {
       const n = mapPresence(c);
@@ -694,7 +698,7 @@
       <p class="meta">${formatHolmesRecommendHtml(r)}</p>
       <div class="marks">
     `;
-    for (const [k, label] of [["ワ", "ワトソン"], ["アイ", "アイリーン"], ["モ", "モーリアティ"], ["ハ/ホプ", "ハンター/ホプキンス"]]) {
+    for (const [k, label] of [["ワ", "ワトソン"], ["アイ", "アイリーン"], ["モ", "モーリアティ"], ["ハ/ホプ", "ハンター/ホプキンス"], ["ベ", "ベイカー"]]) {
       html += `<div class="mark-box"><strong>${label}</strong>${escapeHtml(cells[k] || "-")}<br/><span>${escapeHtml(marks[k] || "-")}</span></div>`;
     }
     html += "</div><div class='pdf-links'>";
@@ -709,6 +713,7 @@
     if (col === "ワトソン") return "mark-honmei mark-w";
     if (col === "アイリーン") return "mark-honmei mark-i";
     if (col === "モーリアティ") return "mark-honmei mark-m";
+    if (col === "ベイカー") return "mark-honmei mark-b";
     return "mark-honmei mark-h";
   }
 
