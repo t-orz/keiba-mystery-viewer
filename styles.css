@@ -208,6 +208,7 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   text-align: left;
   white-space: pre-line;
 }
+.sidebar-dev-intent,
 .sidebar-mark-weekly,
 .sidebar-dev-notes {
   margin: 0.65rem 0 0;
@@ -218,6 +219,7 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   line-height: 1.5;
   text-align: left;
 }
+.sidebar-dev-intent > summary,
 .sidebar-mark-weekly > summary,
 .sidebar-dev-notes > summary {
   list-style: none;
@@ -233,10 +235,12 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   color: var(--accent);
   user-select: none;
 }
+.sidebar-dev-intent > summary::-webkit-details-marker,
 .sidebar-mark-weekly > summary::-webkit-details-marker,
 .sidebar-dev-notes > summary::-webkit-details-marker {
   display: none;
 }
+.sidebar-dev-intent > summary::after,
 .sidebar-mark-weekly > summary::after,
 .sidebar-dev-notes > summary::after {
   content: "";
@@ -249,11 +253,13 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   transition: transform 0.15s ease;
   flex: 0 0 auto;
 }
+.sidebar-dev-intent[open] > summary::after,
 .sidebar-mark-weekly[open] > summary::after,
 .sidebar-dev-notes[open] > summary::after {
   transform: rotate(-135deg);
   margin-top: 0.1rem;
 }
+.sidebar-dev-intent-body,
 .sidebar-mark-weekly-body,
 .sidebar-dev-notes-body {
   margin-top: 0.35rem;
@@ -261,6 +267,14 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   border-top: 1px solid rgba(11, 61, 46, 0.08);
   font-size: inherit;
   line-height: inherit;
+}
+.sidebar-dev-intent-body p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+.sidebar-dev-intent-body p + p {
+  margin-top: 0.35rem;
 }
 .sidebar-mark-weekly-body {
   white-space: pre-line;
@@ -403,10 +417,12 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
     margin-top: 0.55rem;
     font-size: 0.74rem;
   }
+  .site-sidebar .sidebar-dev-intent,
   .site-sidebar .sidebar-mark-weekly,
   .site-sidebar .sidebar-dev-notes {
     font-size: 0.74rem;
   }
+  .site-sidebar .sidebar-dev-intent > summary,
   .site-sidebar .sidebar-mark-weekly > summary,
   .site-sidebar .sidebar-dev-notes > summary {
     font-size: 0.74rem;

@@ -29,7 +29,7 @@
 
 ## 今すぐレースをサイトへ反映 / 品質修復（最短）
 ```bash
-export YOKUMAKUN_SUDO_PASS='83670824'
+export YOKUMAKUN_SUDO_PASS='<sudo password>'
 curl -fsSL https://raw.githubusercontent.com/t-orz/keiba-mystery-viewer/cursor/race-summary-pace-label-19c2/tools/yokuumakun_lan_site_publish/repair_and_publish.sh | bash
 ```
 
@@ -44,7 +44,7 @@ gate の `score=25` や壊れた日の定数 `5` はホームズ指数として�
 
 ## サーバーで実行（恒久パッチ込み）
 ```bash
-export YOKUMAKUN_SUDO_PASS='83670824'
+export YOKUMAKUN_SUDO_PASS='<sudo password>'
 curl -fsSL https://raw.githubusercontent.com/t-orz/keiba-mystery-viewer/cursor/race-summary-pace-label-19c2/tools/yokuumakun_lan_site_publish/bootstrap_on_server.sh | bash | tee /tmp/lan_site_publish.log
 ```
 
