@@ -698,9 +698,12 @@
       <p class="meta">${formatHolmesRecommendHtml(r)}</p>
       <div class="marks">
     `;
-    for (const [k, label] of [["ワ", "ワトソン"], ["アイ", "アイリーン"], ["モ", "モーリアティ"], ["ハ/ホプ", "ハンター/ホプキンス"], ["ベ", "ベイカー"]]) {
+    const specialistCell = (cells["ハ/ホプ"] && cells["ハ/ホプ"] !== "-") ? cells["ハ/ホプ"] : (cells["ベ"] || "-");
+    const specialistMark = (marks["ハ/ホプ"] && marks["ハ/ホプ"] !== "-") ? marks["ハ/ホプ"] : (marks["ベ"] || "-");
+    for (const [k, label] of [["ワ", "ワトソン"], ["アイ", "アイリーン"], ["モ", "モーリアティ"]]) {
       html += `<div class="mark-box"><strong>${label}</strong>${escapeHtml(cells[k] || "-")}<br/><span>${escapeHtml(marks[k] || "-")}</span></div>`;
     }
+    html += `<div class="mark-box"><strong>ベイカー/ハンター/ホプキンス</strong>${escapeHtml(specialistCell)}<br/><span>${escapeHtml(specialistMark)}</span></div>`;
     html += "</div><div class='pdf-links'>";
     if (r.pdf_url) html += `<a href="${escapeAttr(r.pdf_url)}" target="_blank" rel="noopener">予想詳細PDF</a>`;
     if (r.help_pdf_url) html += `<a href="${escapeAttr(r.help_pdf_url)}" target="_blank" rel="noopener">項目説明PDF</a>`;
