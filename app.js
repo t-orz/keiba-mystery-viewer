@@ -684,13 +684,18 @@
     const coursePart = courseLabel
       ? ` ／ <span class="race-course">${escapeHtml(courseLabel)}</span>`
       : "";
+    const fieldSizeNum = Number(r.field_size);
+    const fieldSizePart =
+      Number.isFinite(fieldSizeNum) && fieldSizeNum > 0
+        ? ` ／ 出走 <span class="race-field-size">${escapeHtml(String(fieldSizeNum))}頭</span>`
+        : "";
     const paceLabel = String(r.pace_label || "").trim();
     const paceLine = paceLabel
       ? `<p class="meta race-pace">予想ペース: <strong>${escapeHtml(paceLabel)}</strong></p>`
       : "";
     let html = `
       <h3>${escapeHtml(r.place)} ${escapeHtml(r.R)}R ${escapeHtml(r.name || "")}</h3>
-      <p class="meta">発走 ${escapeHtml(r.start_time || "-")}${coursePart} ／ 天気:${escapeHtml(r.weather || "-")} 馬場:${escapeHtml(r.baba || "-")}</p>
+      <p class="meta">発走 ${escapeHtml(r.start_time || "-")}${coursePart} ／ 天気:${escapeHtml(r.weather || "-")} 馬場:${escapeHtml(r.baba || "-")}${fieldSizePart}</p>
       ${paceLine}
       <p class="meta race-predicted-at">予想更新時間: <strong>${escapeHtml(predictedAtLabel)}</strong></p>
       <p class="meta">期待値偏差: <strong>${escapeHtml(r.dev)}</strong>（ランク ${escapeHtml(r.rank || "-")}）</p>
