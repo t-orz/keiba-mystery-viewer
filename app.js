@@ -783,7 +783,32 @@
       html += '<p class="hint">予想前の出馬表です（印列は予想後に表示されます）。</p>';
     }
     box.innerHTML = html;
+    syncShutubaStickyOffset(box);
   }
+
+  // 枠番・馬番の左固定を有効化し、2列目の left を1列目の実測幅に合わせる。
+  // 端末やフォント倍率で桁幅が変わるため、CSS で決め打ちにすると隙間や重なりが出る。
+  // 見出しが 枠番 / 馬番 のときだけ有効化する（列が欠けた表で馬名を固定しないため）。
+  function syncShutubaStickyOffset(scope) {
+    const root = scope || document;
+    root.querySelectorAll("table.shutuba").forEach((tbl) => {
+      const ths = tbl.querySelectorAll("thead th");
+      const ok =
+        ths.length >= 2 &&
+        ths[0].textContent.trim() === "枠番" &&
+        ths[1].textContent.trim() === "馬番";
+      tbl.classList.toggle("sticky-num", ok);
+      if (!ok) {
+        tbl.style.removeProperty("--shutuba-col1-w");
+        return;
+      }
+      const w = ths[0].getBoundingClientRect().width;
+      if (w > 0) tbl.style.setProperty("--shutuba-col1-w", `${w}px`);
+    });
+  }
+
+  // 画面回転やリサイズで1列目の幅が変わるため測り直す
+  window.addEventListener("resize", () => syncShutubaStickyOffset());
 
   function initShutubaSortControls() {
     document.querySelectorAll("[data-shutuba-sort]").forEach((btn) => {

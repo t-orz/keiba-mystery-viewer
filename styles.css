@@ -1118,13 +1118,46 @@ table.shutuba td {
   vertical-align: middle;
 }
 table.shutuba th {
-  background: rgba(11, 61, 46, 0.08);
+  /* 固定表示で下の行が透けないよう不透明にする。値は
+     rgba(11,61,46,.08) を --card(#fffcf5) に重ねた合成色で、見た目は従来と同じ。 */
+  background: #ebede5;
   color: var(--accent);
   font-weight: 700;
   position: sticky;
   top: 0;
   z-index: 1;
 }
+/* 横スクロール時に枠番・馬番を左端へ固定する。
+   スマホなど1画面に収まらない幅のとき、右側の列を見ていても馬が特定できるようにする。
+   .sticky-num は app.js が「1列目=枠番 / 2列目=馬番」を確認したときだけ付ける
+   （列が欠けた表で馬名を固定してしまわないため）。
+   2列目の left は決め打ちにせず app.js が1列目の実測幅を --shutuba-col1-w に入れる。
+   フォント倍率や桁数で1pxずれると隙間や重なりが出るため。 */
+table.shutuba.sticky-num th:nth-child(1),
+table.shutuba.sticky-num td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+table.shutuba.sticky-num th:nth-child(2),
+table.shutuba.sticky-num td:nth-child(2) {
+  position: sticky;
+  left: var(--shutuba-col1-w, 2.2rem);
+  z-index: 2;
+  /* border-collapse: collapse では固定セルの縦罫線が消えるので影で代用する */
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.18);
+}
+table.shutuba.sticky-num td:nth-child(1),
+table.shutuba.sticky-num td:nth-child(2) {
+  background: var(--card);
+}
+/* 枠番セルは枠色のインライン背景が勝つ（不透明なのでそのままで問題ない） */
+table.shutuba.sticky-num th:nth-child(1),
+table.shutuba.sticky-num th:nth-child(2) {
+  /* ヘッダーは上固定と左固定が重なる角なので、本文の固定セルより前面に出す */
+  z-index: 3;
+}
+
 table.shutuba td:nth-child(3),
 table.shutuba th:nth-child(3) {
   text-align: left;
