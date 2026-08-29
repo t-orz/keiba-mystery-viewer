@@ -800,10 +800,16 @@
       tbl.classList.toggle("sticky-num", ok);
       if (!ok) {
         tbl.style.removeProperty("--shutuba-col1-w");
+        tbl.classList.remove("is-overflowing");
         return;
       }
       const w = ths[0].getBoundingClientRect().width;
       if (w > 0) tbl.style.setProperty("--shutuba-col1-w", `${w}px`);
+      // 実際に横へはみ出しているときだけ固定列の境界を太くする。
+      // 収まっている幅で太い線を出すと表が重く見えるため。
+      const wrap = tbl.closest(".table-wrap");
+      const overflowing = !!wrap && wrap.scrollWidth > wrap.clientWidth + 1;
+      tbl.classList.toggle("is-overflowing", overflowing);
     });
   }
 
@@ -978,7 +984,18 @@
     const note =
       (typeof payload.avg_popularity_note === "string" && payload.avg_popularity_note.trim()) ||
       "※（）：サンプル数\n※<>：サンプルの平均人気";
-    el.innerHTML = [escapeHtml(note), ...payload.logics.map(formatMarkWeeklyLogic)].join("\n");
+    // 対象週を必ず出す。見出しは「前週の探偵印成績」固定なので、集計が止まっても
+    // 表示だけでは古いと分からない（実際に3週間気づけなかった）。
+    // JRA-VAN の結果到着が遅れると直近週ではなく1〜2週前になることがある。
+    const period =
+      payload.week_start && payload.week_end
+        ? `対象週: ${payload.week_start} 〜 ${payload.week_end}`
+        : "";
+    el.innerHTML = [period, note]
+      .filter(Boolean)
+      .map(escapeHtml)
+      .concat(payload.logics.map(formatMarkWeeklyLogic))
+      .join("\n");
   }
 
   function applyData(data, { flash = false } = {}) {

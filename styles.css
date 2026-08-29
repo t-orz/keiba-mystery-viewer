@@ -1151,6 +1151,18 @@ table.shutuba.sticky-num td:nth-child(1),
 table.shutuba.sticky-num td:nth-child(2) {
   background: var(--card);
 }
+/* 実際に横スクロールする幅のときだけ、固定列の右端をはっきりさせる。
+   1px の影では隣の列の罫線 rgba(0,0,0,.1) と見分けがつかず、
+   固定している馬番と、その右を流れていく別の情報が混同して見える。
+   線を太くしたうえで、外側に淡い影を置いて「ここから下に潜る」ことを示す。
+   収まっている幅では細いままにする（常時太いと表が重く見えるため）。
+   .is-overflowing は app.js が scrollWidth と clientWidth を比べて付ける。 */
+table.shutuba.sticky-num.is-overflowing th:nth-child(2),
+table.shutuba.sticky-num.is-overflowing td:nth-child(2) {
+  box-shadow:
+    3px 0 0 var(--accent),
+    7px 0 8px -4px rgba(0, 0, 0, 0.35);
+}
 /* 枠番セルは枠色のインライン背景が勝つ（不透明なのでそのままで問題ない） */
 table.shutuba.sticky-num th:nth-child(1),
 table.shutuba.sticky-num th:nth-child(2) {
