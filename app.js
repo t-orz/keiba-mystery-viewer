@@ -600,6 +600,7 @@
     if (bl === "moriarty" || /モーリアティ/.test(label)) return "assets/cast/moriarty.png";
     if (/ホプキンス/.test(label)) return "assets/cast/hopkins.png";
     if (bl === "hunter" || /ハンター/.test(label)) return "assets/cast/hunter.png";
+    if (bl === "baker" || /ベイカー/.test(label)) return "assets/cast/baker.png";
     return "";
   }
 
