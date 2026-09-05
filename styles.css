@@ -1354,6 +1354,12 @@ table.shutuba .mark-b { color: #b8860b; }
   .pc-only {
     display: none !important;
   }
+  /* スマホでは .site-sidebar が text-align: center だが、
+     鹿子・天候の行は flex なので justify-content の既定（flex-start）が勝ち、
+     周りだけ中央寄せなのにここだけ左に寄って見える。 */
+  .track-cond-item {
+    justify-content: center;
+  }
   .sidebar-jumps {
     display: none !important;
   }
