@@ -231,7 +231,14 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   color: var(--accent);
 }
 .track-cond-weather {
+  min-width: 1.5em;
   color: var(--muted);
+  text-align: center;
+}
+.track-cond-weather--icon {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 1rem;
+  line-height: 1;
 }
 .track-cond-surface {
   display: inline-flex;

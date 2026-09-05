@@ -1000,6 +1000,66 @@
 
   const TRACK_BABA_CLASS = { "良": "ryo", "稍重": "yaya", "重": "omo", "不良": "furyo" };
 
+  // JRA 公式の天候は 6 種（晴・曇・小雨・雨・小雪・雪）。
+  // BMP の記号には異体字セレクタ FE0F を付け、字形フォントではなく絵文字で出させる。
+  const TRACK_WEATHER_ICON = {
+    "晴": String.fromCodePoint(0x2600, 0xfe0f),
+    "曇": String.fromCodePoint(0x2601, 0xfe0f),
+    "小雨": String.fromCodePoint(0x1f302),
+    "雨": String.fromCodePoint(0x2602, 0xfe0f),
+    "小雪": String.fromCodePoint(0x1f328, 0xfe0f),
+    "雪": String.fromCodePoint(0x26c4),
+  };
+
+  let trackEmojiOk = null;
+
+  /** 使う絵文字が全て字形を持つ環境か。1 つでも豆腐になるなら文字表示に戻す。 */
+  function trackEmojiSupported() {
+    if (trackEmojiOk !== null) return trackEmojiOk;
+    trackEmojiOk = false;
+    try {
+      const canvas = document.createElement("canvas");
+      if (!canvas.getContext) return trackEmojiOk;
+      canvas.width = 24;
+      canvas.height = 24;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return trackEmojiOk;
+      const draw = (ch) => {
+        ctx.clearRect(0, 0, 24, 24);
+        ctx.textBaseline = "top";
+        ctx.font = "18px sans-serif";
+        ctx.fillText(ch, 0, 0);
+        return canvas.toDataURL();
+      };
+      // U+FFFF は非文字なので必ず豆腐になる。これと同じ描画＝その字形が無い。
+      const tofu = draw(String.fromCodePoint(0xffff));
+      trackEmojiOk = Object.keys(TRACK_WEATHER_ICON)
+        .map((k) => TRACK_WEATHER_ICON[k])
+        .every((ch) => draw(ch) !== tofu);
+    } catch (e) {
+      trackEmojiOk = false;
+    }
+    return trackEmojiOk;
+  }
+
+  function trackWeatherHtml(weather) {
+    const text = String(weather || "").trim();
+    const icon = TRACK_WEATHER_ICON[text];
+    // 未知の表記と、絵文字を出せない環境では従来どおり文字で出す。
+    if (!icon || !trackEmojiSupported()) {
+      return '<span class="track-cond-weather">' + escapeHtml(text || "—") + "</span>";
+    }
+    return (
+      '<span class="track-cond-weather track-cond-weather--icon" title="' +
+      escapeHtml(text) +
+      '" aria-label="' +
+      escapeHtml(text) +
+      '">' +
+      icon +
+      "</span>"
+    );
+  }
+
   function trackBabaClass(v) {
     return "track-cond-baba track-cond-baba--" + (TRACK_BABA_CLASS[String(v || "").trim()] || "none");
   }
@@ -1069,9 +1129,8 @@
       items.push(
         '<li class="track-cond-item"><span class="track-cond-place">' +
           escapeHtml(place) +
-          '</span><span class="track-cond-weather">' +
-          escapeHtml(weather || "—") +
           "</span>" +
+          trackWeatherHtml(weather) +
           cells +
           "</li>"
       );
