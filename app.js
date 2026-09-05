@@ -998,6 +998,88 @@
       .join("\n");
   }
 
+  const TRACK_BABA_CLASS = { "良": "ryo", "稍重": "yaya", "重": "omo", "不良": "furyo" };
+
+  function trackBabaClass(v) {
+    return "track-cond-baba track-cond-baba--" + (TRACK_BABA_CLASS[String(v || "").trim()] || "none");
+  }
+
+  // 直前予想は個別レースだけを更新するので、predicted_at が新しいレースほど
+  // 天候・馬場の取得時刻も新しい。predicted_at が無いものは R の大きい方で代用する。
+  function trackCondRecencyKey(r) {
+    const pa = r && r.predicted_at;
+    if (pa) {
+      const t = Date.parse(String(pa).replace(" ", "T"));
+      if (!Number.isNaN(t)) return [1, t];
+    }
+    const rn = parseInt(String((r && r.R) || "").replace(/[^0-9]/g, ""), 10);
+    return [0, Number.isNaN(rn) ? -1 : rn];
+  }
+
+  function trackLatestValue(races, valueOf) {
+    let best = "";
+    let bestKey = null;
+    for (const r of races) {
+      const v = String(valueOf(r) || "").trim();
+      if (!v || v === "-") continue;
+      const key = trackCondRecencyKey(r);
+      if (!bestKey || key[0] > bestKey[0] || (key[0] === bestKey[0] && key[1] > bestKey[1])) {
+        best = v;
+        bestKey = key;
+      }
+    }
+    return best;
+  }
+
+  function renderTrackConditions(data) {
+    const box = $("trackCond");
+    const list = $("trackCondList");
+    if (!box || !list) return;
+    const vs = (data && Array.isArray(data.venues) ? data.venues : []).filter(
+      (v) => v && Array.isArray(v.races) && v.races.length
+    );
+    if (isDayClosedSnapshot(data) || !vs.length) {
+      box.hidden = true;
+      list.innerHTML = "";
+      return;
+    }
+    const items = [];
+    for (const v of vs) {
+      const races = v.races.filter((r) => r && typeof r === "object");
+      const place = String(v.place || (races[0] && races[0].place) || "").trim();
+      if (!place) continue;
+      const weather = trackLatestValue(races, (r) => r.weather);
+      // 障害は芝・ダートのどちらの馬場を指すか一意でないので、面別集計からは外す
+      const onSurface = (name) => races.filter((r) => String(r.course || "").trim() === name);
+      const cells = [
+        ["芝", trackLatestValue(onSurface("芝"), (r) => r.baba)],
+        ["ダ", trackLatestValue(onSurface("ダート"), (r) => r.baba)],
+      ]
+        .map(
+          ([label, baba]) =>
+            '<span class="track-cond-surface"><span class="track-cond-surface-label">' +
+            escapeHtml(label) +
+            '</span><span class="' +
+            trackBabaClass(baba) +
+            '">' +
+            escapeHtml(baba || "—") +
+            "</span></span>"
+        )
+        .join("");
+      items.push(
+        '<li class="track-cond-item"><span class="track-cond-place">' +
+          escapeHtml(place) +
+          '</span><span class="track-cond-weather">' +
+          escapeHtml(weather || "—") +
+          "</span>" +
+          cells +
+          "</li>"
+      );
+    }
+    list.innerHTML = items.join("");
+    box.hidden = !items.length;
+  }
+
   function applyData(data, { flash = false } = {}) {
     const prevUpdated = state.data && state.data.updated_at;
     state.data = data;
@@ -1015,6 +1097,7 @@
       window.setTimeout(() => el.classList.remove("just-updated"), 2500);
     }
     renderUpdateTiming(data);
+    renderTrackConditions(data);
     renderMarkWeeklyStats(data);
     renderTop5();
     renderTabs();

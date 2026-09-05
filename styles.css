@@ -199,6 +199,84 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   line-height: 1.45;
   text-align: left;
 }
+.track-cond {
+  margin: 0.7rem 0 0;
+}
+.track-cond-title {
+  margin: 0 0 0.32rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.track-cond-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.track-cond-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.28rem 0.42rem;
+  font-size: 0.79rem;
+  line-height: 1.3;
+}
+.track-cond-place {
+  min-width: 2.7em;
+  font-weight: 700;
+  color: var(--accent);
+}
+.track-cond-weather {
+  color: var(--muted);
+}
+.track-cond-surface {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+}
+.track-cond-surface-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.track-cond-baba {
+  min-width: 2.9em;
+  padding: 0.02rem 0.34rem;
+  text-align: center;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+.track-cond-baba--ryo {
+  background: rgba(52, 168, 83, 0.16);
+  border-color: rgba(52, 168, 83, 0.45);
+  color: #1c6b33;
+}
+.track-cond-baba--yaya {
+  background: rgba(240, 180, 41, 0.2);
+  border-color: rgba(240, 180, 41, 0.55);
+  color: #7a5405;
+}
+.track-cond-baba--omo {
+  background: rgba(219, 128, 45, 0.2);
+  border-color: rgba(219, 128, 45, 0.55);
+  color: #8a4a10;
+}
+.track-cond-baba--furyo {
+  background: rgba(200, 60, 45, 0.18);
+  border-color: rgba(200, 60, 45, 0.5);
+  color: #8c2b20;
+}
+.track-cond-baba--none {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--muted);
+}
 .update-timing {
   margin: 0.75rem 0 0;
   padding: 0;
@@ -420,6 +498,13 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   }
   .site-sidebar .update-note {
     margin-top: 0.45rem;
+    font-size: 0.76rem;
+  }
+  .site-sidebar .track-cond {
+    margin-top: 0.6rem;
+  }
+  .site-sidebar .track-cond-title,
+  .site-sidebar .track-cond-item {
     font-size: 0.76rem;
   }
   .site-sidebar .update-timing {
