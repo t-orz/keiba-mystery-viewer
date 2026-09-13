@@ -357,7 +357,8 @@
 
   function jumpClass(rank) {
     const r = Number(rank);
-    if (r >= 1 && r <= 5) return "jump rank-hi";
+    if (r === 1) return "jump rank-top";
+    if (r >= 2 && r <= 5) return "jump rank-hi";
     if (r >= 6 && r <= 10) return "jump rank-mid";
     return "jump";
   }
