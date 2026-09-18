@@ -11,8 +11,8 @@
   --green-b: rgba(52, 168, 83, 0.55);
   --gold: rgba(240, 163, 10, 0.34);
   --gold-b: rgba(176, 118, 0, 0.75);
-  --obstacle: #e3e3e3;
-  --obstacle-b: rgba(0, 0, 0, 0.22);
+  --obstacle: #c9c9c9;
+  --obstacle-b: rgba(0, 0, 0, 0.32);
   --accent: #0b3d2e;
   --pad: clamp(0.75rem, 3.5vw, 1.25rem);
   --touch: 44px;
