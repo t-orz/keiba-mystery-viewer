@@ -355,6 +355,14 @@
     });
   }
 
+  /** 障害競走か。コース＝障害 / 参考予想の注記 / レース名の「障害」「ジャンプ」で見る。 */
+  function isObstacleRace(r) {
+    if (!r || typeof r !== "object") return false;
+    if (r.reference_only && /障害/.test(String(r.reference_only_reason || ""))) return true;
+    if (/^障|障害/.test(String(r.course || r.surface || "").trim())) return true;
+    return /障害|ジャンプ/.test(String(r.name || r.race_name || ""));
+  }
+
   function jumpClass(rank) {
     const r = Number(rank);
     if (r === 1) return "jump rank-top";
@@ -391,6 +399,7 @@
     const selected = String(r.race_id) === String(state.raceId);
     const nearest = nearestId != null && String(r.race_id) === String(nearestId);
     let cls = jumpClass(r.holmes_index_rank);
+    if (isObstacleRace(r)) cls += " is-obstacle";
     if (selected) cls += " is-selected";
     if (nearest) cls += " is-nearest-prepost";
     b.className = cls;

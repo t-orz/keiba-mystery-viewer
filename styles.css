@@ -11,6 +11,8 @@
   --green-b: rgba(52, 168, 83, 0.55);
   --gold: rgba(240, 163, 10, 0.34);
   --gold-b: rgba(176, 118, 0, 0.75);
+  --obstacle: #e3e3e3;
+  --obstacle-b: rgba(0, 0, 0, 0.22);
   --accent: #0b3d2e;
   --pad: clamp(0.75rem, 3.5vw, 1.25rem);
   --touch: 44px;
@@ -981,6 +983,12 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
 .jump.rank-top {
   background: var(--gold);
   border-color: var(--gold-b);
+}
+/* 障害競走はホームズ指数の対象外（参考予想）。順位色を付けず薄い灰色で示す。
+   rank-* と同じ詳細度なので、必ずこの順（後ろ）に置く。 */
+.jump.is-obstacle {
+  background: var(--obstacle);
+  border-color: var(--obstacle-b);
 }
 
 /* 発走表モード: 会場列 × 発走時刻行（バレー得点推移表イメージ） */
