@@ -984,14 +984,16 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
   background: var(--gold);
   border-color: var(--gold-b);
 }
-/* 馬名欄の略号（D=初ダート / B=ブリンカー継続 / NB=初・非継続ブリンカー）。
+/* 馬名欄の略号（D=初ダート / B=ブリンカー継続 / NB=初ブリンカー / RB=再ブリンカー）。
    色は公開JSONが持つ PDF と同じ値を inline style で受ける。 */
 .horse-badge {
-  margin-left: 0.25em;
-  font-size: 0.72em;
+  margin-left: 0.3em;
+  /* 上付きは小さすぎて読めなかったので、馬名と同じ高さに揃える。
+     略号と色は PDF と同じで、置き方だけ画面向きに変えている。 */
+  font-size: 0.8em;
   font-weight: 700;
   line-height: 1;
-  vertical-align: top;
+  vertical-align: middle;
   white-space: nowrap;
 }
 .horse-badge-legend {
