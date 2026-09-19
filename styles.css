@@ -299,6 +299,7 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 }
 .sidebar-dev-intent,
 .sidebar-mark-weekly,
+.sidebar-prev-pdf,
 .sidebar-dev-notes {
   margin: 0.65rem 0 0;
   padding: 0;
@@ -310,6 +311,7 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 }
 .sidebar-dev-intent > summary,
 .sidebar-mark-weekly > summary,
+.sidebar-prev-pdf > summary,
 .sidebar-dev-notes > summary {
   list-style: none;
   cursor: pointer;
@@ -326,11 +328,13 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 }
 .sidebar-dev-intent > summary::-webkit-details-marker,
 .sidebar-mark-weekly > summary::-webkit-details-marker,
+.sidebar-prev-pdf > summary::-webkit-details-marker,
 .sidebar-dev-notes > summary::-webkit-details-marker {
   display: none;
 }
 .sidebar-dev-intent > summary::after,
 .sidebar-mark-weekly > summary::after,
+.sidebar-prev-pdf > summary::after,
 .sidebar-dev-notes > summary::after {
   content: "";
   width: 0.4rem;
@@ -344,12 +348,14 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 }
 .sidebar-dev-intent[open] > summary::after,
 .sidebar-mark-weekly[open] > summary::after,
+.sidebar-prev-pdf[open] > summary::after,
 .sidebar-dev-notes[open] > summary::after {
   transform: rotate(-135deg);
   margin-top: 0.1rem;
 }
 .sidebar-dev-intent-body,
 .sidebar-mark-weekly-body,
+.sidebar-prev-pdf-body,
 .sidebar-dev-notes-body {
   margin-top: 0.35rem;
   padding-top: 0.35rem;
@@ -524,11 +530,13 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   }
   .site-sidebar .sidebar-dev-intent,
   .site-sidebar .sidebar-mark-weekly,
+  .site-sidebar .sidebar-prev-pdf,
   .site-sidebar .sidebar-dev-notes {
     font-size: 0.74rem;
   }
   .site-sidebar .sidebar-dev-intent > summary,
   .site-sidebar .sidebar-mark-weekly > summary,
+  .site-sidebar .sidebar-prev-pdf > summary,
   .site-sidebar .sidebar-dev-notes > summary {
     font-size: 0.74rem;
     font-weight: 400;
@@ -1112,6 +1120,36 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
 .sidebar-jump-timeline .jump-scoreboard-cell .jump {
   min-height: 2.1rem;
   font-size: 0.78rem;
+}
+
+/* 【前日予想データPDF】: 発走表順の表から前日以前の印付き出馬表PDFへ飛ぶ */
+.sidebar-prev-pdf-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: inherit;
+  line-height: inherit;
+}
+.prev-pdf-day + .prev-pdf-day {
+  margin-top: 0.55rem;
+}
+.prev-pdf-day-title {
+  margin: 0 0 0.25rem;
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 700;
+  line-height: inherit;
+}
+/* セルの中身は <a>。.jump の見た目のままリンクとして振る舞わせる */
+.prev-pdf-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+}
+.prev-pdf-link.is-nopdf {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .race-detail h3 {

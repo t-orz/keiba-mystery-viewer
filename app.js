@@ -1195,6 +1195,7 @@
     renderUpdateTiming(data);
     renderTrackConditions(data);
     renderMarkWeeklyStats(data);
+    refreshPrevPdfBlock();
     renderTop5();
     renderTabs();
     renderMatrix();
@@ -1223,6 +1224,308 @@
         $("updatedAt").innerHTML = `<span class="error">スナップショット取得失敗: ${escapeHtml(e.message || e)}</span>`;
       }
     }
+  }
+
+  /* ===== 【前日予想データPDF】 ==============================================
+     連続した開催日の2日目以降に、同じ連続開催の前日（3日目なら前々日まで）の
+     印付き出馬表 PDF を開けるようにする。
+
+     - 日付付きスナップショット snapshots/<YYYY-MM-DD>.json は公開のたびに更新され、
+       開催日終了処理でも消さずに残る。ここから place / R / start_time / pdf_url を借りる。
+     - 本体は 240KB 前後あるので、存在確認は HEAD で行い、中身はアコーディオンを
+       開いたときに初めて取りに行く。
+     - 前日のスナップショットが無い日（＝連続開催の初日）で遡りを打ち切るので、
+       開催週をまたいで前週の開催を拾うことはない。
+     - PDF 自体は Supabase 側で 8 日経つと消えるため、古い日はリンク切れになりうる。 */
+  const PREV_PDF_MAX_DAYS = 3;
+  const PREV_PDF_DAY_LABELS = ["前日", "前々日", "3日前"];
+  const prevPdfState = { days: [], probedFor: "", loadedFor: "", loading: false };
+
+  /** cfg.SNAPSHOT_URL（= .../snapshots/latest.json）と同じ場所の日付付き URL */
+  function datedSnapshotUrl(day) {
+    const base = String(cfg.SNAPSHOT_URL || "").split("?")[0];
+    if (!base || !/latest\.json$/.test(base)) return "";
+    return base.replace(/latest\.json$/, `${day}.json`);
+  }
+
+  function withCacheBust(url) {
+    return url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+  }
+
+  /** "YYYY-MM-DD" を delta 日ずらす（閲覧端末のタイムゾーンに依存させない） */
+  function shiftDay(day, delta) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day || "").trim());
+    if (!m) return "";
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    d.setUTCDate(d.getUTCDate() + Number(delta));
+    return d.toISOString().slice(0, 10);
+  }
+
+  /** 日本時間の今日。端末の時計が海外でも開催日とずれないようにする。 */
+  function todayInJst() {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+    } catch (_) {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+  }
+
+  function prevPdfBaseDay() {
+    const day = String((state.data && state.data.schedule_date) || "").trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : todayInJst();
+  }
+
+  function formatPrevPdfDayLabel(day, idx) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day || ""));
+    const name = PREV_PDF_DAY_LABELS[idx] || `${idx + 1}日前`;
+    if (!m) return `${day} ${name}`;
+    const wd = "日月火水木金土".charAt(
+      new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay()
+    );
+    return `${Number(m[2])}/${Number(m[3])}（${wd}）の予想 ［${name}］`;
+  }
+
+  /** 遡れる前日の一覧。途切れた時点で打ち切る＝連続開催のぶんだけ返る。 */
+  async function probePrevPdfDays(baseDay) {
+    const days = [];
+    let day = baseDay;
+    for (let i = 0; i < PREV_PDF_MAX_DAYS; i += 1) {
+      day = shiftDay(day, -1);
+      const url = day ? datedSnapshotUrl(day) : "";
+      if (!url) break;
+      let ok = false;
+      try {
+        const resp = await fetch(withCacheBust(url), { method: "HEAD", cache: "no-store" });
+        ok = resp.ok;
+      } catch (_) {
+        ok = false;
+      }
+      if (!ok) break;
+      days.push(day);
+    }
+    return days;
+  }
+
+  /** 発走表順の表の1セル。PDF があればリンク、無ければ押せない見た目にする。 */
+  function makePrevPdfLink(r) {
+    const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
+    let cls = jumpClass(r.holmes_index_rank);
+    if (isObstacleRace(r)) cls += " is-obstacle";
+    const head = `${r.place || ""} ${rn}R ${normalizeStartTime(r.start_time)}`.trim();
+    const name = String(r.name || "").trim();
+    const tip = name ? `${head} ${name}` : head;
+    const pdf = String(r.pdf_url || "").trim();
+    if (!pdf) {
+      const span = document.createElement("span");
+      span.className = `${cls} prev-pdf-link is-nopdf`;
+      span.textContent = `${rn}R`;
+      span.title = `${tip}（PDFはありません）`;
+      return span;
+    }
+    const a = document.createElement("a");
+    a.className = `${cls} prev-pdf-link`;
+    a.href = pdf;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = `${rn}R`;
+    a.title = `${tip} の予想詳細PDF`;
+    return a;
+  }
+
+  /** レースジャンプ「発走表」と同じ会場列 × 発走時刻行の表を、その日の JSON から作る */
+  function buildPrevPdfTable(snap) {
+    const venueList = (snap && Array.isArray(snap.venues) && snap.venues) || [];
+    const placeList = venueList.map((v) => v.place).filter(Boolean);
+    const races = [];
+    for (const v of venueList) {
+      for (const r of v.races || []) races.push(r.place ? r : { ...r, place: v.place });
+    }
+    if (!placeList.length || !races.length) {
+      const p = document.createElement("p");
+      p.className = "sidebar-prev-pdf-hint";
+      p.textContent = "この日の発走表データがありません";
+      return p;
+    }
+
+    const times = [];
+    const seen = new Set();
+    for (const r of races) {
+      const t = normalizeStartTime(r.start_time);
+      if (!t || seen.has(t)) continue;
+      seen.add(t);
+      times.push(t);
+    }
+    times.sort();
+    if (!times.length) {
+      const p = document.createElement("p");
+      p.className = "sidebar-prev-pdf-hint";
+      p.textContent = "この日の発走時刻がありません";
+      return p;
+    }
+
+    const byKey = new Map();
+    for (const r of races) {
+      const t = normalizeStartTime(r.start_time);
+      const place = r.place;
+      if (!t || !place) continue;
+      const key = `${t}||${place}`;
+      // 同一時刻・同一場は R 昇順の先頭を採用（レースジャンプと同じ扱い）
+      const prev = byKey.get(key);
+      if (!prev) {
+        byKey.set(key, r);
+        continue;
+      }
+      const rn = Number.parseInt(String(r.R || "").replace(/[Rr]$/, ""), 10);
+      const pn = Number.parseInt(String(prev.R || "").replace(/[Rr]$/, ""), 10);
+      if (Number.isFinite(rn) && (!Number.isFinite(pn) || rn < pn)) byKey.set(key, r);
+    }
+
+    const box = document.createElement("div");
+    box.className = "jump-timeline sidebar-jump-timeline";
+    const scroll = document.createElement("div");
+    scroll.className = "jump-timeline-scroll";
+    const table = document.createElement("table");
+    table.className = "jump-scoreboard";
+    table.setAttribute("aria-label", "前日予想データPDF（発走表順）");
+
+    const thead = document.createElement("thead");
+    const hr = document.createElement("tr");
+    const corner = document.createElement("th");
+    corner.className = "jump-scoreboard-corner";
+    corner.textContent = "発走";
+    hr.appendChild(corner);
+    for (const place of placeList) {
+      const th = document.createElement("th");
+      th.className = "jump-scoreboard-place";
+      th.textContent = place;
+      hr.appendChild(th);
+    }
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    for (const t of times) {
+      const tr = document.createElement("tr");
+      const th = document.createElement("th");
+      th.className = "jump-scoreboard-time";
+      th.scope = "row";
+      th.textContent = t;
+      tr.appendChild(th);
+      for (const place of placeList) {
+        const td = document.createElement("td");
+        const r = byKey.get(`${t}||${place}`);
+        if (!r) {
+          td.className = "jump-scoreboard-cell is-empty";
+          const dot = document.createElement("span");
+          dot.className = "jump-scoreboard-dot";
+          dot.setAttribute("aria-hidden", "true");
+          td.appendChild(dot);
+        } else {
+          td.className = "jump-scoreboard-cell";
+          const inner = document.createElement("div");
+          inner.className = "jump-scoreboard-cell-inner";
+          inner.appendChild(makePrevPdfLink(r));
+          td.appendChild(inner);
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    scroll.appendChild(table);
+    box.appendChild(scroll);
+    return box;
+  }
+
+  function buildPrevPdfDaySection(day, idx, snap) {
+    const sec = document.createElement("section");
+    sec.className = "prev-pdf-day";
+    const h = document.createElement("h3");
+    h.className = "prev-pdf-day-title";
+    h.textContent = formatPrevPdfDayLabel(day, idx);
+    sec.appendChild(h);
+    sec.appendChild(buildPrevPdfTable(snap));
+    return sec;
+  }
+
+  /** アコーディオンを開いたときだけ本体（日別スナップショット）を取りに行く */
+  async function renderPrevPdf() {
+    const body = $("prevPdfBody");
+    if (!body) return;
+    const days = prevPdfState.days;
+    const wantKey = days.join(",");
+    if (prevPdfState.loading) return;
+    if (prevPdfState.loadedFor && prevPdfState.loadedFor === wantKey) return;
+    if (!days.length) {
+      body.innerHTML = "<p class='sidebar-prev-pdf-hint'>前日の予想データはありません</p>";
+      prevPdfState.loadedFor = wantKey;
+      return;
+    }
+    prevPdfState.loading = true;
+    body.innerHTML = "<p class='sidebar-prev-pdf-hint'>前日の予想データを読み込み中…</p>";
+    try {
+      const loaded = [];
+      for (const day of days) {
+        const url = datedSnapshotUrl(day);
+        if (!url) continue;
+        const resp = await fetch(withCacheBust(url), { cache: "no-store" });
+        if (!resp.ok) continue;
+        loaded.push({ day, snap: await resp.json() });
+      }
+      body.innerHTML = "";
+      if (!loaded.length) {
+        body.innerHTML = "<p class='sidebar-prev-pdf-hint'>前日の予想データはありません</p>";
+      } else {
+        const lead = document.createElement("p");
+        lead.className = "sidebar-prev-pdf-hint";
+        lead.textContent = "※レースを押すと、その日の印付き出馬表PDFが開きます";
+        body.appendChild(lead);
+        loaded.forEach((item, i) => {
+          body.appendChild(buildPrevPdfDaySection(item.day, i, item.snap));
+        });
+      }
+      prevPdfState.loadedFor = wantKey;
+    } catch (e) {
+      body.innerHTML =
+        "<p class='sidebar-prev-pdf-hint'>前日の予想データを取得できませんでした: " +
+        escapeHtml(e.message || e) +
+        "</p>";
+    } finally {
+      prevPdfState.loading = false;
+    }
+  }
+
+  /** 連続開催の2日目以降だけブロックを出す（前日が無ければ隠したまま） */
+  async function refreshPrevPdfBlock() {
+    const block = $("prevPdfBlock");
+    if (!block) return;
+    const baseDay = prevPdfBaseDay();
+    if (!baseDay || prevPdfState.probedFor === baseDay) return;
+    prevPdfState.probedFor = baseDay;
+    const days = await probePrevPdfDays(baseDay);
+    prevPdfState.days = days;
+    prevPdfState.loadedFor = "";
+    block.hidden = !days.length;
+    if (!days.length) {
+      block.open = false;
+      return;
+    }
+    if (block.open) renderPrevPdf();
+  }
+
+  function initPrevPdfBlock() {
+    const block = $("prevPdfBlock");
+    if (!block) return;
+    block.addEventListener("toggle", () => {
+      if (block.open) renderPrevPdf();
+    });
   }
 
   const ACC_STORAGE_KEY = "pv_acc_state_v1";
@@ -1338,6 +1641,7 @@
   initAccordion();
   initShutubaSortControls();
   initJumpLayoutControls();
+  initPrevPdfBlock();
   loadSnapshot();
   const poll = Number(cfg.POLL_INTERVAL_MS) || 30000;
   if (poll > 0) {
