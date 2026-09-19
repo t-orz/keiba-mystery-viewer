@@ -984,6 +984,23 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
   background: var(--gold);
   border-color: var(--gold-b);
 }
+/* 馬名欄の略号（D=初ダート / B=ブリンカー継続 / NB=初・非継続ブリンカー）。
+   色は公開JSONが持つ PDF と同じ値を inline style で受ける。 */
+.horse-badge {
+  margin-left: 0.25em;
+  font-size: 0.72em;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.horse-badge-legend {
+  margin: 0.4rem 0 0;
+}
+.horse-badge-legend .horse-badge {
+  margin-left: 0.5em;
+}
+
 /* 障害競走はホームズ指数の対象外（参考予想）。順位色を付けず薄い灰色で示す。
    rank-* と同じ詳細度なので、必ずこの順（後ろ）に置く。 */
 .jump.is-obstacle {

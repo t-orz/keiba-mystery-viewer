@@ -766,6 +766,7 @@
     }
     const cols = Array.isArray(shutuba.columns) ? shutuba.columns : [];
     const markCols = new Set(Array.isArray(shutuba.mark_columns) ? shutuba.mark_columns : []);
+    const badgeLegend = Array.isArray(shutuba.badge_legend) ? shutuba.badge_legend : [];
     let html = '<div class="table-wrap"><table class="shutuba"><thead><tr>';
     for (const c of cols) {
       html += `<th>${escapeHtml(c)}</th>`;
@@ -785,16 +786,40 @@
         if (st.cancel && (c === "馬名" || c === "単勝")) classes.push("cancel-text");
         if (markCols.has(c) && honmei[c]) classes.push(markHonmeiClass(c));
         const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
-        html += `<td${cls}${styleAttr}>${escapeHtml(row[c] ?? "")}</td>`;
+        const badges = c === "馬名" ? horseBadgesHtml(row.badges) : "";
+        html += `<td${cls}${styleAttr}>${escapeHtml(row[c] ?? "")}${badges}</td>`;
       }
       html += "</tr>";
     }
     html += "</tbody></table></div>";
+    if (badgeLegend.length) {
+      const title = escapeHtml(shutuba.badge_legend_title || "【馬名略号】");
+      const items = badgeLegend
+        .map((b) => `${horseBadgesHtml([b])} ${escapeHtml(b && b.description ? b.description : "")}`)
+        .join(" / ");
+      html += `<p class="hint horse-badge-legend"><strong>${title}</strong>${items}</p>`;
+    }
     if (!shutuba.predicted) {
       html += '<p class="hint">予想前の出馬表です（印列は予想後に表示されます）。</p>';
     }
     box.innerHTML = html;
     syncShutubaStickyOffset(box);
+  }
+
+  /** 馬名欄の略号（D / B / NB）。判定も色もサーバー側 horse_name_badges が出所。
+   *  色は公開JSONが持つ値をそのまま使うので、PDF と必ず同じになる。 */
+  function horseBadgesHtml(badges) {
+    if (!Array.isArray(badges) || !badges.length) return "";
+    return badges
+      .map((b) => {
+        const label = String((b && b.label) || "").trim();
+        if (!label) return "";
+        const color = String((b && b.color) || "");
+        // 想定外の値を style に流さない
+        const style = /^#[0-9a-fA-F]{3,8}$/.test(color) ? ` style="color:${color}"` : "";
+        return `<span class="horse-badge"${style}>${escapeHtml(label)}</span>`;
+      })
+      .join("");
   }
 
   // 枠番・馬番の左固定を有効化し、2列目の left を1列目の実測幅に合わせる。
