@@ -1200,6 +1200,7 @@
     renderTabs();
     renderMatrix();
     renderJumps();
+    syncBrandJump();
     if (state.raceId) {
       renderDetail();
       renderShutuba();
@@ -1224,6 +1225,58 @@
         $("updatedAt").innerHTML = `<span class="error">スナップショット取得失敗: ${escapeHtml(e.message || e)}</span>`;
       }
     }
+  }
+
+  /* ===== サイトバナー → 発走が最も近いレース ================================
+     サイドバーのロゴを押すと、右側の予想表示を「最終更新時刻以降で最も近い
+     未発走レース」（レースジャンプで赤枠が付くレース）へ切り替える。
+     対象が無い日（非開催・全レース発走済み・公開終了）は、ただの画像に戻す。 */
+  function brandJumpTarget() {
+    const r = nearestPrepostRace();
+    return r && r.race_id ? r : null;
+  }
+
+  function jumpToNearestPrepost() {
+    const r = brandJumpTarget();
+    if (!r) return;
+    selectRace(r.race_id, r.place);
+  }
+
+  /** 押せる状態かを毎更新で見直す（発走が進むと対象レースも動く） */
+  function syncBrandJump() {
+    const el = $("brandName");
+    if (!el) return;
+    const r = brandJumpTarget();
+    if (!r) {
+      el.classList.remove("is-jumpable");
+      el.removeAttribute("role");
+      el.removeAttribute("tabindex");
+      el.removeAttribute("title");
+      el.removeAttribute("aria-label");
+      return;
+    }
+    const rn = String(r.R || "").replace(/[Rr]$/, "");
+    const label =
+      `発走が最も近いレースの予想へ（${r.place || ""} ${rn}R ${normalizeStartTime(r.start_time)}）`.replace(
+        /\s+/g,
+        " "
+      );
+    el.classList.add("is-jumpable");
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.title = label;
+    el.setAttribute("aria-label", label);
+  }
+
+  function initBrandJump() {
+    const el = $("brandName");
+    if (!el) return;
+    el.addEventListener("click", () => jumpToNearestPrepost());
+    el.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+      e.preventDefault();
+      jumpToNearestPrepost();
+    });
   }
 
   /* ===== 【前日予想データPDF】 ==============================================
@@ -1642,6 +1695,7 @@
   initShutubaSortControls();
   initJumpLayoutControls();
   initPrevPdfBlock();
+  initBrandJump();
   loadSnapshot();
   const poll = Number(cfg.POLL_INTERVAL_MS) || 30000;
   if (poll > 0) {

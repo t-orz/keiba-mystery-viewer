@@ -154,6 +154,18 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   background: transparent;
   box-sizing: border-box;
 }
+/* 発走が最も近いレースがあるときだけ、バナーを押せる見た目にする */
+.brand-logo.is-jumpable {
+  cursor: pointer;
+}
+.brand-logo.is-jumpable:hover .brand-logo-img {
+  filter: brightness(1.06);
+}
+.brand-logo.is-jumpable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
 .brand-logo-img {
   display: block;
   width: 100%;
