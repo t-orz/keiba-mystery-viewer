@@ -117,10 +117,13 @@ body.is-day-closed .site-sidebar {
   background: #fffcf5;
   backdrop-filter: none;
 }
+/* クリックを通すための pointer-events だけ。position/z-index は付けないこと。
+   サイドバー自体が上の規則で z-index:9999 の重ね合わせ文脈を作っているので、
+   中の要素まで上げる必要はない。上げると発走表の sticky 見出し（z-index:2）より
+   前に出て、スクロール時にレースボタンが競馬場の見出しへ被る
+   （2026-09-21、クローズ後の【前日予想データPDF】で発覚）。 */
 body.is-day-closed .site-sidebar a:not([aria-disabled="true"]),
 body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
-  position: relative;
-  z-index: 9999;
   pointer-events: auto !important;
 }
 .day-closed-message {
