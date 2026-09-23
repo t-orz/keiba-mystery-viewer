@@ -154,7 +154,7 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   text-align: center;
   color: #111;
   font-weight: 700;
-  font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+  font-size: clamp(calc(0.85rem + 4pt), calc(1.5vw + 4pt), calc(1.05rem + 4pt));
   line-height: 1.5;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
 }
