@@ -167,6 +167,8 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
     sans-serif;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
 }
+/* 折り返しは文節の切れ目だけで起こす（スマホで「終了しま／した」と割れないように） */
+.dcm-chunk { display: inline-block; }
 /* スマホでだけ「：」の直後で改行する */
 .day-closed-hours-br { display: none; }
 @media (max-width: 720px) {
