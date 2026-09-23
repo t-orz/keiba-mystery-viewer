@@ -92,6 +92,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 2;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: clamp(1.25rem, 4vw, 2.5rem);
@@ -147,6 +148,15 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85),
     0 0 12px rgba(255, 255, 255, 0.55);
+}
+.day-closed-hours {
+  margin: 0.9em 0 0;
+  text-align: center;
+  color: #111;
+  font-weight: 700;
+  font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+  line-height: 1.5;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
 }
 
 .brand-logo {
