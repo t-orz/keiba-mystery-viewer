@@ -152,10 +152,19 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 .day-closed-hours {
   margin: 0.9em 0 0;
   text-align: center;
-  color: #111;
+  color: #0047c8;
   font-weight: 700;
   font-size: clamp(calc(0.85rem + 4pt), calc(1.5vw + 4pt), calc(1.05rem + 4pt));
   line-height: 1.5;
+  font-family:
+    "創英角ポップ体",
+    "Soei Kakugothic Pop",
+    "SoeiKakugothicPop",
+    "Souei Kaku Pop",
+    "M PLUS Rounded 1c",
+    "Hiragino Maru Gothic ProN",
+    "Yu Gothic",
+    sans-serif;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
 }
 
