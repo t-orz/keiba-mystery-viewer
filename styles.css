@@ -1480,6 +1480,8 @@ table.shutuba .mark-b { color: #b8860b; }
   }
   .acc-toolbar.mobile-only {
     display: flex;
+    /* 上の見出しブロックに詰まって見えないよう少し空ける */
+    margin-top: 0.75rem;
   }
   .acc-toolbar[hidden] { display: none !important; }
 
