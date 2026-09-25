@@ -424,6 +424,12 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 .sidebar-mark-weekly-body {
   white-space: pre-line;
 }
+.mark-weekly-pdf-link {
+  color: #0b3d2e;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .sidebar-mark-weekly-logic + .sidebar-mark-weekly-logic {
   margin-top: 0.55rem;
 }

@@ -1033,9 +1033,15 @@
       payload.week_start && payload.week_end
         ? `対象週: ${payload.week_start} 〜 ${payload.week_end}`
         : "";
+    // 同じ集計の表形式PDF（週次集計ジョブが作って pdf_url に載せる）。注記のすぐ下に出す。
+    const pdfUrl = String(payload.pdf_url || "").trim();
+    const pdfLink = /^https:\/\//.test(pdfUrl)
+      ? `<a class="mark-weekly-pdf-link" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">表形式のPDFで閲覧する</a>`
+      : "";
     el.innerHTML = [period, note]
       .filter(Boolean)
       .map(escapeHtml)
+      .concat(pdfLink ? [pdfLink] : [])
       .concat(payload.logics.map(formatMarkWeeklyLogic))
       .join("\n");
   }
