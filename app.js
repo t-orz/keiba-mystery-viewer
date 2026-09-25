@@ -969,49 +969,8 @@
       "\n※更新されない場合は通信障害など運用上のトラブルが発生しております。ご容赦ください";
   }
 
-  function formatMarkWeeklyAvgPop(avg) {
-    if (avg == null || avg === "") return "";
-    const n = Number(avg);
-    if (!Number.isFinite(n)) return "";
-    const r = Math.round(n * 10) / 10;
-    if (Math.abs(r - Math.round(r)) < 1e-9) return String(Math.round(r));
-    return r.toFixed(1);
-  }
-
-  function formatMarkWeeklyLogic(logic) {
-    const label = String((logic && logic.label) || (logic && logic.id) || "").trim();
-    const lines = [label ? `・<strong>${escapeHtml(label)}</strong>` : "・"];
-    const marks = (logic && logic.marks) || [];
-    for (const item of marks) {
-      const mk = String((item && item.mark) || "");
-      const n = Number((item && item.n) || 0);
-      const fin = Array.isArray(item && item.finishes) ? item.finishes : [0, 0, 0, 0];
-      const a = Number(fin[0] || 0);
-      const b = Number(fin[1] || 0);
-      const c = Number(fin[2] || 0);
-      const d = Number(fin[3] || 0);
-      let line = `${mk}（${n}）【${a}-${b}-${c}-${d}】`;
-      const avgRaw =
-        item && item.avg_popularity != null
-          ? item.avg_popularity
-          : item && item.avg_popularity_top3;
-      const avgTxt = formatMarkWeeklyAvgPop(avgRaw);
-      if (avgTxt) line += `<${avgTxt}>`;
-      const winRate = item && item.win_rate;
-      const winReturn = item && item.win_return_rate;
-      const placeRate = item && item.place_rate;
-      const placeReturn = item && item.place_return_rate;
-      if (n > 0 && winRate != null && winReturn != null) {
-        line += ` 勝率${Number(winRate).toFixed(1)}% 単回収${Number(winReturn).toFixed(1)}%`;
-      }
-      if (n > 0 && placeRate != null && placeReturn != null) {
-        line += ` 複勝${Number(placeRate).toFixed(1)}% 複回収${Number(placeReturn).toFixed(1)}%`;
-      }
-      lines.push(escapeHtml(line));
-    }
-    return lines.join("\n");
-  }
-
+  // 【前週の探偵印成績】は対象週と表形式PDFへのボタンだけを出す（2026-09-26）。
+  // 印ごとの成績・注記（サンプル数／平均人気など）は PDF に集約した。ブロック内に戻さないこと。
   function renderMarkWeeklyStats(data) {
     const el = $("markWeeklyStats") || document.querySelector(".sidebar-mark-weekly-body");
     if (!el) return;
@@ -1019,31 +978,24 @@
     const emptyMsg =
       (payload && typeof payload.empty_message === "string" && payload.empty_message.trim()) ||
       "データがありません";
-    if (!payload || !payload.has_data || !Array.isArray(payload.logics) || !payload.logics.length) {
+    if (!payload || !payload.has_data) {
       el.textContent = emptyMsg;
       return;
     }
-    const note =
-      (typeof payload.avg_popularity_note === "string" && payload.avg_popularity_note.trim()) ||
-      "※（）：サンプル数\n※<>：サンプルの平均人気";
-    // 対象週を必ず出す。見出しは「前週の探偵印成績」固定なので、集計が止まっても
+    // 対象週は必ず出す。見出しは「前週の探偵印成績」固定なので、集計が止まっても
     // 表示だけでは古いと分からない（実際に3週間気づけなかった）。
-    // JRA-VAN の結果到着が遅れると直近週ではなく1〜2週前になることがある。
     const period =
       payload.week_start && payload.week_end
         ? `対象週: ${payload.week_start} 〜 ${payload.week_end}`
         : "";
-    // 同じ集計の表形式PDF（週次集計ジョブが作って pdf_url に載せる）。注記のすぐ下に出す。
     const pdfUrl = String(payload.pdf_url || "").trim();
-    const pdfLink = /^https:\/\//.test(pdfUrl)
-      ? `<a class="mark-weekly-pdf-link" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">表形式のPDFで閲覧する</a>`
-      : "";
-    el.innerHTML = [period, note]
-      .filter(Boolean)
-      .map(escapeHtml)
-      .concat(pdfLink ? [pdfLink] : [])
-      .concat(payload.logics.map(formatMarkWeeklyLogic))
-      .join("\n");
+    if (!/^https:\/\//.test(pdfUrl)) {
+      el.textContent = [period, "PDFを準備中です"].filter(Boolean).join("\n");
+      return;
+    }
+    el.innerHTML =
+      (period ? `<span class="mark-weekly-period">${escapeHtml(period)}</span>` : "") +
+      `<a class="btn mark-weekly-pdf-btn" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">表形式のPDFで閲覧する</a>`;
   }
 
   const TRACK_BABA_CLASS = { "良": "ryo", "稍重": "yaya", "重": "omo", "不良": "furyo" };

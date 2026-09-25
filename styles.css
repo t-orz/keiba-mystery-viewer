@@ -424,14 +424,22 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 .sidebar-mark-weekly-body {
   white-space: pre-line;
 }
-.mark-weekly-pdf-link {
-  color: #0b3d2e;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+.mark-weekly-period {
+  display: block;
 }
-.sidebar-mark-weekly-logic + .sidebar-mark-weekly-logic {
-  margin-top: 0.55rem;
+.mark-weekly-pdf-btn {
+  display: flex;
+  width: 100%;
+  margin-top: 0.5rem;
+  background: var(--accent);
+  box-sizing: border-box;
+}
+.mark-weekly-pdf-btn:hover {
+  filter: brightness(1.15);
+}
+.mark-weekly-pdf-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .sidebar-dev-notes-lead,
 .sidebar-dev-notes-def {
