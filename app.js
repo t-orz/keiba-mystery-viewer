@@ -997,8 +997,13 @@
           : item && item.avg_popularity_top3;
       const avgTxt = formatMarkWeeklyAvgPop(avgRaw);
       if (avgTxt) line += `<${avgTxt}>`;
+      const winRate = item && item.win_rate;
+      const winReturn = item && item.win_return_rate;
       const placeRate = item && item.place_rate;
       const placeReturn = item && item.place_return_rate;
+      if (n > 0 && winRate != null && winReturn != null) {
+        line += ` 勝率${Number(winRate).toFixed(1)}% 単回収${Number(winReturn).toFixed(1)}%`;
+      }
       if (n > 0 && placeRate != null && placeReturn != null) {
         line += ` 複勝${Number(placeRate).toFixed(1)}% 複回収${Number(placeReturn).toFixed(1)}%`;
       }
