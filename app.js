@@ -729,6 +729,25 @@
     box.innerHTML = html;
   }
 
+  // 脚質は競馬新聞と同じ漢字1文字で出し、前→後ろの順に色を変える（2026-09-27）。
+  // データ（推定脚質）は元の語のまま。表示のときだけ置き換え、元の語は title に残す。
+  const RUNNING_STYLE_SHORT = {
+    "逃げ": ["逃", "rs-nige"],
+    "先行": ["先", "rs-senko"],
+    "差し": ["差", "rs-sashi"],
+    "追込": ["追", "rs-oikomi"],
+    "追い込み": ["追", "rs-oikomi"],
+    "マクリ": ["捲", "rs-makuri"],
+  };
+
+  function runningStyleCellHtml(v) {
+    const raw = String(v ?? "").trim();
+    const hit = RUNNING_STYLE_SHORT[raw];
+    const [txt, cls] = hit || ["－", "rs-none"];
+    const title = raw ? `推定脚質: ${raw}` : "推定脚質: 不明";
+    return `<span class="rs ${cls}" title="${escapeAttr(title)}">${escapeHtml(txt)}</span>`;
+  }
+
   function markHonmeiClass(col) {
     if (col === "ワトソン") return "mark-honmei mark-w";
     if (col === "アイリーン") return "mark-honmei mark-i";
@@ -785,9 +804,11 @@
         }
         if (st.cancel && (c === "馬名" || c === "単勝")) classes.push("cancel-text");
         if (markCols.has(c) && honmei[c]) classes.push(markHonmeiClass(c));
+        if (c === "脚質") classes.push("rs-cell");
         const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
         const badges = c === "馬名" ? horseBadgesHtml(row.badges) : "";
-        html += `<td${cls}${styleAttr}>${escapeHtml(row[c] ?? "")}${badges}</td>`;
+        const body = c === "脚質" ? runningStyleCellHtml(row[c]) : escapeHtml(row[c] ?? "");
+        html += `<td${cls}${styleAttr}>${body}${badges}</td>`;
       }
       html += "</tr>";
     }
