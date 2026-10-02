@@ -1495,6 +1495,8 @@ table.shutuba td.rs-cell { text-align: center; }
   }
   .matrix-nav.mobile-only {
     display: block;
+    /* 上の見出し（会場マトリクス）に競馬場ボタンが詰まって見えないよう少し空ける */
+    margin-top: 0.75rem;
   }
   .acc-toolbar.mobile-only {
     display: flex;
