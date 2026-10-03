@@ -6,7 +6,7 @@
   function loadShutubaSort() {
     try {
       const v = localStorage.getItem(SHUTUBA_SORT_KEY);
-      if (v === "umaban" || v === "default") return v;
+      if (v === "umaban" || v === "default" || v === "ninki") return v;
     } catch (_) {
       /* ignore */
     }
@@ -34,23 +34,25 @@
   const $ = (id) => document.getElementById(id);
 
   function syncShutubaSortControls() {
-    const sortDefault = state.shutubaSort !== "umaban";
+    const mode = state.shutubaSort;
     document.querySelectorAll("[data-shutuba-sort]").forEach((btn) => {
-      const mode = btn.getAttribute("data-shutuba-sort");
-      const active = sortDefault ? mode === "default" : mode === "umaban";
+      const active = btn.getAttribute("data-shutuba-sort") === mode;
       btn.classList.toggle("active", active);
       btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
     const hint = $("shutubaSortHint");
     if (hint) {
-      hint.textContent = sortDefault
-        ? "推定3着内率の高い順"
-        : "馬番の小さい順";
+      hint.textContent =
+        mode === "umaban"
+          ? "馬番の小さい順"
+          : mode === "ninki"
+          ? "人気の高い順（単勝オッズが低い順）"
+          : "推定3着内率の高い順（本体UIと同じ）";
     }
   }
 
   function setShutubaSort(mode) {
-    state.shutubaSort = mode === "umaban" ? "umaban" : "default";
+    state.shutubaSort = mode === "umaban" || mode === "ninki" ? mode : "default";
     try {
       localStorage.setItem(SHUTUBA_SORT_KEY, state.shutubaSort);
     } catch (_) {
@@ -758,14 +760,26 @@
 
   function shutubaRowsForDisplay(rows) {
     const list = Array.isArray(rows) ? rows.slice() : [];
-    if (state.shutubaSort !== "umaban") return list;
-    return list.sort((a, b) => {
-      const na = Number.parseInt(String(a && a["馬番"] != null ? a["馬番"] : ""), 10);
-      const nb = Number.parseInt(String(b && b["馬番"] != null ? b["馬番"] : ""), 10);
-      const va = Number.isFinite(na) ? na : 999;
-      const vb = Number.isFinite(nb) ? nb : 999;
-      return va - vb;
-    });
+    if (state.shutubaSort === "umaban") {
+      return list.sort((a, b) => {
+        const na = Number.parseInt(String(a && a["馬番"] != null ? a["馬番"] : ""), 10);
+        const nb = Number.parseInt(String(b && b["馬番"] != null ? b["馬番"] : ""), 10);
+        const va = Number.isFinite(na) ? na : 999;
+        const vb = Number.isFinite(nb) ? nb : 999;
+        return va - vb;
+      });
+    }
+    if (state.shutubaSort === "ninki") {
+      return list.sort((a, b) => {
+        const na = Number.parseInt(String(a && a["人気"] != null ? a["人気"] : ""), 10);
+        const nb = Number.parseInt(String(b && b["人気"] != null ? b["人気"] : ""), 10);
+        // 取消等で人気が無い馬は末尾へ（馬番ソートと同じ考え方）
+        const va = Number.isFinite(na) ? na : 999;
+        const vb = Number.isFinite(nb) ? nb : 999;
+        return va - vb;
+      });
+    }
+    return list;
   }
 
   function renderShutuba() {
