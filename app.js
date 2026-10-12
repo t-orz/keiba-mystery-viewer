@@ -728,6 +728,7 @@
     if (r.help_pdf_url) html += `<a href="${escapeAttr(r.help_pdf_url)}" target="_blank" rel="noopener">項目説明PDF</a>`;
     if (!r.pdf_url && !r.help_pdf_url) html += "<span class='hint'>PDFはまだ公開されていません</span>";
     html += "</div>";
+    html += raceResultHtml(r);
     box.innerHTML = html;
   }
 
@@ -1218,6 +1219,7 @@
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       applyData(data, { flash: silent });
+      loadResults();
     } catch (e) {
       if (!silent) {
         $("updatedAt").innerHTML = `<span class="error">スナップショット取得失敗: ${escapeHtml(e.message || e)}</span>`;
@@ -1301,6 +1303,87 @@
 
   function withCacheBust(url) {
     return url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+  }
+
+  /* ===== 確定結果（1〜5着） ==================================================
+     発走後に結果が確定したレースの 1〜5着を、サーバーが results/<開催日>.json に
+     予想とは別のファイルで置く（主に JRA 公式、取れなかった分だけ netkeiba）。
+     ここではそれを読んでレース要約の下に添えるだけで、予想の印や指数は書き換えない。
+     結果は数分おきにしか増えないので、予想のポーリングより間隔を空けて取りに行く。
+     snapshots/ 配下はサイトクローズで消されるため、置き場所は results/ にしてある。 */
+  const RESULTS_MIN_INTERVAL_MS = 120000;
+  const resultsState = { day: "", races: {}, fetchedAt: 0, loading: false };
+
+  /** cfg.SNAPSHOT_URL（= .../snapshots/latest.json）と同じバケットの results/<day>.json */
+  function resultsUrl(day) {
+    const base = String(cfg.SNAPSHOT_URL || "").split("?")[0];
+    if (!base || !/snapshots\/latest\.json$/.test(base)) return "";
+    return base.replace(/snapshots\/latest\.json$/, `results/${day}.json`);
+  }
+
+  async function loadResults({ force = false } = {}) {
+    const day = String((state.data && state.data.schedule_date) || "").trim();
+    if (!day || resultsState.loading || isDayClosedSnapshot(state.data)) return;
+    const now = Date.now();
+    if (!force && resultsState.day === day && now - resultsState.fetchedAt < RESULTS_MIN_INTERVAL_MS) return;
+    const url = resultsUrl(day);
+    if (!url) return;
+    if (resultsState.day !== day) {
+      resultsState.day = day;
+      resultsState.races = {};
+    }
+    resultsState.loading = true;
+    try {
+      const resp = await fetch(withCacheBust(url), { cache: "no-store" });
+      // 最初のレースが確定するまではファイルが無い（4xx）。そのときは何も出さない
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.schedule_date === day && data.races && typeof data.races === "object") {
+          const changed = JSON.stringify(data.races) !== JSON.stringify(resultsState.races);
+          resultsState.races = data.races;
+          if (changed && state.raceId) renderDetail();
+        }
+      }
+      resultsState.fetchedAt = now;
+    } catch (_) {
+      /* 次の周期でやり直す */
+    } finally {
+      resultsState.loading = false;
+    }
+  }
+
+  function raceResultHtml(r) {
+    const day = String((state.data && state.data.schedule_date) || "");
+    if (!r || resultsState.day !== day) return "";
+    const res = resultsState.races[r.race_id];
+    const top = res && Array.isArray(res.top) ? res.top : [];
+    if (!top.length) return "";
+    const sh = r.shutuba || {};
+    const cols = Array.isArray(sh.mark_columns) ? sh.mark_columns : [];
+    const byUma = {};
+    for (const row of Array.isArray(sh.rows) ? sh.rows : []) {
+      byUma[String(row && row["馬番"] != null ? row["馬番"] : "").trim()] = row;
+    }
+    let html = `<div class="race-result"><h4>確定結果`;
+    if (res.source) html += `<span class="race-result-src">（${escapeHtml(res.source)}）</span>`;
+    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>馬番</th><th>馬名</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
+    for (const t of top) {
+      const row = byUma[String(t.umaban)] || {};
+      const marks = [];
+      for (const c of cols) {
+        const m = String(row[c] != null ? row[c] : "").trim();
+        if (!m || m === "-") continue;
+        const cls = m === "◎" ? ` class="${markHonmeiClass(c)}"` : "";
+        marks.push(`<span${cls}>${escapeHtml(m + c)}</span>`);
+      }
+      html += `<tr><td class="rr-rank">${escapeHtml(String(t.rank))}</td>`;
+      html += `<td class="rr-num">${escapeHtml(String(t.umaban))}</td>`;
+      html += `<td class="rr-name">${escapeHtml(t.name || row["馬名"] || "")}</td>`;
+      html += `<td class="rr-num">${t.ninki != null ? escapeHtml(String(t.ninki)) : "-"}</td>`;
+      html += `<td class="rr-marks">${marks.join(" ") || "-"}</td></tr>`;
+    }
+    html += "</tbody></table></div>";
+    return html;
   }
 
   /** "YYYY-MM-DD" を delta 日ずらす（閲覧端末のタイムゾーンに依存させない） */

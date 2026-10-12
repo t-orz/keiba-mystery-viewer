@@ -1259,6 +1259,56 @@ html.hide-cast-icons .holmes-recommend-icon {
   overflow-wrap: anywhere;
 }
 .mark-box strong { display: block; margin-bottom: 0.2rem; color: var(--accent); }
+/* 確定結果（1〜5着）。予想の下に別枠で添える（2026-10-12） */
+.race-result {
+  margin-top: 0.9rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  padding-top: 0.6rem;
+}
+.race-result h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+.race-result-src {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.race-result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  background: #fff;
+}
+.race-result-table th,
+.race-result-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.3rem 0.35rem;
+  text-align: left;
+  vertical-align: top;
+}
+.race-result-table th {
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.race-result-table .rr-rank,
+.race-result-table .rr-num {
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.race-result-table .rr-name { overflow-wrap: anywhere; }
+.race-result-table .rr-marks { font-size: 0.82rem; }
+.race-result-table .rr-marks span { white-space: nowrap; }
+.race-result-table .mark-honmei { font-weight: 700; }
+.race-result-table .mark-w { color: #d32f2f; }
+.race-result-table .mark-i { color: #1565c0; }
+.race-result-table .mark-h { color: #16a085; }
+.race-result-table .mark-m { color: #7b1fa2; }
+.race-result-table .mark-b { color: #b8860b; }
 .pdf-links {
   margin-top: 0.85rem;
   display: flex;
