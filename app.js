@@ -1007,8 +1007,9 @@
       "\n※更新されない場合は通信障害など運用上のトラブルが発生しております。ご容赦ください";
   }
 
-  // 【前週の探偵印成績】は対象週と表形式PDFへのボタンだけを出す（2026-09-26）。
+  // 【探偵印成績（前週・今開催）】は対象週・今開催と表形式PDFへのボタンだけを出す（2026-09-26）。
   // 印ごとの成績・注記（サンプル数／平均人気など）は PDF に集約した。ブロック内に戻さないこと。
+  // 2026-10-13: PDF の2ページ目以降に開催ごとの累計（今開催の探偵印成績）を足し、見出しも改めた。
   function renderMarkWeeklyStats(data) {
     const el = $("markWeeklyStats") || document.querySelector(".sidebar-mark-weekly-body");
     if (!el) return;
@@ -1020,20 +1021,26 @@
       el.textContent = emptyMsg;
       return;
     }
-    // 対象週は必ず出す。見出しは「前週の探偵印成績」固定なので、集計が止まっても
+    // 対象週は必ず出す。見出しは「探偵印成績（前週・今開催）」固定なので、集計が止まっても
     // 表示だけでは古いと分からない（実際に3週間気づけなかった）。
     const period =
       payload.week_start && payload.week_end
         ? `対象週: ${payload.week_start} 〜 ${payload.week_end}`
         : "";
+    // 今開催: PDF の2ページ目以降に載っている開催（開催初日から対象週の末日までの累計）
+    const meetings = (Array.isArray(payload.meetings) ? payload.meetings : [])
+      .filter((m) => m && m.title)
+      .map((m) => `${m.title} ${m.nichime || ""}`.trim());
+    const meetingLine = meetings.length ? `今開催: ${meetings.join("／")}` : "";
     const pdfUrl = String(payload.pdf_url || "").trim();
     if (!/^https:\/\//.test(pdfUrl)) {
-      el.textContent = [period, "PDFを準備中です"].filter(Boolean).join("\n");
+      el.textContent = [period, meetingLine, "PDFを準備中です"].filter(Boolean).join("\n");
       return;
     }
     el.innerHTML =
       (period ? `<span class="mark-weekly-period">${escapeHtml(period)}</span>` : "") +
-      `<a class="btn mark-weekly-pdf-btn" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">表形式のPDFで閲覧する</a>`;
+      (meetingLine ? `<span class="mark-weekly-period">${escapeHtml(meetingLine)}</span>` : "") +
+      `<a class="btn mark-weekly-pdf-btn" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">${meetings.length ? "前週と今開催の成績をPDFで見る" : "前週の成績をPDFで見る"}</a>`;
   }
 
   const TRACK_BABA_CLASS = { "良": "ryo", "稍重": "yaya", "重": "omo", "不良": "furyo" };
