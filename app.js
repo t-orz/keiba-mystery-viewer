@@ -1366,7 +1366,7 @@
     }
     let html = `<div class="race-result"><h4>確定結果`;
     if (res.source) html += `<span class="race-result-src">（${escapeHtml(res.source)}）</span>`;
-    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>馬番</th><th>馬名</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
+    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>馬番</th><th>馬名</th><th class="rr-margin">着差</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
     for (const t of top) {
       const row = byUma[String(t.umaban)] || {};
       const marks = [];
@@ -1378,11 +1378,37 @@
       }
       html += `<tr><td class="rr-rank">${escapeHtml(String(t.rank))}</td>`;
       html += `<td class="rr-num">${escapeHtml(String(t.umaban))}</td>`;
-      html += `<td class="rr-name">${escapeHtml(t.name || row["馬名"] || "")}</td>`;
+      // 着差は広い画面では専用の列、スマホ幅では馬名の下に出す（列が増えると馬名が細切れになるため）
+      const margin = escapeHtml(t.margin || "");
+      html += `<td class="rr-name">${escapeHtml(t.name || row["馬名"] || "")}`;
+      if (margin) html += `<span class="rr-margin-inline">${margin}</span>`;
+      html += `</td><td class="rr-margin">${margin}</td>`;
       html += `<td class="rr-num">${t.ninki != null ? escapeHtml(String(t.ninki)) : "-"}</td>`;
       html += `<td class="rr-marks">${marks.join(" ") || "-"}</td></tr>`;
     }
-    html += "</tbody></table></div>";
+    html += "</tbody></table>";
+    html += payoutTableHtml(res.payouts);
+    html += "</div>";
+    return html;
+  }
+
+  /** 払戻金（単勝〜3連単）。複勝・ワイドは1券種に複数行あるので券種のセルを縦に結合する */
+  function payoutTableHtml(payouts) {
+    const list = Array.isArray(payouts) ? payouts.filter((p) => p && Array.isArray(p.items) && p.items.length) : [];
+    if (!list.length) return "";
+    let html = `<table class="race-payout-table"><thead><tr><th>券種</th><th>組番</th><th>払戻金</th><th>人気</th></tr></thead><tbody>`;
+    for (const p of list) {
+      p.items.forEach((it, i) => {
+        html += "<tr>";
+        if (i === 0) html += `<th scope="row" rowspan="${p.items.length}">${escapeHtml(p.type || "")}</th>`;
+        const yen = Number(it.yen);
+        html += `<td class="rp-combo">${escapeHtml(String(it.combo || ""))}</td>`;
+        html += `<td class="rp-yen">${Number.isFinite(yen) ? escapeHtml(yen.toLocaleString("ja-JP")) + "円" : "-"}</td>`;
+        html += `<td class="rp-ninki">${it.ninki != null ? escapeHtml(String(it.ninki)) + "番人気" : "-"}</td>`;
+        html += "</tr>";
+      });
+    }
+    html += "</tbody></table>";
     return html;
   }
 
