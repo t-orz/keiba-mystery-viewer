@@ -687,6 +687,7 @@
     const found = findRace(state.raceId);
     if (!found) {
       box.innerHTML = "<p class='hint'>マトリクスの行またはジャンプボタンでレースを選ぶと表示されます。</p>";
+      renderResult();
       return;
     }
     const r = found.race;
@@ -728,8 +729,9 @@
     if (r.help_pdf_url) html += `<a href="${escapeAttr(r.help_pdf_url)}" target="_blank" rel="noopener">項目説明PDF</a>`;
     if (!r.pdf_url && !r.help_pdf_url) html += "<span class='hint'>PDFはまだ公開されていません</span>";
     html += "</div>";
-    html += raceResultHtml(r);
+    html += raceResultBriefHtml(r);
     box.innerHTML = html;
+    renderResult();
   }
 
   // 脚質は競馬新聞と同じ漢字1文字で出す（2026-09-27）。色は付けない。
@@ -1352,19 +1354,51 @@
     }
   }
 
-  function raceResultHtml(r) {
+  /** 選択中レースの確定結果。まだ無ければ null */
+  function raceResultFor(r) {
     const day = String((state.data && state.data.schedule_date) || "");
-    if (!r || resultsState.day !== day) return "";
+    if (!r || resultsState.day !== day) return null;
     const res = resultsState.races[r.race_id];
-    const top = res && Array.isArray(res.top) ? res.top : [];
-    if (!top.length) return "";
+    return res && Array.isArray(res.top) && res.top.length ? res : null;
+  }
+
+  /** レース要約に添える1行（着順と馬番だけ）。詳しくは「確定結果」ブロックへ */
+  function raceResultBriefHtml(r) {
+    const res = raceResultFor(r);
+    if (!res) return "";
+    const parts = res.top.map(
+      (t) => `<span class="rb-item">${escapeHtml(String(t.rank))}着 <strong>${escapeHtml(String(t.umaban))}</strong>番</span>`
+    );
+    return `<p class="meta race-result-brief">確定着順: ${parts.join(" ")}</p>`;
+  }
+
+  /** 「確定結果」ブロック（既定は閉じている）。着差・人気・探偵の印・払戻金まで出す */
+  function renderResult() {
+    const box = $("raceResult");
+    if (!box) return;
+    const found = findRace(state.raceId);
+    if (!found) {
+      box.innerHTML = "<p class='hint'>レースを選ぶと、確定したレースの結果が表示されます。</p>";
+      return;
+    }
+    const r = found.race;
+    const html = raceResultHtml(r);
+    box.innerHTML =
+      html ||
+      `<p class="hint">${escapeHtml(r.place || "")} ${escapeHtml(String(r.R || ""))}R の結果はまだ確定していません（確定から20分ほどで表示されます）。</p>`;
+  }
+
+  function raceResultHtml(r) {
+    const res = raceResultFor(r);
+    if (!res) return "";
+    const top = res.top;
     const sh = r.shutuba || {};
     const cols = Array.isArray(sh.mark_columns) ? sh.mark_columns : [];
     const byUma = {};
     for (const row of Array.isArray(sh.rows) ? sh.rows : []) {
       byUma[String(row && row["馬番"] != null ? row["馬番"] : "").trim()] = row;
     }
-    let html = `<div class="race-result"><h4>確定結果`;
+    let html = `<h4>${escapeHtml(r.place || "")} ${escapeHtml(String(r.R || ""))}R ${escapeHtml(r.name || "")}`;
     if (res.source) html += `<span class="race-result-src">（${escapeHtml(res.source)}）</span>`;
     html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>馬番</th><th>馬名</th><th class="rr-margin">着差</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
     for (const t of top) {
@@ -1388,7 +1422,6 @@
     }
     html += "</tbody></table>";
     html += payoutTableHtml(res.payouts);
-    html += "</div>";
     return html;
   }
 

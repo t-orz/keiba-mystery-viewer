@@ -1259,11 +1259,18 @@ html.hide-cast-icons .holmes-recommend-icon {
   overflow-wrap: anywhere;
 }
 .mark-box strong { display: block; margin-bottom: 0.2rem; color: var(--accent); }
-/* 確定結果（1〜5着）。予想の下に別枠で添える（2026-10-12） */
-.race-result {
-  margin-top: 0.9rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
-  padding-top: 0.6rem;
+/* 確定結果（2026-10-12）。詳細は独立した「確定結果」ブロック（既定は閉じる）、
+   レース要約には着順と馬番だけの1行を添える */
+.race-result-brief {
+  margin-top: 0.75rem;
+}
+.race-result-brief .rb-item {
+  display: inline-block;
+  white-space: nowrap;
+  margin-right: 0.6rem;
+}
+.race-result-brief .rb-item strong {
+  color: var(--accent);
 }
 .race-result h4 {
   margin: 0 0 0.4rem;
