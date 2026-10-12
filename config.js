@@ -13,7 +13,7 @@
 window.PUBLIC_VIEWER_CONFIG = {
   SNAPSHOT_URL: "https://rathgwvfewasazxlpusx.supabase.co/storage/v1/object/public/public-viewer/snapshots/latest.json",
   LINE_FRIEND_URL: "https://lin.ee/YOUR_LINE_OA",
-  DISCORD_INVITE_URL: "https://discord.gg/WxEPbtSXS",
+  DISCORD_INVITE_URL: "https://discord.gg/j23u3KWtcH",
   /** 超直前予想（発走約5分前・Discord通知限定）の参加リンク。サイドバーの黒いボタン */
   DISCORD_5M_INVITE_URL: "https://discord.gg/4Xc5sxS9Y",
   BRAND_NAME: "\u7AF6\u99ACAI \u30DF\u30B9\u30C6\u30EA\u30FC\u4E88\u60F3",
