@@ -1040,7 +1040,7 @@
     el.innerHTML =
       (period ? `<span class="mark-weekly-period">${escapeHtml(period)}</span>` : "") +
       (meetingLine ? `<span class="mark-weekly-period">${escapeHtml(meetingLine)}</span>` : "") +
-      `<a class="btn mark-weekly-pdf-btn" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">${meetings.length ? "前週と今開催の成績をPDFで見る" : "前週の成績をPDFで見る"}</a>`;
+      `<a class="btn mark-weekly-pdf-btn" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">成績をPDFで見る</a>`;
   }
 
   const TRACK_BABA_CLASS = { "良": "ryo", "稍重": "yaya", "重": "omo", "不良": "furyo" };
