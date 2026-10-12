@@ -1362,12 +1362,18 @@
     return res && Array.isArray(res.top) && res.top.length ? res : null;
   }
 
-  /** レース要約に添える1行（着順と馬番だけ）。詳しくは「確定結果」ブロックへ */
+  /** 馬番を丸囲み数字にする（①〜⑳。JRA は最大18頭）。範囲外はそのままの数字 */
+  function circledNumber(n) {
+    const v = Number.parseInt(String(n), 10);
+    return Number.isFinite(v) && v >= 1 && v <= 20 ? String.fromCharCode(0x2460 + v - 1) : String(n);
+  }
+
+  /** レース要約に添える1行（着順と馬番だけ。馬番は丸囲み数字）。詳しくは「確定結果」ブロックへ */
   function raceResultBriefHtml(r) {
     const res = raceResultFor(r);
     if (!res) return "";
     const parts = res.top.map(
-      (t) => `<span class="rb-item">${escapeHtml(String(t.rank))}着 <strong>${escapeHtml(String(t.umaban))}</strong>番</span>`
+      (t) => `<span class="rb-item">${escapeHtml(String(t.rank))}着 <strong>${escapeHtml(circledNumber(t.umaban))}</strong></span>`
     );
     return `<p class="meta race-result-brief">確定着順: ${parts.join(" ")}</p>`;
   }
