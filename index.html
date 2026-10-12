@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261013062411" />
+  <link rel="stylesheet" href="styles.css?v=20261013064748" />
 </head>
 <body>
   <div class="layout">
@@ -46,6 +46,11 @@
           <div class="sidebar-discord-wrap">
             <a class="btn btn-discord" id="discordCta" href="#" target="_blank" rel="noopener">Discord配信に参加</a>
             <p class="sidebar-limited-note">※期間・人数限定</p>
+          </div>
+          <div class="sidebar-discord-wrap">
+            <p class="sidebar-discord-lead">直前予想のさらにその先へ！Discord通知限定の馬券締め切りギリギリをついた予想はコチラ</p>
+            <a class="btn btn-discord btn-discord-dark" id="discordCta5m" href="#" target="_blank" rel="noopener">Discord配信に参加</a>
+            <p class="sidebar-limited-note">※人数限定</p>
           </div>
         </div>
         <p class="update-timing" id="updateTiming" aria-label="主な更新タイミング">【主な更新タイミング】
@@ -273,13 +278,13 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261013062411"></script>
+  <script src="config.js?v=20261013064748"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="app.js?v=20261013062411"></script>
+  <script src="app.js?v=20261013064748"></script>
 </body>
 </html>

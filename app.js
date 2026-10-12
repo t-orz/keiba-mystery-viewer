@@ -72,15 +72,21 @@
         else brand.textContent = cfg.BRAND_NAME;
       }
     }
-    if (!disc) return;
-    if (cfg.DISCORD_INVITE_URL && !String(cfg.DISCORD_INVITE_URL).includes("YOUR_")) {
-      disc.href = cfg.DISCORD_INVITE_URL;
-      disc.removeAttribute("aria-disabled");
-      disc.removeAttribute("title");
+    setDiscordCta(disc, cfg.DISCORD_INVITE_URL, "DISCORD_INVITE_URL");
+    // 超直前予想（Discord通知限定）の参加ボタン（2026-10-13）
+    setDiscordCta($("discordCta5m"), cfg.DISCORD_5M_INVITE_URL, "DISCORD_5M_INVITE_URL");
+  }
+
+  function setDiscordCta(el, url, key) {
+    if (!el) return;
+    if (url && /^https:\/\//.test(String(url)) && !String(url).includes("YOUR_")) {
+      el.href = url;
+      el.removeAttribute("aria-disabled");
+      el.removeAttribute("title");
     } else {
-      disc.href = "#";
-      disc.setAttribute("aria-disabled", "true");
-      disc.title = "config.js の DISCORD_INVITE_URL を設定してください";
+      el.href = "#";
+      el.setAttribute("aria-disabled", "true");
+      el.title = `config.js の ${key} を設定してください`;
     }
   }
 

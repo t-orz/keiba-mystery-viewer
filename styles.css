@@ -496,6 +496,15 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   flex-direction: column;
   gap: 0.25rem;
 }
+.sidebar-discord-wrap + .sidebar-discord-wrap {
+  margin-top: 0.5rem;
+}
+.sidebar-discord-lead {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
 .sidebar-limited-note {
   margin: 0;
   font-size: 0.78rem;
@@ -855,6 +864,27 @@ body.is-day-closed .btn-discord:not([aria-disabled="true"]):active {
   box-shadow:
     0 0 0 2px rgba(88, 101, 242, 0.3),
     0 2px 8px rgba(88, 101, 242, 0.35);
+}
+/* 超直前予想（Discord通知限定）の参加ボタン。形は直前予想と同じで色だけ黒系 */
+.btn-discord.btn-discord-dark:not([aria-disabled="true"]),
+body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]) {
+  background: #1f2328;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+}
+.btn-discord.btn-discord-dark:not([aria-disabled="true"]):hover,
+body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):hover {
+  background: #353a42;
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.5),
+    0 6px 16px rgba(0, 0, 0, 0.3);
+}
+.btn-discord.btn-discord-dark:not([aria-disabled="true"]):active,
+body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):active {
+  background: #0d0f12;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+.btn-discord.btn-discord-dark:not([aria-disabled="true"]):focus-visible {
+  outline-color: #1f2328;
 }
 .btn[aria-disabled="true"] {
   opacity: 0.45;
