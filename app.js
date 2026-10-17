@@ -1174,7 +1174,24 @@
   };
   const WIND_DIR16 = ["", "北北東", "北東", "東北東", "東", "東南東", "南東", "南南東", "南", "南南西", "南西", "西南西", "西", "西北西", "北西", "北北西", "北"];
   const WIND_REFRESH_MS = 10 * 60 * 1000;
-  const windState = { byPlace: {}, loadedAt: 0, loading: false };
+  const windState = { byPlace: {}, loadedAt: 0, loading: false, frozenDay: "" };
+  /** 最終レースの発走からこの分だけ後の観測で風を止める（その10分観測にレースが入る） */
+  const WIND_FREEZE_AFTER_LAST_START_MIN = 10;
+
+  /** 当日最終レース発走＋10分を "YYYYMMDDHHMM00"（アメダスのキーと同じ形）で。発走時刻が無ければ "" */
+  function windFreezeKey(data) {
+    let last = -1;
+    for (const v of Array.isArray(data.venues) ? data.venues : []) {
+      for (const r of Array.isArray(v && v.races) ? v.races : []) {
+        const hm = normalizeStartTime(r && r.start_time);
+        if (hm) last = Math.max(last, Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)));
+      }
+    }
+    if (last < 0) return "";
+    const t = Math.min(last + WIND_FREEZE_AFTER_LAST_START_MIN, 23 * 60 + 50);
+    const ymd = String(data.schedule_date || "").replace(/-/g, "");
+    return `${ymd}${String(Math.floor(t / 60)).padStart(2, "0")}${String(t % 60).padStart(2, "0")}00`;
+  }
 
   /** 風向（吹いてくる方位 1〜16）と直線の向きから、追い風／向かい風／横風を判定する。
       rel は「風が吹いていく向き」を、馬が上へ走り内ラチが左にある図に置いたときの角度
@@ -1207,6 +1224,8 @@
       return;
     }
     if (windState.loading) return;
+    // 最終レースが終わった後は、そのレース時点の風で止めて取りに行かない
+    if (windState.frozenDay === String(data.schedule_date || "") && Object.keys(windState.byPlace).length) return;
     if (!force && Date.now() - windState.loadedAt < WIND_REFRESH_MS) return;
     const places = (Array.isArray(data.venues) ? data.venues : [])
       .map((v) => String((v && v.place) || "").trim())
@@ -1216,9 +1235,14 @@
     try {
       const base = "https://www.jma.go.jp/bosai/amedas/data";
       const latest = String(await (await fetch(`${base}/latest_time.txt`, { cache: "no-store" })).text()).trim();
-      const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})/.exec(latest);
+      const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(latest);
       if (!m) return;
-      const block = `${m[1]}${m[2]}${m[3]}_${String(Math.floor(Number(m[4]) / 3) * 3).padStart(2, "0")}`;
+      const latestKey = `${m[1]}${m[2]}${m[3]}${m[4]}${m[5]}00`;
+      const freezeKey = windFreezeKey(data);
+      const frozen = !!freezeKey && latestKey >= freezeKey;
+      // 止めるときは最終レース時点を含む3時間ブロックを読む（最新のブロックだと後の観測しか無い）
+      const k = frozen ? freezeKey : latestKey;
+      const block = `${k.slice(0, 8)}_${String(Math.floor(Number(k.slice(8, 10)) / 3) * 3).padStart(2, "0")}`;
       const next = {};
       await Promise.all(
         places.map(async (place) => {
@@ -1229,6 +1253,7 @@
             const series = await res.json();
             const keys = Object.keys(series || {}).sort();
             for (let i = keys.length - 1; i >= 0; i--) {
+              if (frozen && keys[i] > freezeKey) continue;
               const row = series[keys[i]] || {};
               const dir = Array.isArray(row.windDirection) ? row.windDirection[0] : null;
               const spd = Array.isArray(row.wind) ? row.wind[0] : null;
@@ -1243,6 +1268,7 @@
       );
       windState.byPlace = next;
       windState.loadedAt = Date.now();
+      windState.frozenDay = frozen && Object.keys(next).length ? String(data.schedule_date || "") : "";
     } catch (e) {
       /* 気象庁に届かないときは風の行を出さないだけ */
     } finally {
