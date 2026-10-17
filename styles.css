@@ -1423,8 +1423,13 @@ html.hide-cast-icons .holmes-recommend-icon {
   font-size: 0.76rem;
   color: var(--muted);
 }
+.race-result-table .rr-jockey {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
 @media (max-width: 480px) {
-  .race-result-table .rr-margin { display: none; }
+  .race-result-table .rr-margin,
+  .race-result-table .rr-jockey { display: none; }
   .race-result-table .rr-margin-inline { display: block; }
 }
 .race-payout-table {

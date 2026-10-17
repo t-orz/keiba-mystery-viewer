@@ -1626,7 +1626,7 @@
     }
     let html = `<h4>${escapeHtml(r.place || "")} ${escapeHtml(String(r.R || ""))}R ${escapeHtml(r.name || "")}`;
     if (res.source) html += `<span class="race-result-src">（${escapeHtml(res.source)}）</span>`;
-    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>枠</th><th>馬番</th><th>馬名</th><th class="rr-margin">着差</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
+    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>枠</th><th>馬番</th><th>馬名</th><th class="rr-jockey">騎手</th><th class="rr-margin">着差</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
     for (const t of top) {
       const row = byUma[String(t.umaban)] || {};
       const marks = [];
@@ -1645,11 +1645,14 @@
         : "";
       html += `<td class="rr-num rr-waku"${wakuStyle}>${escapeHtml(waku || "-")}</td>`;
       html += `<td class="rr-num">${escapeHtml(String(t.umaban))}</td>`;
-      // 着差は広い画面では専用の列、スマホ幅では馬名の下に出す（列が増えると馬名が細切れになるため）
+      // 騎手・着差は広い画面では専用の列、スマホ幅では馬名の下に出す（列が増えると馬名が細切れになるため）
+      // 騎手は確定結果の値（乗り替わり後）を優先し、無い古い結果は出馬表の騎手で補う
       const margin = escapeHtml(t.margin || "");
+      const jockey = escapeHtml(t.jockey || row["騎手"] || "");
       html += `<td class="rr-name">${escapeHtml(t.name || row["馬名"] || "")}`;
-      if (margin) html += `<span class="rr-margin-inline">${margin}</span>`;
-      html += `</td><td class="rr-margin">${margin}</td>`;
+      const inline = [jockey, margin].filter(Boolean).join(" ");
+      if (inline) html += `<span class="rr-margin-inline">${inline}</span>`;
+      html += `</td><td class="rr-jockey">${jockey}</td><td class="rr-margin">${margin}</td>`;
       html += `<td class="rr-num">${t.ninki != null ? escapeHtml(String(t.ninki)) : "-"}</td>`;
       html += `<td class="rr-marks">${marks.join(" ") || "-"}</td></tr>`;
     }
