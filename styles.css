@@ -285,20 +285,38 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   font-size: 1rem;
   line-height: 1;
 }
-/* 最後の直線の風（アメダス最寄り観測点・目安）。天候・馬場の下にもう1行 */
+/* 最後の直線の風（アメダス最寄り観測点・目安）。馬場の後ろに小さな図＋風速。
+   図は馬が上へ走り、左の縦線が内ラチ、矢印は風が吹いていく向き */
 .track-cond-wind {
-  flex-basis: 100%;
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.25rem;
-  padding-left: calc(2.7em + 0.42rem);
-  color: var(--ink);
+  align-items: center;
+  gap: 0.12rem;
+  padding: 0.02rem 0.3rem 0.02rem 0.18rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #555;
+  background: rgba(0, 0, 0, 0.06);
 }
-.track-cond-wind--head { color: #b23a1e; }
-.track-cond-wind--tail { color: #1f6a3a; }
+.track-cond-wind svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+}
+.track-cond-wind--head { color: #b23a1e; background: rgba(178, 58, 30, 0.1); }
+.track-cond-wind--tail { color: #1f6a3a; background: rgba(31, 106, 58, 0.1); }
+.track-cond-wind-speed { color: var(--ink); }
+.track-cond-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+}
 .track-cond-wind-at {
-  color: var(--muted);
+  font-weight: 400;
   font-size: 0.7rem;
+  white-space: nowrap;
 }
 .track-cond-surface {
   display: inline-flex;
@@ -1666,9 +1684,8 @@ table.shutuba td.rs-cell { text-align: center; }
   .track-cond-item {
     justify-content: center;
   }
-  .track-cond-wind {
+  .track-cond-title {
     justify-content: center;
-    padding-left: 0;
   }
   .sidebar-jumps {
     display: none !important;

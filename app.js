@@ -1154,29 +1154,34 @@
      bearing は直線をゴールへ向かう進行方向（北=0°・時計回り）。OSM の走路と実測コース形状の
      照合で求め、180°取り違えはスタンド側の建物面積で検算した（サーバー ~/research_wind/）。 */
   const WIND_STRETCH = {
-    札幌: { bearing: 179.4, station: "14163", stationName: "札幌", km: 1.8 },
-    函館: { bearing: 123.5, station: "23232", stationName: "函館", km: 4.3 },
-    福島: { bearing: 26.5, station: "36127", stationName: "福島", km: 1.3 },
-    新潟: { bearing: 241.8, station: "54236", stationName: "松浜", km: 6.5 },
-    東京: { bearing: 267.5, station: "44116", stationName: "府中", km: 2.1 },
-    中山: { bearing: 14.8, station: "45106", stationName: "船橋", km: 7.6 },
-    中京: { bearing: 234.1, station: "51216", stationName: "大府", km: 9.0 },
-    京都: { bearing: 53.5, station: "61326", stationName: "京田辺", km: 9.1 },
-    阪神: { bearing: 286.8, station: "62051", stationName: "豊中", km: 7.1 },
-    小倉: { bearing: 156.5, station: "82056", stationName: "八幡", km: 12.1 },
+    札幌: { bearing: 179.4, hand: "right", station: "14163", stationName: "札幌", km: 1.8 },
+    函館: { bearing: 123.5, hand: "right", station: "23232", stationName: "函館", km: 4.3 },
+    福島: { bearing: 26.5, hand: "right", station: "36127", stationName: "福島", km: 1.3 },
+    新潟: { bearing: 241.8, hand: "left", station: "54236", stationName: "松浜", km: 6.5 },
+    東京: { bearing: 267.5, hand: "left", station: "44116", stationName: "府中", km: 2.1 },
+    中山: { bearing: 14.8, hand: "right", station: "45106", stationName: "船橋", km: 7.6 },
+    中京: { bearing: 234.1, hand: "left", station: "51216", stationName: "大府", km: 9.0 },
+    京都: { bearing: 53.5, hand: "right", station: "61326", stationName: "京田辺", km: 9.1 },
+    阪神: { bearing: 286.8, hand: "right", station: "62051", stationName: "豊中", km: 7.1 },
+    小倉: { bearing: 156.5, hand: "right", station: "82056", stationName: "八幡", km: 12.1 },
   };
   const WIND_DIR16 = ["", "北北東", "北東", "東北東", "東", "東南東", "南東", "南南東", "南", "南南西", "南西", "西南西", "西", "西北西", "北西", "北北西", "北"];
   const WIND_REFRESH_MS = 10 * 60 * 1000;
   const windState = { byPlace: {}, loadedAt: 0, loading: false };
 
-  /** 風向（吹いてくる方位 1〜16）と直線の向きから、追い風／向かい風／横風を判定する */
-  function windRelation(dirCode, speed, bearing) {
-    if (!dirCode || !(speed > 0)) return { label: "無風", cls: "calm" };
+  /** 風向（吹いてくる方位 1〜16）と直線の向きから、追い風／向かい風／横風を判定する。
+      rel は「風が吹いていく向き」を、馬が上へ走り内ラチが左にある図に置いたときの角度
+      （0=真上=追い風、180=向かい風、-90=外から内へ吹く横風、+90=内から外へ）。
+      右回りは内ラチが右手なので左右を反転して、どの場でも内ラチを左に描く */
+  function windRelation(dirCode, speed, info) {
+    if (!dirCode || !(speed > 0)) return { label: "無風", cls: "calm", rel: 0 };
     const toward = (dirCode * 22.5 + 180) % 360;
-    const diff = Math.abs(((toward - bearing + 540) % 360) - 180);
-    if (diff <= 45) return { label: "追い風", cls: "tail" };
-    if (diff >= 135) return { label: "向かい風", cls: "head" };
-    return { label: diff < 90 ? "横風（やや追い）" : "横風（やや向かい）", cls: "cross" };
+    let rel = ((toward - info.bearing + 540) % 360) - 180;
+    if (info.hand === "right") rel = -rel;
+    const diff = Math.abs(rel);
+    if (diff <= 45) return { label: "追い風", cls: "tail", rel };
+    if (diff >= 135) return { label: "向かい風", cls: "head", rel };
+    return { label: rel < 0 ? "外（スタンド側）から吹く横風" : "内（内馬場側）から吹く横風", cls: "cross", rel };
   }
 
   function jstTodayYmd() {
@@ -1239,20 +1244,25 @@
     if (state.data === data) renderTrackConditions(data);
   }
 
+  /** 小さな図: 左の縦線が内ラチ、馬は上へ走る。矢印は風が吹いていく向き */
   function trackWindHtml(place) {
     const info = WIND_STRETCH[place];
     const w = windState.byPlace[place];
     if (!info || !w) return "";
-    const rel = windRelation(w.dir, w.speed, info.bearing);
+    const rel = windRelation(w.dir, w.speed, info);
     const dirName = WIND_DIR16[w.dir] || "静穏";
-    const title =
-      `${info.stationName}（ゴールから約${info.km}km）の${w.at}観測: ${dirName} ${w.speed}m/s。` +
-      "競馬場内の観測ではないため目安です";
-    const speed = rel.cls === "calm" ? "" : ` ${escapeHtml(String(w.speed))}m/s`;
+    let title =
+      `直線: ${rel.label}。${info.stationName}（ゴールから約${info.km}km）の${w.at}観測 ${dirName} ${w.speed}m/s。` +
+      "図は馬が上へ走り、左の線が内ラチ。矢印は風が吹いていく向き。競馬場内の観測ではないため目安です";
+    if (rel.cls === "cross" && rel.rel < 0) title += "（スタンド側からの風は実際にはこれより弱いことがあります）";
+    const arrow =
+      rel.cls === "calm"
+        ? '<circle cx="9" cy="8" r="1.6" fill="currentColor"/>'
+        : `<g transform="rotate(${rel.rel.toFixed(0)} 9 8)"><path d="M9 13.5V3M5.6 6.2 9 2.8l3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
     return (
-      `<span class="track-cond-wind track-cond-wind--${rel.cls}" title="${escapeHtml(title)}">` +
-      `<span class="track-cond-surface-label">直線</span>${escapeHtml(rel.label)}${speed}` +
-      `<span class="track-cond-wind-at">${escapeHtml(w.at)}</span></span>`
+      `<span class="track-cond-wind track-cond-wind--${rel.cls}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">` +
+      `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 1.5v13" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>${arrow}</svg>` +
+      `<span class="track-cond-wind-speed">${rel.cls === "calm" ? "0" : escapeHtml(String(w.speed))}</span></span>`
     );
   }
 
@@ -1303,6 +1313,13 @@
     }
     list.innerHTML = items.join("");
     box.hidden = !items.length;
+    // 風の観測時刻は場ごとでなく見出しに1回だけ（全場が同じアメダスの時刻）
+    const windAt = $("trackCondWindAt");
+    if (windAt) {
+      const at = Object.values(windState.byPlace).map((w) => w.at).sort().pop() || "";
+      windAt.textContent = at ? `風${at}` : "";
+      windAt.hidden = !at;
+    }
   }
 
   function applyData(data, { flash = false } = {}) {
