@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261017121626" />
+  <link rel="stylesheet" href="styles.css?v=20261017121953" />
 </head>
 <body>
   <div class="layout">
@@ -23,8 +23,9 @@
       <p class="updated" id="updatedAt">更新を読み込み中…</p>
       <p class="update-note">※数値、予想印は更新ごとに変動する場合があります。レース直前予想通知機能もご活用されるなど、最新の更新情報を参照してください</p>
       <section class="track-cond" id="trackCond" aria-labelledby="trackCondTitle" hidden>
-        <h2 class="track-cond-title" id="trackCondTitle"><span>【天候・馬場・風向 m/s】</span><span class="track-cond-wind-at" id="trackCondWindAt" hidden></span></h2>
+        <h2 class="track-cond-title" id="trackCondTitle"><span>【天候・馬場・直線風向 m/s】</span><span class="track-cond-wind-at" id="trackCondWindAt" hidden></span></h2>
         <ul class="track-cond-list" id="trackCondList"></ul>
+        <p class="track-cond-note">※風向きはスタンド視点（テレビ中継視点）です</p>
       </section>
       <p class="nav-links">
         <a href="help.html" target="_blank" rel="noopener noreferrer">項目説明ヘルプ</a>
@@ -279,13 +280,13 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261017121626"></script>
+  <script src="config.js?v=20261017121953"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="app.js?v=20261017121626"></script>
+  <script src="app.js?v=20261017121953"></script>
 </body>
 </html>

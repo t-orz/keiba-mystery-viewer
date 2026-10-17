@@ -313,6 +313,11 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   align-items: baseline;
   gap: 0.4rem;
 }
+.track-cond-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
 .track-cond-wind-at {
   font-weight: 400;
   font-size: 0.7rem;
