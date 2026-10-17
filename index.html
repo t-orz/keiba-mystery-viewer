@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261017101552" />
+  <link rel="stylesheet" href="styles.css?v=20261017113439" />
 </head>
 <body>
   <div class="layout">
@@ -258,6 +258,7 @@
           <span class="acc-chevron" aria-hidden="true"></span>
         </button>
         <div class="acc-body">
+          <h4 class="shutuba-race-title" id="shutubaRaceTitle" hidden></h4>
           <div class="shutuba-toolbar" role="group" aria-label="出馬表の並び替え">
             <span class="shutuba-sort-label">並び</span>
             <button type="button" class="shutuba-sort-btn active" data-shutuba-sort="default" aria-pressed="true">期待率順</button>
@@ -278,13 +279,13 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261017101552"></script>
+  <script src="config.js?v=20261017113439"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="app.js?v=20261017101552"></script>
+  <script src="app.js?v=20261017113439"></script>
 </body>
 </html>

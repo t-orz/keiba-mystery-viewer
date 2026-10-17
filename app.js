@@ -796,6 +796,13 @@
     if (!box) return;
     syncShutubaSortControls();
     const found = findRace(state.raceId);
+    // 表の上に「東京11R」のように競馬場とレース番号を出す
+    const title = $("shutubaRaceTitle");
+    if (title) {
+      const label = found ? `${found.race.place || found.venue.place || ""}${found.race.R != null ? `${found.race.R}R` : ""}` : "";
+      title.textContent = label;
+      title.hidden = !label;
+    }
     if (!found) {
       box.innerHTML = "<p class='hint'>レースを選ぶと出馬表が表示されます。</p>";
       return;

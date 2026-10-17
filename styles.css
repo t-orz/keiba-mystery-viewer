@@ -1439,6 +1439,11 @@ html.hide-cast-icons .holmes-recommend-icon {
 #shutubaCard .acc-body > .shutuba-toolbar {
   margin-top: 0.15rem;
 }
+.shutuba-race-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--accent);
+}
 .shutuba-toolbar {
   display: flex;
   flex-wrap: wrap;
