@@ -796,10 +796,17 @@
     if (!box) return;
     syncShutubaSortControls();
     const found = findRace(state.raceId);
-    // 表の上に「東京11R」のように競馬場とレース番号を出す
+    // 表の上に「東京11R 秋華賞」のように競馬場・レース番号・レース名を出す
     const title = $("shutubaRaceTitle");
     if (title) {
-      const label = found ? `${found.race.place || found.venue.place || ""}${found.race.R != null ? `${found.race.R}R` : ""}` : "";
+      const label = found
+        ? [
+            `${found.race.place || found.venue.place || ""}${found.race.R != null ? `${found.race.R}R` : ""}`,
+            String(found.race.name || "").trim(),
+          ]
+            .filter(Boolean)
+            .join(" ")
+        : "";
       title.textContent = label;
       title.hidden = !label;
     }
