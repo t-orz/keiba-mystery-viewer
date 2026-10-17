@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261017121953" />
+  <link rel="stylesheet" href="styles.css?v=20261017122350" />
 </head>
 <body>
   <div class="layout">
@@ -25,7 +25,7 @@
       <section class="track-cond" id="trackCond" aria-labelledby="trackCondTitle" hidden>
         <h2 class="track-cond-title" id="trackCondTitle"><span>【天候・馬場・直線風向 m/s】</span><span class="track-cond-wind-at" id="trackCondWindAt" hidden></span></h2>
         <ul class="track-cond-list" id="trackCondList"></ul>
-        <p class="track-cond-note">※風向きはスタンド視点（テレビ中継視点）です</p>
+        <p class="track-cond-note">※風向きはスタンド視点（テレビ中継視点）での目安データです</p>
       </section>
       <p class="nav-links">
         <a href="help.html" target="_blank" rel="noopener noreferrer">項目説明ヘルプ</a>
@@ -280,13 +280,13 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261017121953"></script>
+  <script src="config.js?v=20261017122350"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="app.js?v=20261017121953"></script>
+  <script src="app.js?v=20261017122350"></script>
 </body>
 </html>

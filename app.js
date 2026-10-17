@@ -1181,7 +1181,7 @@
     const diff = Math.abs(rel);
     if (diff <= 45) return { label: "追い風", cls: "tail", rel };
     if (diff >= 135) return { label: "向かい風", cls: "head", rel };
-    return { label: rel < 0 ? "外（スタンド側）から吹く横風" : "内（内馬場側）から吹く横風", cls: "cross", rel };
+    return { label: rel < 0 ? "スタンド側からの横風" : "内馬場側からの横風", cls: "cross", rel };
   }
 
   function jstTodayYmd() {
@@ -1253,11 +1253,9 @@
     if (!info || !w) return "";
     const rel = windRelation(w.dir, w.speed, info);
     const dirName = WIND_DIR16[w.dir] || "静穏";
-    let title =
-      `直線: ${rel.label}。${info.stationName}（ゴールから約${info.km}km）の${w.at}観測 ${dirName} ${w.speed}m/s。` +
-      `図は中継画面と同じ向き（馬は${info.hand === "right" ? "右から左" : "左から右"}へ走り、上の線が内ラチ）。` +
-      "矢印は風が吹いていく向き。競馬場内の観測ではないため目安です";
-    if (rel.cls === "cross" && rel.rel < 0) title += "（スタンド側からの風は実際にはこれより弱いことがあります）";
+    // 例: 「向かい風 3.5m/s（府中 北西 11:40）」
+    const title =
+      `${rel.label}${rel.cls === "calm" ? "" : ` ${w.speed}m/s`}（${info.stationName} ${dirName} ${w.at}）`;
     const screenDeg = info.hand === "right" ? -90 - rel.rel : 90 + rel.rel;
     const arrow =
       rel.cls === "calm"
