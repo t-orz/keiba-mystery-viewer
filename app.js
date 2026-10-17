@@ -1350,6 +1350,7 @@
       window.setTimeout(() => el.classList.remove("just-updated"), 2500);
     }
     renderUpdateTiming(data);
+    loadIncident(data);
     renderTrackConditions(data);
     loadWind(data);
     renderMarkWeeklyStats(data);
@@ -1462,6 +1463,68 @@
 
   function withCacheBust(url) {
     return url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
+  }
+
+  /* ===== 障害のお知らせ ======================================================
+     表示データに影響する重大な障害があった日は、サーバーが incidents/<開催日>.json を置く
+     （public_incident_notice.py）。当日の表示中だけ「最終更新日時」の下に出し、
+     ファイルが無い日・過去日の表示・取得失敗時は隠したまま。 */
+  const INCIDENT_MIN_INTERVAL_MS = 60 * 1000;
+  const incidentState = { day: "", fetchedAt: 0, loading: false };
+
+  function incidentUrl(day) {
+    const base = String(cfg.SNAPSHOT_URL || "").split("?")[0];
+    if (!base || !/snapshots\/latest\.json$/.test(base)) return "";
+    return base.replace(/snapshots\/latest\.json$/, `incidents/${day}.json`);
+  }
+
+  function renderIncident(items) {
+    const box = $("incidentNotice");
+    if (!box) return;
+    const list = Array.isArray(items) ? items.filter((it) => it && (it.title || it.body)) : [];
+    if (!list.length) {
+      box.hidden = true;
+      box.innerHTML = "";
+      return;
+    }
+    box.innerHTML =
+      '<h2 class="incident-notice-title">【障害のお知らせ】</h2>' +
+      list
+        .map(
+          (it) =>
+            '<div class="incident-notice-item">' +
+            (it.title ? `<p class="incident-notice-head">${escapeHtml(it.title)}</p>` : "") +
+            (it.body ? `<p class="incident-notice-body">${escapeHtml(it.body)}</p>` : "") +
+            "</div>"
+        )
+        .join("");
+    box.hidden = false;
+  }
+
+  async function loadIncident(data) {
+    const day = String((data && data.schedule_date) || "").trim();
+    if (!day || day !== jstTodayYmd() || isDayClosedSnapshot(data)) {
+      renderIncident([]);
+      return;
+    }
+    const now = Date.now();
+    if (incidentState.loading) return;
+    if (incidentState.day === day && now - incidentState.fetchedAt < INCIDENT_MIN_INTERVAL_MS) return;
+    const url = incidentUrl(day);
+    if (!url) return;
+    incidentState.loading = true;
+    try {
+      const resp = await fetch(withCacheBust(url), { cache: "no-store" });
+      // ファイルが無い（平常時）は 400/404 が返る
+      const body = resp.ok ? await resp.json() : null;
+      renderIncident(body && body.schedule_date === day ? body.items : []);
+      incidentState.day = day;
+      incidentState.fetchedAt = now;
+    } catch (e) {
+      /* 取れないときは出さないだけ */
+    } finally {
+      incidentState.loading = false;
+    }
   }
 
   /* ===== 確定結果（1〜5着） ==================================================

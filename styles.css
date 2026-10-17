@@ -237,6 +237,41 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   border-radius: 4px;
   padding: 0.15rem 0.35rem;
 }
+/* 障害のお知らせ（障害があった日だけ。平常時は hidden） */
+.incident-notice {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(178, 58, 30, 0.45);
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: rgba(178, 58, 30, 0.07);
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: left;
+}
+.incident-notice[hidden] {
+  display: none;
+}
+.incident-notice-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #b23a1e;
+}
+.incident-notice-item + .incident-notice-item {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed rgba(178, 58, 30, 0.35);
+}
+.incident-notice-head {
+  margin: 0;
+  font-weight: 700;
+}
+.incident-notice-body {
+  margin: 0.1rem 0 0;
+  white-space: pre-line;
+}
 .update-note {
   margin: 0.4rem 0 0;
   color: var(--muted);
