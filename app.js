@@ -1259,10 +1259,12 @@
     const w = windState.byPlace[place];
     if (!info || !w) return "";
     const rel = windRelation(w.dir, w.speed, info);
+    // 風速は常に小数1桁（4 → 4.0）
+    const speedText = Number(w.speed).toFixed(1);
     const dirName = WIND_DIR16[w.dir] || "静穏";
     // 例: 「向かい風 3.5m/s（府中 北西 11:40）」
     const title =
-      `${rel.label}${rel.cls === "calm" ? "" : ` ${w.speed}m/s`}（${info.stationName} ${dirName} ${w.at}）`;
+      `${rel.label}${rel.cls === "calm" ? "" : ` ${speedText}m/s`}（${info.stationName} ${dirName} ${w.at}）`;
     const screenDeg = info.hand === "right" ? -90 - rel.rel : 90 + rel.rel;
     const arrow =
       rel.cls === "calm"
@@ -1271,7 +1273,7 @@
     return (
       `<span class="track-cond-wind track-cond-wind--${rel.cls}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">` +
       `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1.5h14" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>${arrow}</svg>` +
-      `<span class="track-cond-wind-speed">${rel.cls === "calm" ? "0" : escapeHtml(String(w.speed))}</span></span>`
+      `<span class="track-cond-wind-speed">${rel.cls === "calm" ? "0.0" : escapeHtml(speedText)}</span></span>`
     );
   }
 
