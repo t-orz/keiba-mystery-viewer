@@ -1419,7 +1419,7 @@
     }
     let html = `<h4>${escapeHtml(r.place || "")} ${escapeHtml(String(r.R || ""))}R ${escapeHtml(r.name || "")}`;
     if (res.source) html += `<span class="race-result-src">（${escapeHtml(res.source)}）</span>`;
-    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>馬番</th><th>馬名</th><th class="rr-margin">着差</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
+    html += `</h4><table class="race-result-table"><thead><tr><th>着</th><th>枠</th><th>馬番</th><th>馬名</th><th class="rr-margin">着差</th><th>人気</th><th>探偵の印</th></tr></thead><tbody>`;
     for (const t of top) {
       const row = byUma[String(t.umaban)] || {};
       const marks = [];
@@ -1430,6 +1430,13 @@
         marks.push(`<span${cls}>${escapeHtml(m + c)}</span>`);
       }
       html += `<tr><td class="rr-rank">${escapeHtml(String(t.rank))}</td>`;
+      // 枠番は出馬表の行から引き、色も出馬表と同じ枠色にする
+      const st = row._style || {};
+      const waku = String(row["枠番"] != null ? row["枠番"] : "").trim();
+      const wakuStyle = waku && st.frame_bg
+        ? ` style="background:${escapeAttr(st.frame_bg)};color:${escapeAttr(st.frame_fg || "#000")}"`
+        : "";
+      html += `<td class="rr-num rr-waku"${wakuStyle}>${escapeHtml(waku || "-")}</td>`;
       html += `<td class="rr-num">${escapeHtml(String(t.umaban))}</td>`;
       // 着差は広い画面では専用の列、スマホ幅では馬名の下に出す（列が増えると馬名が細切れになるため）
       const margin = escapeHtml(t.margin || "");

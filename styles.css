@@ -1337,6 +1337,7 @@ html.hide-cast-icons .holmes-recommend-icon {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.race-result-table .rr-waku { width: 1.6rem; font-weight: 600; }
 .race-result-table .rr-name { overflow-wrap: anywhere; }
 .race-result-table .rr-marks { font-size: 0.82rem; }
 .race-result-table .rr-marks span { white-space: nowrap; }
