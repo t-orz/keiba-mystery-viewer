@@ -285,6 +285,21 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   font-size: 1rem;
   line-height: 1;
 }
+/* 最後の直線の風（アメダス最寄り観測点・目安）。天候・馬場の下にもう1行 */
+.track-cond-wind {
+  flex-basis: 100%;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding-left: calc(2.7em + 0.42rem);
+  color: var(--ink);
+}
+.track-cond-wind--head { color: #b23a1e; }
+.track-cond-wind--tail { color: #1f6a3a; }
+.track-cond-wind-at {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
 .track-cond-surface {
   display: inline-flex;
   align-items: center;
@@ -1650,6 +1665,10 @@ table.shutuba td.rs-cell { text-align: center; }
      周りだけ中央寄せなのにここだけ左に寄って見える。 */
   .track-cond-item {
     justify-content: center;
+  }
+  .track-cond-wind {
+    justify-content: center;
+    padding-left: 0;
   }
   .sidebar-jumps {
     display: none !important;

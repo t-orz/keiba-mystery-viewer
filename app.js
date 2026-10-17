@@ -1149,6 +1149,113 @@
     return best;
   }
 
+  /* 最後の直線の風（2026-10-17）。気象庁アメダスの最寄り観測点を閲覧者のブラウザから直接読む
+     （CORS 許可あり・1観測点 約8KB）。表示だけで予想には使わない。
+     bearing は直線をゴールへ向かう進行方向（北=0°・時計回り）。OSM の走路と実測コース形状の
+     照合で求め、180°取り違えはスタンド側の建物面積で検算した（サーバー ~/research_wind/）。 */
+  const WIND_STRETCH = {
+    札幌: { bearing: 179.4, station: "14163", stationName: "札幌", km: 1.8 },
+    函館: { bearing: 123.5, station: "23232", stationName: "函館", km: 4.3 },
+    福島: { bearing: 26.5, station: "36127", stationName: "福島", km: 1.3 },
+    新潟: { bearing: 241.8, station: "54236", stationName: "松浜", km: 6.5 },
+    東京: { bearing: 267.5, station: "44116", stationName: "府中", km: 2.1 },
+    中山: { bearing: 14.8, station: "45106", stationName: "船橋", km: 7.6 },
+    中京: { bearing: 234.1, station: "51216", stationName: "大府", km: 9.0 },
+    京都: { bearing: 53.5, station: "61326", stationName: "京田辺", km: 9.1 },
+    阪神: { bearing: 286.8, station: "62051", stationName: "豊中", km: 7.1 },
+    小倉: { bearing: 156.5, station: "82056", stationName: "八幡", km: 12.1 },
+  };
+  const WIND_DIR16 = ["", "北北東", "北東", "東北東", "東", "東南東", "南東", "南南東", "南", "南南西", "南西", "西南西", "西", "西北西", "北西", "北北西", "北"];
+  const WIND_REFRESH_MS = 10 * 60 * 1000;
+  const windState = { byPlace: {}, loadedAt: 0, loading: false };
+
+  /** 風向（吹いてくる方位 1〜16）と直線の向きから、追い風／向かい風／横風を判定する */
+  function windRelation(dirCode, speed, bearing) {
+    if (!dirCode || !(speed > 0)) return { label: "無風", cls: "calm" };
+    const toward = (dirCode * 22.5 + 180) % 360;
+    const diff = Math.abs(((toward - bearing + 540) % 360) - 180);
+    if (diff <= 45) return { label: "追い風", cls: "tail" };
+    if (diff >= 135) return { label: "向かい風", cls: "head" };
+    return { label: diff < 90 ? "横風（やや追い）" : "横風（やや向かい）", cls: "cross" };
+  }
+
+  function jstTodayYmd() {
+    const d = new Date(Date.now() + 9 * 3600 * 1000);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /** 当日開催の表示中だけ取りに行く（過去日の表示に「現在の風」を出さない） */
+  function windApplies(data) {
+    return !!data && !isDayClosedSnapshot(data) && String(data.schedule_date || "") === jstTodayYmd();
+  }
+
+  async function loadWind(data, { force = false } = {}) {
+    if (!windApplies(data)) {
+      windState.byPlace = {};
+      return;
+    }
+    if (windState.loading) return;
+    if (!force && Date.now() - windState.loadedAt < WIND_REFRESH_MS) return;
+    const places = (Array.isArray(data.venues) ? data.venues : [])
+      .map((v) => String((v && v.place) || "").trim())
+      .filter((p) => WIND_STRETCH[p]);
+    if (!places.length) return;
+    windState.loading = true;
+    try {
+      const base = "https://www.jma.go.jp/bosai/amedas/data";
+      const latest = String(await (await fetch(`${base}/latest_time.txt`, { cache: "no-store" })).text()).trim();
+      const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})/.exec(latest);
+      if (!m) return;
+      const block = `${m[1]}${m[2]}${m[3]}_${String(Math.floor(Number(m[4]) / 3) * 3).padStart(2, "0")}`;
+      const next = {};
+      await Promise.all(
+        places.map(async (place) => {
+          const info = WIND_STRETCH[place];
+          try {
+            const res = await fetch(`${base}/point/${info.station}/${block}.json`, { cache: "no-store" });
+            if (!res.ok) return;
+            const series = await res.json();
+            const keys = Object.keys(series || {}).sort();
+            for (let i = keys.length - 1; i >= 0; i--) {
+              const row = series[keys[i]] || {};
+              const dir = Array.isArray(row.windDirection) ? row.windDirection[0] : null;
+              const spd = Array.isArray(row.wind) ? row.wind[0] : null;
+              if (typeof spd !== "number" || typeof dir !== "number") continue;
+              next[place] = { dir, speed: spd, at: `${keys[i].slice(8, 10)}:${keys[i].slice(10, 12)}` };
+              break;
+            }
+          } catch (e) {
+            /* 1場の失敗で他の場を落とさない */
+          }
+        })
+      );
+      windState.byPlace = next;
+      windState.loadedAt = Date.now();
+    } catch (e) {
+      /* 気象庁に届かないときは風の行を出さないだけ */
+    } finally {
+      windState.loading = false;
+    }
+    if (state.data === data) renderTrackConditions(data);
+  }
+
+  function trackWindHtml(place) {
+    const info = WIND_STRETCH[place];
+    const w = windState.byPlace[place];
+    if (!info || !w) return "";
+    const rel = windRelation(w.dir, w.speed, info.bearing);
+    const dirName = WIND_DIR16[w.dir] || "静穏";
+    const title =
+      `${info.stationName}（ゴールから約${info.km}km）の${w.at}観測: ${dirName} ${w.speed}m/s。` +
+      "競馬場内の観測ではないため目安です";
+    const speed = rel.cls === "calm" ? "" : ` ${escapeHtml(String(w.speed))}m/s`;
+    return (
+      `<span class="track-cond-wind track-cond-wind--${rel.cls}" title="${escapeHtml(title)}">` +
+      `<span class="track-cond-surface-label">直線</span>${escapeHtml(rel.label)}${speed}` +
+      `<span class="track-cond-wind-at">${escapeHtml(w.at)}</span></span>`
+    );
+  }
+
   function renderTrackConditions(data) {
     const box = $("trackCond");
     const list = $("trackCondList");
@@ -1190,6 +1297,7 @@
           "</span>" +
           trackWeatherHtml(weather) +
           cells +
+          trackWindHtml(place) +
           "</li>"
       );
     }
@@ -1215,6 +1323,7 @@
     }
     renderUpdateTiming(data);
     renderTrackConditions(data);
+    loadWind(data);
     renderMarkWeeklyStats(data);
     refreshPrevPdfBlock();
     renderTop5();
@@ -1893,6 +2002,7 @@
   const poll = Number(cfg.POLL_INTERVAL_MS) || 30000;
   if (poll > 0) {
     window.setInterval(() => loadSnapshot({ silent: true }), poll);
+    window.setInterval(() => loadWind(state.data), WIND_REFRESH_MS);
   }
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) loadSnapshot({ silent: true });
