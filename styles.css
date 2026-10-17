@@ -1391,6 +1391,23 @@ html.hide-cast-icons .holmes-recommend-icon {
   font-size: 0.8rem;
   color: var(--muted);
 }
+/* 払戻金はテレビ中継と同じく公式の券種順で左の列→右の列（2026-10-17） */
+.race-payout-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.2rem;
+  max-width: 52rem;
+  margin-top: 0.6rem;
+  align-items: start;
+}
+.race-payout-split .race-payout-table {
+  max-width: none;
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .race-payout-split { grid-template-columns: minmax(0, 1fr); }
+  .race-payout-split .race-payout-table + .race-payout-table thead { display: none; }
+}
 .race-result-table .mark-honmei { font-weight: 700; }
 .race-result-table .mark-w { color: #d32f2f; }
 .race-result-table .mark-i { color: #1565c0; }

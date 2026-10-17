@@ -1444,10 +1444,30 @@
     return html;
   }
 
-  /** 払戻金（単勝〜3連単）。複勝・ワイドは1券種に複数行あるので券種のセルを縦に結合する */
+  /** 払戻金（単勝〜3連単）。テレビ中継と同じく公式の券種順で左の列から右の列へ流す。
+      行数がほぼ半分になる券種の切れ目で2つの表に分け、スマホ幅では縦に並べる */
   function payoutTableHtml(payouts) {
     const list = Array.isArray(payouts) ? payouts.filter((p) => p && Array.isArray(p.items) && p.items.length) : [];
     if (!list.length) return "";
+    const total = list.reduce((n, p) => n + p.items.length, 0);
+    let acc = 0;
+    let cut = list.length;
+    let bestDiff = Infinity;
+    list.forEach((p, i) => {
+      acc += p.items.length;
+      const diff = Math.abs(total - 2 * acc);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        cut = i + 1;
+      }
+    });
+    const right = list.slice(cut);
+    if (!right.length) return payoutColumnHtml(list);
+    return `<div class="race-payout-split">${payoutColumnHtml(list.slice(0, cut))}${payoutColumnHtml(right)}</div>`;
+  }
+
+  /** 払戻金の表1つぶん。複勝・ワイドは1券種に複数行あるので券種のセルを縦に結合する */
+  function payoutColumnHtml(list) {
     let html = `<table class="race-payout-table"><thead><tr><th>券種</th><th>組番</th><th>払戻金</th><th>人気</th></tr></thead><tbody>`;
     for (const p of list) {
       p.items.forEach((it, i) => {
