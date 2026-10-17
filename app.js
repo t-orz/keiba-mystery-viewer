@@ -1244,7 +1244,9 @@
     if (state.data === data) renderTrackConditions(data);
   }
 
-  /** 小さな図: 左の縦線が内ラチ、馬は上へ走る。矢印は風が吹いていく向き */
+  /** 小さな図: テレビ中継と同じくスタンド側から見た向き。上の横線が内ラチ（奥）、
+      馬は右回りなら右→左、左回りなら左→右へ走る。矢印は風が吹いていく向き。
+      rel（馬が上へ走り内ラチが左の図での角度）を、右回りは鏡映して -90-rel、左回りは 90+rel に移す */
   function trackWindHtml(place) {
     const info = WIND_STRETCH[place];
     const w = windState.byPlace[place];
@@ -1253,15 +1255,17 @@
     const dirName = WIND_DIR16[w.dir] || "静穏";
     let title =
       `直線: ${rel.label}。${info.stationName}（ゴールから約${info.km}km）の${w.at}観測 ${dirName} ${w.speed}m/s。` +
-      "図は馬が上へ走り、左の線が内ラチ。矢印は風が吹いていく向き。競馬場内の観測ではないため目安です";
+      `図は中継画面と同じ向き（馬は${info.hand === "right" ? "右から左" : "左から右"}へ走り、上の線が内ラチ）。` +
+      "矢印は風が吹いていく向き。競馬場内の観測ではないため目安です";
     if (rel.cls === "cross" && rel.rel < 0) title += "（スタンド側からの風は実際にはこれより弱いことがあります）";
+    const screenDeg = info.hand === "right" ? -90 - rel.rel : 90 + rel.rel;
     const arrow =
       rel.cls === "calm"
-        ? '<circle cx="9" cy="8" r="1.6" fill="currentColor"/>'
-        : `<g transform="rotate(${rel.rel.toFixed(0)} 9 8)"><path d="M9 13.5V3M5.6 6.2 9 2.8l3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+        ? '<circle cx="8" cy="9.5" r="1.6" fill="currentColor"/>'
+        : `<g transform="rotate(${screenDeg.toFixed(0)} 8 9.5)"><path d="M8 14.5V4.5M4.8 7.6 8 4.4l3.2 3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>`;
     return (
       `<span class="track-cond-wind track-cond-wind--${rel.cls}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">` +
-      `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 1.5v13" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>${arrow}</svg>` +
+      `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1.5h14" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>${arrow}</svg>` +
       `<span class="track-cond-wind-speed">${rel.cls === "calm" ? "0" : escapeHtml(String(w.speed))}</span></span>`
     );
   }

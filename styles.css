@@ -286,7 +286,7 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   line-height: 1;
 }
 /* 最後の直線の風（アメダス最寄り観測点・目安）。馬場の後ろに小さな図＋風速。
-   図は馬が上へ走り、左の縦線が内ラチ、矢印は風が吹いていく向き */
+   図は中継画面と同じ向き（上の横線が内ラチ、右回りは右→左・左回りは左→右へ走る）、矢印は風が吹いていく向き */
 .track-cond-wind {
   display: inline-flex;
   align-items: center;
