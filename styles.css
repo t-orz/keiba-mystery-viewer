@@ -1944,12 +1944,10 @@ table.shutuba td.rs-cell { text-align: center; }
 }
 
 /* 馬名に重ねる前走・前々走（app.js prevRun*、2026-10-18）。
-   馬名はボタンにしてあるが、見た目は点線の付いた文字のまま */
+   馬名はボタンにしてあるが、見た目はただの文字のまま（点線はユーザー指示で外した） */
 .prev-run-trigger {
   all: unset;
   cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 0.2em;
 }
 .prev-run-trigger:focus-visible {
   outline: 2px solid var(--accent);
@@ -2000,12 +1998,6 @@ table.shutuba td.rs-cell { text-align: center; }
   margin: 0.45rem 0 0;
   padding-top: 0.35rem;
   border-top: 1px dashed rgba(0, 0, 0, 0.2);
-}
-.prev-run-src {
-  margin: 0.35rem 0 0;
-  color: var(--muted);
-  font-size: 0.75rem;
-  text-align: right;
 }
 
 /* 直前予想が済んだかの表示（app.js preRaceBandHtml / is-pre-race-done、2026-10-18）。

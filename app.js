@@ -979,7 +979,7 @@
     }
     if (shutuba.rows.some((row) => prevRunFor(found.race.race_id, row["馬番"]))) {
       html +=
-        '<p class="hint prev-run-hint">点線の付いた馬名は、マウスを重ねる（スマホはタップする）と前走・前々走が出ます（出典：JRA）。</p>';
+        '<p class="hint prev-run-hint">馬名にマウスを重ねる（スマホはタップする）と前走・前々走が出ます。前走・前々走の出典：JRA（小窓の下段の一言はこのサイトで計算）。</p>';
     }
     if (!shutuba.predicted) {
       html += '<p class="hint">予想前の出馬表です（印列は予想後に表示されます）。</p>';
@@ -1728,7 +1728,7 @@
 
   /* 馬名に重ねる前走・前々走（2026-10-18）。
      サーバーが JRA 公式の詳細出馬表から prev_runs/<開催日>.json を作る（public_prev_runs.py）。
-     事実は前走・前々走の最小限だけ。こちらで計算した一言を添え、出典（JRA）を必ず出す
+     事実は前走・前々走の最小限だけ。こちらで計算した一言を添え、出典（JRA）は出馬表の下の案内に必ず出す
      （JRA-VAN・netkeiba 由来のデータは規約上ここには出さない）。
      PC はマウスを重ねると、スマホは馬名をタップすると小窓を開く。ファイルが無ければ馬名はそのまま。 */
   const PREV_RUNS_MIN_INTERVAL_MS = 10 * 60 * 1000;
@@ -1812,7 +1812,6 @@
     let html = `<p class="prev-run-head">${escapeHtml(name)}</p>`;
     if (runs.length) html += `<ul class="prev-run-list">${runs.map((r) => prevRunLineHtml(r, today)).join("")}</ul>`;
     if (notes.length) html += `<p class="prev-run-notes">${notes.map(escapeHtml).join("・")}</p>`;
-    html += '<p class="prev-run-src">出典：JRA（一言はこのサイトで計算）</p>';
     return html;
   }
 
