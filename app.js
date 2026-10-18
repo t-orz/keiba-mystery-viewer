@@ -470,7 +470,6 @@
 
   function preRaceBandHtml(r) {
     if (!r || !r.predicted || !r.update_kind) return "";
-    const start = normalizeStartTime(r.start_time) || "";
     const upd = hhmmOf(r.predicted_at);
     const changes = changedHonmeiTaikou(r);
     const changeText =
@@ -496,12 +495,14 @@
       title = "朝一斉の予想のまま";
       sub = `直前予想は発走の約${PRE_RACE_LEAD_MIN}分前${nextPre ? `（${nextPre}ごろ）` : ""}に入ります。印が変わることがあります`;
     }
-    const meta = kind === "missed" ? `発走 ${start}（発走済み）` : `${upd ? `${upd}予想更新・` : ""}発走 ${start}`;
+    // 発走時刻はレース要約の条件の行に出すので帯には書かない（ユーザー決定 2026-10-18 案C）
+    const meta = kind === "missed" ? "発走済み" : upd ? `${upd}予想更新` : "";
     return (
       `<div class="prerace-band prerace-band--${kind}" role="status">` +
       `<span class="prerace-band-icon" aria-hidden="true"></span>` +
       `<div class="prerace-band-text"><p class="prerace-band-title">${escapeHtml(title)}` +
-      ` <span class="prerace-band-meta">${escapeHtml(meta)}</span></p>` +
+      (meta ? ` <span class="prerace-band-meta">${escapeHtml(meta)}</span>` : "") +
+      `</p>` +
       (sub ? `<p class="prerace-band-sub">${escapeHtml(sub)}</p>` : "") +
       `</div></div>`
     );
