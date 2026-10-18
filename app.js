@@ -862,6 +862,10 @@
         .join(" / ");
       html += `<p class="hint horse-badge-legend"><strong>${title}</strong>${items}</p>`;
     }
+    // 枠番・馬名・騎手・斤量・性齢・馬体重を JRA 公式の値に差し替えたレース（auto-x jra_display_facts.py）
+    if (shutuba.facts_source) {
+      html += `<p class="hint shutuba-facts-source">枠番・馬名・騎手・斤量・性齢・馬体重の出典：${escapeHtml(shutuba.facts_source)}</p>`;
+    }
     if (shutuba.rows.some((row) => prevRunFor(found.race.race_id, row["馬番"]))) {
       html +=
         '<p class="hint prev-run-hint">点線の付いた馬名は、マウスを重ねる（スマホはタップする）と前走・前々走が出ます（出典：JRA）。</p>';
