@@ -958,8 +958,8 @@
         const body =
           c === "脚質"
             ? runningStyleCellHtml(row[c])
-            : c === "馬名"
-              ? prevRunNameHtml(found.race.race_id, row)
+            : c === "馬番"
+              ? prevRunTriggerHtml(found.race.race_id, row)
               : escapeHtml(row[c] ?? "");
         html += `<td${cls}${styleAttr}>${body}${badges}</td>`;
       }
@@ -979,7 +979,7 @@
     }
     if (shutuba.rows.some((row) => prevRunFor(found.race.race_id, row["馬番"]))) {
       html +=
-        '<p class="hint prev-run-hint">馬名にマウスを重ねる（スマホはタップする）と前走・前々走が出ます。前走・前々走の出典：JRA（小窓の下段の一言はこのサイトで計算）。</p>';
+        '<p class="hint prev-run-hint">馬番にマウスを重ねる（スマホはタップする）と前走・前々走が出ます。前走・前々走の出典：JRA（小窓の下段の一言はこのサイトで計算）。</p>';
     }
     if (!shutuba.predicted) {
       html += '<p class="hint">予想前の出馬表です（印列は予想後に表示されます）。</p>';
@@ -1730,7 +1730,8 @@
      サーバーが JRA 公式の詳細出馬表から prev_runs/<開催日>.json を作る（public_prev_runs.py）。
      事実は前走・前々走の最小限だけ。こちらで計算した一言を添え、出典（JRA）は出馬表の下の案内に必ず出す
      （JRA-VAN・netkeiba 由来のデータは規約上ここには出さない）。
-     PC はマウスを重ねると、スマホは馬名をタップすると小窓を開く。ファイルが無ければ馬名はそのまま。 */
+     PC は馬番にマウスを重ねると、スマホは馬番をタップすると小窓を開く（ユーザー選択 2026-10-18。
+     馬番の列は横スクロールしても左に固定なので、どの列を見ていても開ける）。ファイルが無ければ馬番はそのまま。 */
   const PREV_RUNS_MIN_INTERVAL_MS = 10 * 60 * 1000;
   const prevRunsState = { day: "", races: {}, fetchedAt: 0, loading: false };
 
@@ -1778,12 +1779,15 @@
     return (race && race[String(umaban ?? "").trim()]) || null;
   }
 
-  function prevRunNameHtml(raceId, row) {
-    const name = escapeHtml(row["馬名"] ?? "");
-    if (!prevRunFor(raceId, row["馬番"])) return name;
+  function prevRunTriggerHtml(raceId, row) {
+    const num = escapeHtml(row["馬番"] ?? "");
+    if (!prevRunFor(raceId, row["馬番"])) return num;
+    // 小窓の見出しは馬名。公開側が足す接尾辞（[初走] など）は外す
+    const name = String(row["馬名"] ?? "").replace(/\s*\[[^\]]*\]|\s*🔥/g, "").trim();
     return (
       `<button type="button" class="prev-run-trigger" data-race="${escapeAttr(String(raceId))}"` +
-      ` data-umaban="${escapeAttr(String(row["馬番"]).trim())}" aria-haspopup="dialog" aria-expanded="false">${name}</button>`
+      ` data-umaban="${escapeAttr(String(row["馬番"]).trim())}" data-name="${escapeAttr(name)}"` +
+      ` aria-label="${escapeAttr(`${num}番 ${name} の前走・前々走`)}" aria-haspopup="dialog" aria-expanded="false">${num}</button>`
     );
   }
 
@@ -1842,7 +1846,7 @@
     const gutter = 8;
     // 100vw はスクロールバーを含むので、実際の表示幅から決める（はみ出すと横スクロールが出る）
     prevRunPopEl.style.maxWidth = `${Math.min(384, vw - gutter * 2)}px`;
-    prevRunPopEl.innerHTML = prevRunPopHtml(btn.textContent, pr);
+    prevRunPopEl.innerHTML = prevRunPopHtml(btn.dataset.name || btn.textContent, pr);
     prevRunPopEl.hidden = false;
     const rect = btn.getBoundingClientRect();
     const pw = prevRunPopEl.offsetWidth;

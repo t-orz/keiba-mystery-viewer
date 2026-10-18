@@ -1944,7 +1944,7 @@ table.shutuba td.rs-cell { text-align: center; }
 }
 
 /* 馬名に重ねる前走・前々走（app.js prevRun*、2026-10-18）。
-   馬名はボタンにしてあるが、見た目はただの文字のまま（点線はユーザー指示で外した） */
+   馬番をボタンにしてあるが、見た目はただの数字のまま（点線はユーザー指示で外した） */
 .prev-run-trigger {
   all: unset;
   cursor: pointer;
