@@ -1809,6 +1809,8 @@
     if (/^\d+$/.test(rank) && r.margin !== undefined && r.margin !== "") {
       result += rank === "1" ? ` 2着に${r.margin}秒差` : ` 1着と${r.margin}秒差`;
     }
+    // 馬体重（10-18 追加）。計量の無い走（海外など）は出さない
+    if (Number.isFinite(Number(r.weight)) && Number(r.weight) > 0) result += `・${Number(r.weight)}kg`;
     return (
       `<li><span class="prev-run-label">${escapeHtml(r.label || "")}</span><span>${escapeHtml(head)}</span>` +
       `<span class="prev-run-result">${escapeHtml(result)}</span></li>`
