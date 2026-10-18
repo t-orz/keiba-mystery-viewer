@@ -2001,7 +2001,7 @@ table.shutuba td.rs-cell { text-align: center; }
 }
 
 /* 直前予想が済んだかの表示（app.js preRaceBandHtml / is-pre-race-done、2026-10-18）。
-   ✓はボタンの内側の右上（ジャンプ欄は横がはみ出すと切れるため外には出さない）。
+   ジャンプボタンは下の縁の内側に濃い緑の細い帯（角の✓は見た目が良くないとして案Aに変更、ユーザー選択）。
    帯は色に加えて印の形と見出しの言葉でも区別できるようにしてある */
 .jump.is-pre-race-done {
   position: relative;
@@ -2009,13 +2009,12 @@ table.shutuba td.rs-cell { text-align: center; }
 .jump.is-pre-race-done::after {
   content: "";
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #0b3d2e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23fffcf5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2 5 8.6 9.6 3.6'/%3E%3C/svg%3E") center / 10px 10px no-repeat;
-  box-shadow: 0 0 0 1.5px #fffcf5;
+  left: 5px;
+  right: 5px;
+  bottom: 3px;
+  height: 3px;
+  border-radius: 2px;
+  background: #0b3d2e;
   pointer-events: none;
 }
 .prerace-band {
