@@ -844,7 +844,12 @@
         if (c === "脚質") classes.push("rs-cell");
         const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
         const badges = c === "馬名" ? horseBadgesHtml(row.badges) : "";
-        const body = c === "脚質" ? runningStyleCellHtml(row[c]) : escapeHtml(row[c] ?? "");
+        const body =
+          c === "脚質"
+            ? runningStyleCellHtml(row[c])
+            : c === "馬名"
+              ? prevRunNameHtml(found.race.race_id, row)
+              : escapeHtml(row[c] ?? "");
         html += `<td${cls}${styleAttr}>${body}${badges}</td>`;
       }
       html += "</tr>";
@@ -857,11 +862,16 @@
         .join(" / ");
       html += `<p class="hint horse-badge-legend"><strong>${title}</strong>${items}</p>`;
     }
+    if (shutuba.rows.some((row) => prevRunFor(found.race.race_id, row["馬番"]))) {
+      html +=
+        '<p class="hint prev-run-hint">点線の付いた馬名は、マウスを重ねる（スマホはタップする）と前走・前々走が出ます（出典：JRA）。</p>';
+    }
     if (!shutuba.predicted) {
       html += '<p class="hint">予想前の出馬表です（印列は予想後に表示されます）。</p>';
     }
     box.innerHTML = html;
     syncShutubaStickyOffset(box);
+    syncPrevRunPopAfterRender(box);
   }
 
   /** 馬名欄の略号（D / B / NB）。判定も色もサーバー側 horse_name_badges が出所。
@@ -1406,6 +1416,7 @@
       const data = await resp.json();
       applyData(data, { flash: silent });
       loadResults();
+      loadPrevRuns();
     } catch (e) {
       if (!silent) {
         $("updatedAt").innerHTML = `<span class="error">スナップショット取得失敗: ${escapeHtml(e.message || e)}</span>`;
@@ -1599,6 +1610,176 @@
       resultsState.loading = false;
     }
   }
+
+  /* 馬名に重ねる前走・前々走（2026-10-18）。
+     サーバーが JRA 公式の詳細出馬表から prev_runs/<開催日>.json を作る（public_prev_runs.py）。
+     事実は前走・前々走の最小限だけ。こちらで計算した一言を添え、出典（JRA）を必ず出す
+     （JRA-VAN・netkeiba 由来のデータは規約上ここには出さない）。
+     PC はマウスを重ねると、スマホは馬名をタップすると小窓を開く。ファイルが無ければ馬名はそのまま。 */
+  const PREV_RUNS_MIN_INTERVAL_MS = 10 * 60 * 1000;
+  const prevRunsState = { day: "", races: {}, fetchedAt: 0, loading: false };
+
+  function prevRunsUrl(day) {
+    const base = String(cfg.SNAPSHOT_URL || "").split("?")[0];
+    if (!base || !/snapshots\/latest\.json$/.test(base)) return "";
+    return base.replace(/snapshots\/latest\.json$/, `prev_runs/${day}.json`);
+  }
+
+  async function loadPrevRuns() {
+    const day = String((state.data && state.data.schedule_date) || "").trim();
+    if (!day || prevRunsState.loading || isDayClosedSnapshot(state.data)) return;
+    const now = Date.now();
+    if (prevRunsState.day === day && now - prevRunsState.fetchedAt < PREV_RUNS_MIN_INTERVAL_MS) return;
+    const url = prevRunsUrl(day);
+    if (!url) return;
+    if (prevRunsState.day !== day) {
+      prevRunsState.day = day;
+      prevRunsState.races = {};
+    }
+    prevRunsState.loading = true;
+    try {
+      const resp = await fetch(withCacheBust(url), { cache: "no-store" });
+      // 朝一斉の公開から数分はファイルが無い（4xx）。そのときは馬名をそのまま出す
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.schedule_date === day && data.races && typeof data.races === "object") {
+          const changed = JSON.stringify(data.races) !== JSON.stringify(prevRunsState.races);
+          prevRunsState.races = data.races;
+          if (changed && state.raceId) renderShutuba();
+        }
+      }
+      prevRunsState.fetchedAt = now;
+    } catch (_) {
+      /* 次の周期でやり直す */
+    } finally {
+      prevRunsState.loading = false;
+    }
+  }
+
+  function prevRunFor(raceId, umaban) {
+    const day = String((state.data && state.data.schedule_date) || "");
+    if (prevRunsState.day !== day) return null;
+    const race = prevRunsState.races[String(raceId || "")];
+    return (race && race[String(umaban ?? "").trim()]) || null;
+  }
+
+  function prevRunNameHtml(raceId, row) {
+    const name = escapeHtml(row["馬名"] ?? "");
+    if (!prevRunFor(raceId, row["馬番"])) return name;
+    return (
+      `<button type="button" class="prev-run-trigger" data-race="${escapeAttr(String(raceId))}"` +
+      ` data-umaban="${escapeAttr(String(row["馬番"]).trim())}" aria-haspopup="dialog" aria-expanded="false">${name}</button>`
+    );
+  }
+
+  function prevRunLineHtml(r, today) {
+    const [y, m, d] = String(r.date || "").split("-").map((x) => Number.parseInt(x, 10));
+    const date = y && m && d ? (String(today || "").startsWith(String(y)) ? `${m}/${d}` : `${y}/${m}/${d}`) : "";
+    const race = [r.race, r.cls ? `(${r.cls})` : ""].join("");
+    const course = r.distance ? `${r.surface || ""}${r.distance}` : "";
+    const head = [date, r.place, race, course, r.cond, r.field ? `${r.field}頭` : ""].filter(Boolean).join(" ");
+    const rank = String(r.rank || "");
+    let result = /^\d+$/.test(rank) ? `${rank}着` : rank;
+    if (r.pop) result += `（${r.pop}番人気）`;
+    if (/^\d+$/.test(rank) && r.margin !== undefined && r.margin !== "") {
+      result += rank === "1" ? ` 2着に${r.margin}秒差` : ` 1着と${r.margin}秒差`;
+    }
+    return (
+      `<li><span class="prev-run-label">${escapeHtml(r.label || "")}</span><span>${escapeHtml(head)}</span>` +
+      `<span class="prev-run-result">${escapeHtml(result)}</span></li>`
+    );
+  }
+
+  function prevRunPopHtml(name, pr) {
+    const today = String((state.data && state.data.schedule_date) || "");
+    const runs = Array.isArray(pr.runs) ? pr.runs : [];
+    const notes = Array.isArray(pr.notes) ? pr.notes.filter(Boolean) : [];
+    let html = `<p class="prev-run-head">${escapeHtml(name)}</p>`;
+    if (runs.length) html += `<ul class="prev-run-list">${runs.map((r) => prevRunLineHtml(r, today)).join("")}</ul>`;
+    if (notes.length) html += `<p class="prev-run-notes">${notes.map(escapeHtml).join("・")}</p>`;
+    html += '<p class="prev-run-src">出典：JRA（一言はこのサイトで計算）</p>';
+    return html;
+  }
+
+  let prevRunPopEl = null;
+  let prevRunAnchor = null;
+  const prevRunCanHover = () =>
+    !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+
+  function hidePrevRunPop() {
+    if (prevRunPopEl) prevRunPopEl.hidden = true;
+    if (prevRunAnchor) prevRunAnchor.setAttribute("aria-expanded", "false");
+    prevRunAnchor = null;
+  }
+
+  function showPrevRunPop(btn) {
+    const pr = prevRunFor(btn.dataset.race, btn.dataset.umaban);
+    if (!pr) return hidePrevRunPop();
+    if (!prevRunPopEl) {
+      prevRunPopEl = document.createElement("div");
+      prevRunPopEl.className = "prev-run-pop";
+      prevRunPopEl.setAttribute("role", "dialog");
+      prevRunPopEl.setAttribute("aria-label", "前走・前々走");
+      prevRunPopEl.hidden = true;
+      document.body.appendChild(prevRunPopEl);
+    }
+    if (prevRunAnchor && prevRunAnchor !== btn) prevRunAnchor.setAttribute("aria-expanded", "false");
+    const vw = document.documentElement.clientWidth;
+    const gutter = 8;
+    // 100vw はスクロールバーを含むので、実際の表示幅から決める（はみ出すと横スクロールが出る）
+    prevRunPopEl.style.maxWidth = `${Math.min(384, vw - gutter * 2)}px`;
+    prevRunPopEl.innerHTML = prevRunPopHtml(btn.textContent, pr);
+    prevRunPopEl.hidden = false;
+    const rect = btn.getBoundingClientRect();
+    const pw = prevRunPopEl.offsetWidth;
+    const ph = prevRunPopEl.offsetHeight;
+    let left = Math.min(rect.left, vw - pw - gutter);
+    left = Math.max(gutter, left);
+    let top = rect.bottom + 4;
+    // 下に入りきらず上に入るなら馬名の上に出す
+    if (top + ph > window.innerHeight - gutter && rect.top - ph - 4 > gutter) top = rect.top - ph - 4;
+    prevRunPopEl.style.left = `${left + window.scrollX}px`;
+    prevRunPopEl.style.top = `${top + window.scrollY}px`;
+    prevRunAnchor = btn;
+    btn.setAttribute("aria-expanded", "true");
+  }
+
+  /** 出馬表はポーリングで描き直されるので、開いている小窓は同じ馬の新しいボタンに付け替える */
+  function syncPrevRunPopAfterRender(box) {
+    if (!prevRunAnchor || !prevRunPopEl || prevRunPopEl.hidden) return;
+    const { race, umaban } = prevRunAnchor.dataset;
+    const next = Array.from(box.querySelectorAll(".prev-run-trigger")).find(
+      (b) => b.dataset.race === race && b.dataset.umaban === umaban
+    );
+    if (next) showPrevRunPop(next);
+    else hidePrevRunPop();
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    if (!prevRunCanHover() || !e.target.closest) return;
+    const btn = e.target.closest(".prev-run-trigger");
+    if (btn && btn !== prevRunAnchor) showPrevRunPop(btn);
+  });
+  document.addEventListener("mouseout", (e) => {
+    if (!prevRunCanHover() || !prevRunAnchor) return;
+    const to = e.relatedTarget;
+    if (to && (prevRunAnchor.contains(to) || (prevRunPopEl && prevRunPopEl.contains(to)))) return;
+    const from = e.target;
+    if (prevRunAnchor.contains(from) || (prevRunPopEl && prevRunPopEl.contains(from))) hidePrevRunPop();
+  });
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest ? e.target.closest(".prev-run-trigger") : null;
+    if (btn) {
+      if (prevRunAnchor === btn && !prevRunCanHover()) hidePrevRunPop();
+      else showPrevRunPop(btn);
+      return;
+    }
+    if (prevRunPopEl && !prevRunPopEl.contains(e.target)) hidePrevRunPop();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hidePrevRunPop();
+  });
+  window.addEventListener("resize", hidePrevRunPop);
 
   /** 選択中レースの確定結果。まだ無ければ null */
   function raceResultFor(r) {

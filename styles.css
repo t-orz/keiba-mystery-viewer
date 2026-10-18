@@ -1942,3 +1942,68 @@ table.shutuba td.rs-cell { text-align: center; }
   font-weight: 700;
   text-decoration: underline;
 }
+
+/* 馬名に重ねる前走・前々走（app.js prevRun*、2026-10-18）。
+   馬名はボタンにしてあるが、見た目は点線の付いた文字のまま */
+.prev-run-trigger {
+  all: unset;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+}
+.prev-run-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.prev-run-pop {
+  position: absolute;
+  z-index: 60;
+  width: max-content;
+  max-width: min(24rem, calc(100vw - 16px));
+  padding: 0.6rem 0.75rem;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.prev-run-pop[hidden] {
+  display: none;
+}
+.prev-run-head {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+}
+.prev-run-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prev-run-list li {
+  /* 折り返しても2行目以降がラベルの右でそろうように、ラベル列と本文列に分ける */
+  display: grid;
+  grid-template-columns: 3.4em 1fr;
+}
+.prev-run-list li + li {
+  margin-top: 0.35rem;
+}
+.prev-run-label {
+  font-weight: 700;
+  color: var(--accent);
+}
+.prev-run-result {
+  grid-column: 2;
+}
+.prev-run-notes {
+  margin: 0.45rem 0 0;
+  padding-top: 0.35rem;
+  border-top: 1px dashed rgba(0, 0, 0, 0.2);
+}
+.prev-run-src {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: right;
+}
