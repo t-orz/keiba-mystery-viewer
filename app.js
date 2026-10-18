@@ -496,7 +496,7 @@
       title = "朝一斉の予想のまま";
       sub = `直前予想は発走の約${PRE_RACE_LEAD_MIN}分前${nextPre ? `（${nextPre}ごろ）` : ""}に入ります。印が変わることがあります`;
     }
-    const meta = kind === "missed" ? `発走 ${start}（発走済み）` : `${upd ? `${upd}更新・` : ""}発走 ${start}`;
+    const meta = kind === "missed" ? `発走 ${start}（発走済み）` : `${upd ? `${upd}予想更新・` : ""}発走 ${start}`;
     return (
       `<div class="prerace-band prerace-band--${kind}" role="status">` +
       `<span class="prerace-band-icon" aria-hidden="true"></span>` +
