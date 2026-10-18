@@ -2007,3 +2007,75 @@ table.shutuba td.rs-cell { text-align: center; }
   font-size: 0.75rem;
   text-align: right;
 }
+
+/* 直前予想が済んだかの表示（app.js preRaceBandHtml / is-pre-race-done、2026-10-18）。
+   ✓はボタンの内側の右上（ジャンプ欄は横がはみ出すと切れるため外には出さない）。
+   帯は色に加えて印の形と見出しの言葉でも区別できるようにしてある */
+.jump.is-pre-race-done {
+  position: relative;
+}
+.jump.is-pre-race-done::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0b3d2e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23fffcf5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2 5 8.6 9.6 3.6'/%3E%3C/svg%3E") center / 10px 10px no-repeat;
+  box-shadow: 0 0 0 1.5px #fffcf5;
+  pointer-events: none;
+}
+.prerace-band {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  margin: 0.4rem 0 0.6rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid;
+}
+.prerace-band-icon {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.05rem;
+  border-radius: 50%;
+  box-sizing: border-box;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 62%;
+}
+.prerace-band-text {
+  min-width: 0;
+}
+.prerace-band-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.prerace-band-meta {
+  font-weight: 400;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.prerace-band-sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.prerace-band--pre_race { background: #e3efe6; border-color: #7fae8c; }
+.prerace-band--pre_race .prerace-band-title { color: #0b3d2e; }
+.prerace-band--pre_race .prerace-band-icon { background-color: #0b3d2e; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23fffcf5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2 5 8.6 9.6 3.6'/%3E%3C/svg%3E"); }
+.prerace-band--morning { background: #f6ecd6; border-color: #c9a35a; }
+.prerace-band--morning .prerace-band-title { color: #6b4500; }
+.prerace-band--morning .prerace-band-icon { background-color: #fffcf5; border: 2px solid #8a5a00; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%238a5a00' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M7 3.5V7l2.4 1.6'/%3E%3C/svg%3E"); }
+.prerace-band--weather { background: #e2eaf4; border-color: #7895bd; }
+.prerace-band--weather .prerace-band-title { color: #23466f; }
+.prerace-band--weather .prerace-band-icon { background-color: #23466f; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fffcf5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.6 10.4h6.6a2.4 2.4 0 0 0 .2-4.8 3.4 3.4 0 0 0-6.5.9 2 2 0 0 0-.3 3.9z'/%3E%3Cpath d='M6 12.4l-.5 1.2M9 12.4l-.5 1.2'/%3E%3C/svg%3E"); }
+.prerace-band--graded_1h { background: #ece5f2; border-color: #9a82b6; }
+.prerace-band--graded_1h .prerace-band-title { color: #4d3570; }
+.prerace-band--graded_1h .prerace-band-icon { background-color: #4d3570; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fffcf5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 3h6v3a3 3 0 0 1-6 0V3z'/%3E%3Cpath d='M5 4.2H3.4a1.8 1.8 0 0 0 1.9 2.4M11 4.2h1.6a1.8 1.8 0 0 1-1.9 2.4'/%3E%3Cpath d='M8 9v2.4M5.8 13h4.4'/%3E%3C/svg%3E"); }
+.prerace-band--missed { background: #efeae2; border-color: #a39a8a; }
+.prerace-band--missed .prerace-band-title { color: #333; }
+.prerace-band--missed .prerace-band-icon { background-color: #5c5c5c; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%23fffcf5' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M7 3.5v4.2'/%3E%3Cpath d='M7 10.3v.2'/%3E%3C/svg%3E"); }

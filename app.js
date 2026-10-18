@@ -399,6 +399,114 @@
     renderJumps();
   }
 
+  /* 直前予想が済んだかの表示（2026-10-18）。
+     サーバーが各レースに update_kind（最後の更新の種類）を付ける（auto-x holmes_morning.update_kind）:
+       pre_race＝直前予想（発走約10分前） / graded_1h＝重賞1時間前 / weather＝8時の天候・馬場の再予想 / morning＝朝一斉のまま
+     ジャンプボタンの✓は直前予想だけ（重賞1時間前・天候馬場の再予想には付けない。ユーザー決定）。
+     レース要約の先頭には状態ごとの帯を出し、朝一斉から変わった◎○を添える（morning_marks があるときだけ）。 */
+  const PRE_RACE_LEAD_MIN = 10;
+  const MARK_LOGIC_NAMES = {
+    ワ: "ワトソン",
+    アイ: "アイリーン",
+    モ: "モーリアティ",
+    "ハ/ホプ": "ハンター/ホプキンス",
+    ベ: "ベイカー",
+  };
+
+  function isPreRaceDone(r) {
+    return !!r && r.update_kind === "pre_race";
+  }
+
+  /** "◎5○1▲8△6,7" → { "◎": "5", "○": "1" }（◎○だけ） */
+  function honmeiTaikou(summary) {
+    const s = String(summary || "");
+    const pick = (sym) => {
+      const m = s.match(new RegExp(`${sym}([0-9,]+)`));
+      return m ? m[1] : "";
+    };
+    return { "◎": pick("◎"), "○": pick("○") };
+  }
+
+  function markNumsText(nums) {
+    const list = String(nums || "").split(",").filter(Boolean);
+    return list.length ? list.map((n) => circledNumber(n)).join("") : "なし";
+  }
+
+  /** 朝一斉から変わった◎○の一覧。朝の印が無ければ null（「変更なし」と区別する） */
+  function changedHonmeiTaikou(r) {
+    const morning = r && r.morning_marks;
+    if (!morning || typeof morning !== "object") return null;
+    const now = r.marks || {};
+    const out = [];
+    for (const key of Object.keys(now)) {
+      const a = honmeiTaikou(morning[key]);
+      const b = honmeiTaikou(now[key]);
+      for (const sym of ["◎", "○"]) {
+        if (a[sym] === b[sym] || (!a[sym] && !b[sym])) continue;
+        out.push(`${MARK_LOGIC_NAMES[key] || key}${sym} ${markNumsText(a[sym])}→${markNumsText(b[sym])}`);
+      }
+    }
+    return out;
+  }
+
+  function hhmmOf(predictedAt) {
+    const label = formatPredictedAtLabel(predictedAt);
+    const m = String(label).match(/(\d{2}:\d{2})$/);
+    return m ? m[1] : "";
+  }
+
+  function minutesBeforeStart(r, minutes) {
+    const t = raceStartDate(r, state.data && state.data.schedule_date);
+    if (!t) return "";
+    const d = new Date(t.getTime() - minutes * 60000);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function raceStarted(r) {
+    const t = raceStartDate(r, state.data && state.data.schedule_date);
+    return !!t && t.getTime() <= Date.now();
+  }
+
+  function preRaceBandHtml(r) {
+    if (!r || !r.predicted || !r.update_kind) return "";
+    const start = normalizeStartTime(r.start_time) || "";
+    const upd = hhmmOf(r.predicted_at);
+    const changes = changedHonmeiTaikou(r);
+    const changeText =
+      changes === null ? "" : changes.length ? `朝一斉から変わった印：${changes.join(" ／ ")}` : "朝一斉から印の変更はありません";
+    const nextPre = minutesBeforeStart(r, PRE_RACE_LEAD_MIN);
+    let kind = r.update_kind;
+    let title = "";
+    let sub = "";
+    if (kind === "pre_race") {
+      title = "直前予想済み";
+      sub = changeText;
+    } else if (kind === "graded_1h" || kind === "weather") {
+      title = kind === "graded_1h" ? "重賞1時間前予想済み" : "天候・馬場の変更で再予想";
+      const lead = kind === "weather" && r.update_note ? `${r.update_note} に変わったため予想し直しました。` : "";
+      const tail = raceStarted(r) ? "" : nextPre ? `直前予想は${nextPre}ごろに入ります` : "";
+      sub = [lead + changeText, tail].filter(Boolean).join("。");
+    } else if (raceStarted(r)) {
+      kind = "missed";
+      title = "直前予想は入りませんでした";
+      sub = `朝一斉の予想${upd ? `（${upd}）` : ""}が最終です`;
+    } else {
+      kind = "morning";
+      title = "朝一斉の予想のまま";
+      sub = `直前予想は発走の約${PRE_RACE_LEAD_MIN}分前${nextPre ? `（${nextPre}ごろ）` : ""}に入ります。印が変わることがあります`;
+    }
+    const meta = kind === "missed" ? `発走 ${start}（発走済み）` : `${upd ? `${upd}更新・` : ""}発走 ${start}`;
+    return (
+      `<div class="prerace-band prerace-band--${kind}" role="status">` +
+      `<span class="prerace-band-icon" aria-hidden="true"></span>` +
+      `<div class="prerace-band-text"><p class="prerace-band-title">${escapeHtml(title)}` +
+      ` <span class="prerace-band-meta">${escapeHtml(meta)}</span></p>` +
+      (sub ? `<p class="prerace-band-sub">${escapeHtml(sub)}</p>` : "") +
+      `</div></div>`
+    );
+  }
+
   function makeJumpButton(r, { nearestId } = {}) {
     const b = document.createElement("button");
     b.type = "button";
@@ -410,6 +518,7 @@
     if (isObstacleRace(r)) cls += " is-obstacle";
     if (selected) cls += " is-selected";
     if (nearest) cls += " is-nearest-prepost";
+    if (isPreRaceDone(r)) cls += " is-pre-race-done";
     b.className = cls;
     const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
     b.textContent = `${rn}R`;
@@ -417,7 +526,8 @@
     const tip = r.holmes_rank_text && r.holmes_rank_text !== "算出前"
       ? `${r.place} ${rn}R ${normalizeStartTime(r.start_time)}（${r.holmes_rank_text}）`
       : `${r.place} ${rn}R ${normalizeStartTime(r.start_time)}`.trim();
-    b.title = tip;
+    b.title = isPreRaceDone(r) ? `${tip} ・直前予想済み` : tip;
+    if (isPreRaceDone(r)) b.setAttribute("aria-label", `${rn}R 直前予想済み`);
     b.addEventListener("click", () => selectRace(r.race_id, r.place, { scroll: false }));
     return b;
   }
@@ -715,6 +825,7 @@
       : "";
     let html = `
       <h3>${escapeHtml(r.place)} ${escapeHtml(r.R)}R ${escapeHtml(r.name || "")}</h3>
+      ${preRaceBandHtml(r)}
       <p class="meta">発走 ${escapeHtml(r.start_time || "-")}${coursePart} ／ 天気:${escapeHtml(r.weather || "-")} 馬場:${escapeHtml(r.baba || "-")}${fieldSizePart}</p>
       ${paceLine}
       <p class="meta race-predicted-at">予想更新時間: <strong>${escapeHtml(predictedAtLabel)}</strong></p>
