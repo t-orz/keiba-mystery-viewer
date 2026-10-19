@@ -1622,10 +1622,13 @@
        開いたときに初めて取りに行く。
      - 前日のスナップショットが無い日（＝連続開催の初日）で遡りを打ち切るので、
        開催週をまたいで前週の開催を拾うことはない。
-     - PDF 自体は Supabase 側で 8 日経つと消えるため、古い日はリンク切れになりうる。 */
+     - PDF 自体は Supabase 側で 8 日経つと消えるため、古い日はリンク切れになりうる。
+     - サイトクローズ後（latest.json が cleared）は、閉じた開催日そのものも並べる。
+       週の開催最終日の PDF を、次の開催日の朝一斉で latest.json が差し替わるまで開けるようにするため。 */
   const PREV_PDF_MAX_DAYS = 3;
   const PREV_PDF_DAY_LABELS = ["前日", "前々日", "3日前"];
-  const prevPdfState = { days: [], probedFor: "", loadedFor: "", loading: false };
+  const PREV_PDF_CLOSED_DAY_LABELS = ["直近の開催日", "その前日", "その前々日"];
+  const prevPdfState = { days: [], closed: false, probedFor: "", loadedFor: "", loading: false };
 
   /** cfg.SNAPSHOT_URL（= .../snapshots/latest.json）と同じ場所の日付付き URL */
   function datedSnapshotUrl(day) {
@@ -2081,7 +2084,8 @@
 
   function formatPrevPdfDayLabel(day, idx) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day || ""));
-    const name = PREV_PDF_DAY_LABELS[idx] || `${idx + 1}日前`;
+    const labels = prevPdfState.closed ? PREV_PDF_CLOSED_DAY_LABELS : PREV_PDF_DAY_LABELS;
+    const name = labels[idx] || `${idx + 1}日前`;
     if (!m) return `${day} ${name}`;
     const wd = "日月火水木金土".charAt(
       new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay()
@@ -2089,10 +2093,11 @@
     return `${Number(m[2])}/${Number(m[3])}（${wd}）の予想 ［${name}］`;
   }
 
-  /** 遡れる前日の一覧。途切れた時点で打ち切る＝連続開催のぶんだけ返る。 */
-  async function probePrevPdfDays(baseDay) {
+  /** 遡れる前日の一覧。途切れた時点で打ち切る＝連続開催のぶんだけ返る。
+      includeBase のときは baseDay 自身から調べる（クローズ後の開催日）。 */
+  async function probePrevPdfDays(baseDay, { includeBase = false } = {}) {
     const days = [];
-    let day = baseDay;
+    let day = includeBase ? shiftDay(baseDay, 1) : baseDay;
     for (let i = 0; i < PREV_PDF_MAX_DAYS; i += 1) {
       day = shiftDay(day, -1);
       const url = day ? datedSnapshotUrl(day) : "";
@@ -2299,14 +2304,17 @@
     }
   }
 
-  /** 連続開催の2日目以降だけブロックを出す（前日が無ければ隠したまま） */
+  /** 連続開催の2日目以降とクローズ後だけブロックを出す（前日が無ければ隠したまま） */
   async function refreshPrevPdfBlock() {
     const block = $("prevPdfBlock");
     if (!block) return;
     const baseDay = prevPdfBaseDay();
-    if (!baseDay || prevPdfState.probedFor === baseDay) return;
-    prevPdfState.probedFor = baseDay;
-    const days = await probePrevPdfDays(baseDay);
+    const closed = isDayClosedSnapshot(state.data);
+    const key = `${baseDay}|${closed ? "closed" : "open"}`;
+    if (!baseDay || prevPdfState.probedFor === key) return;
+    prevPdfState.probedFor = key;
+    const days = await probePrevPdfDays(baseDay, { includeBase: closed });
+    prevPdfState.closed = closed;
     prevPdfState.days = days;
     prevPdfState.loadedFor = "";
     block.hidden = !days.length;
