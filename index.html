@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261018131927" />
+  <link rel="stylesheet" href="styles.css?v=20261019124257" />
 </head>
 <body>
   <div class="layout">
@@ -180,6 +180,10 @@
               <img class="logic-cast-icon" src="assets/cast/baker.png" alt="" width="48" height="48" decoding="async" />
               <span class="logic-blurb-body"><strong>ベイカー</strong> … 都市部主要場特化。東京・中山・阪神・京都・中京（非重賞・新馬以外）向けに、競馬場ごとの専用モデルで印を付ける第3探偵。モーリアティ／ハンター／ホプキンスが付かないレースの担当。</span>
             </p>
+            <p class="logic-blurb" data-cast="wiggins">
+              <img class="logic-cast-icon" src="assets/cast/wiggins.png" alt="" width="48" height="48" decoding="async" onerror="this.remove()" />
+              <span class="logic-blurb-body"><strong>ウィギンズ</strong> … ローカル特化（試験運用）。福島・新潟・小倉の6〜9月以外（非重賞・新馬以外）向けに、ベイカーと同じ競馬場ごとの専用モデルで印を付ける。ハンターがいない時期のローカル開催の担当。</span>
+            </p>
           </div>
           <p class="hint">マトリクスの「ホームズ推」＝ホームズによる推奨ロジック。詳細は <a href="help.html" target="_blank" rel="noopener noreferrer">ヘルプ</a>。</p>
         </div>
@@ -281,13 +285,13 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261018131927"></script>
+  <script src="config.js?v=20261019124257"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="app.js?v=20261018131927"></script>
+  <script src="app.js?v=20261019124257"></script>
 </body>
 </html>

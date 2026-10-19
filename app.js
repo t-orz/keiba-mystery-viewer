@@ -262,6 +262,7 @@
       ホプ: "ホプキンス",
       "ハ/ホプ": "ハンター",
       ベ: "ベイカー",
+      ウ: "ウィギンズ",
     };
     return map[s] || s;
   }
@@ -274,6 +275,7 @@
       if (s === "ホプキンス" || s === "ホプ" || s.includes("ホプキンス") || s.includes("新馬")) return "ホプキンス";
       if (s === "ハンター" || s === "ハ" || s.includes("ハンター") || s.includes("夏")) return "ハンター";
       if (s === "ベイカー" || s === "ベ" || s.includes("ベイカー")) return "ベイカー";
+      if (s === "ウィギンズ" || s === "ウ" || s.includes("ウィギンズ")) return "ウィギンズ";
       // 旧スナップショットの買/様子ラベルはモーリアティ列由来とみなす
       if (s.includes("買") || s.includes("様子") || s.includes("見送")) return "モーリアティ";
       return "";
@@ -287,9 +289,11 @@
       row && row["モ"],
       row && (row["ハ/ホプ"] || row["ハ"] || row["ホプ"]),
       row && row["ベ"],
+      row && row["ウ"],
       row && row.cells && (row.cells["モ"] || row.cells["モーリアティ"]),
       row && row.cells && (row.cells["ハ/ホプ"] || row.cells["ハンター"] || row.cells["ホプキンス"]),
       row && row.cells && (row.cells["ベ"] || row.cells["ベイカー"]),
+      row && row.cells && (row.cells["ウ"] || row.cells["ウィギンズ"]),
     ];
     for (const c of candidates) {
       const n = mapPresence(c);
@@ -411,6 +415,7 @@
     モ: "モーリアティ",
     "ハ/ホプ": "ハンター/ホプキンス",
     ベ: "ベイカー",
+    ウ: "ウィギンズ",
   };
 
   function isPreRaceDone(r) {
@@ -730,6 +735,7 @@
     if (/ホプキンス/.test(label)) return "assets/cast/hopkins.png";
     if (bl === "hunter" || /ハンター/.test(label)) return "assets/cast/hunter.png";
     if (bl === "baker" || /ベイカー/.test(label)) return "assets/cast/baker.png";
+    if (bl === "wiggins" || /ウィギンズ/.test(label)) return "assets/cast/wiggins.png";
     return "";
   }
 
@@ -741,7 +747,7 @@
     }
     return (
       `ホームズ推奨: <span class="holmes-recommend">` +
-      `<img class="logic-cast-icon holmes-recommend-icon" src="${escapeAttr(icon)}" alt="" width="34" height="34" decoding="async" />` +
+      `<img class="logic-cast-icon holmes-recommend-icon" src="${escapeAttr(icon)}" alt="" width="34" height="34" decoding="async" onerror="this.remove()" />` +
       `<strong>${escapeHtml(label)}</strong></span>`
     );
   }
@@ -842,12 +848,19 @@
       <p class="meta">${formatHolmesRecommendHtml(r)}</p>
       <div class="marks">
     `;
-    const specialistCell = (cells["ハ/ホプ"] && cells["ハ/ホプ"] !== "-") ? cells["ハ/ホプ"] : (cells["ベ"] || "-");
-    const specialistMark = (marks["ハ/ホプ"] && marks["ハ/ホプ"] !== "-") ? marks["ハ/ホプ"] : (marks["ベ"] || "-");
+    // 第3探偵の箱はハンター/ホプキンス → ベイカー → ウィギンズの順に、登場しているものを出す（設計上は排他）。
+    const pickSpecialist = (src) => {
+      for (const k of ["ハ/ホプ", "ベ", "ウ"]) {
+        if (src[k] && src[k] !== "-") return src[k];
+      }
+      return "-";
+    };
+    const specialistCell = pickSpecialist(cells);
+    const specialistMark = pickSpecialist(marks);
     for (const [k, label] of [["ワ", "ワトソン"], ["アイ", "アイリーン"], ["モ", "モーリアティ"]]) {
       html += `<div class="mark-box"><strong>${label}</strong>${escapeHtml(cells[k] || "-")}<br/><span>${escapeHtml(marks[k] || "-")}</span></div>`;
     }
-    html += `<div class="mark-box"><strong>ベイカー/ハンター/ホプキンス</strong>${escapeHtml(specialistCell)}<br/><span>${escapeHtml(specialistMark)}</span></div>`;
+    html += `<div class="mark-box"><strong>ベイカー/ハンター/ホプキンス/ウィギンズ</strong>${escapeHtml(specialistCell)}<br/><span>${escapeHtml(specialistMark)}</span></div>`;
     html += "</div><div class='pdf-links'>";
     if (r.pdf_url) html += `<a href="${escapeAttr(r.pdf_url)}" target="_blank" rel="noopener">予想詳細PDF</a>`;
     if (r.help_pdf_url) html += `<a href="${escapeAttr(r.help_pdf_url)}" target="_blank" rel="noopener">項目説明PDF</a>`;
@@ -882,6 +895,7 @@
     if (col === "アイリーン") return "mark-honmei mark-i";
     if (col === "モーリアティ") return "mark-honmei mark-m";
     if (col === "ベイカー") return "mark-honmei mark-b";
+    if (col === "ウィギンズ") return "mark-honmei mark-wg";
     return "mark-honmei mark-h";
   }
 

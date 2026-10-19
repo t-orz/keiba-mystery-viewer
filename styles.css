@@ -1493,6 +1493,7 @@ html.hide-cast-icons .holmes-recommend-icon {
 .race-result-table .mark-h { color: #16a085; }
 .race-result-table .mark-m { color: #7b1fa2; }
 .race-result-table .mark-b { color: #b8860b; }
+.race-result-table .mark-wg { color: #8e2c3a; }
 .pdf-links {
   margin-top: 0.85rem;
   display: flex;
@@ -1650,6 +1651,7 @@ table.shutuba .mark-i { color: #1565c0; }
 table.shutuba .mark-h { color: #16a085; }
 table.shutuba .mark-m { color: #7b1fa2; }
 table.shutuba .mark-b { color: #b8860b; }
+table.shutuba .mark-wg { color: #8e2c3a; }
 /* 脚質（漢字1文字）。色分けは視覚的に違和感があるため付けない（2026-09-27） */
 table.shutuba td.rs-cell { text-align: center; }
 /* ホームズ指数の朝一斉比。良し悪しを示さないよう色は付けず、控えめに出す */
