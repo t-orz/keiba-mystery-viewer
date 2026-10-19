@@ -406,7 +406,7 @@
   /* 直前予想が済んだかの表示（2026-10-18）。
      サーバーが各レースに update_kind（最後の更新の種類）を付ける（auto-x holmes_morning.update_kind）:
        pre_race＝直前予想（発走約10分前） / graded_1h＝重賞1時間前 / weather＝8時の天候・馬場の再予想 / morning＝朝一斉のまま
-     ジャンプボタンの下線（CSS .is-pre-race-done）は直前予想だけ（重賞1時間前・天候馬場の再予想には付けない。ユーザー決定）。
+     ジャンプボタンの下線は 2026-10-19 に廃止（ユーザー決定）。ボタンには直前予想済みをツールチップと読み上げだけで残す。
      レース要約の先頭には状態ごとの帯を出し、朝一斉から変わった◎○を添える（morning_marks があるときだけ）。 */
   const PRE_RACE_LEAD_MIN = 10;
   const MARK_LOGIC_NAMES = {
@@ -524,7 +524,6 @@
     if (isObstacleRace(r)) cls += " is-obstacle";
     if (selected) cls += " is-selected";
     if (nearest) cls += " is-nearest-prepost";
-    if (isPreRaceDone(r)) cls += " is-pre-race-done";
     b.className = cls;
     const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
     b.textContent = `${rn}R`;
