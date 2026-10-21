@@ -376,12 +376,24 @@
   }
 
   // この値未満のレースは「非推奨」。順位が上位でも順位色を付けない（2026-10-24 の新しい計算から）。
-  const HOLMES_LOW_THRESHOLD = 70;
-  function isHolmesLow(r) {
-    if (!r || isObstacleRace(r)) return false;
+  // HOLMES_LOW_THRESHOLD 以上 HOLMES_BORDER_TOP 未満は「境界域」で、色は変えず要約に説明を添える。
+  // 線は race_edge_board.py の HOLMES_LOW_LINE / HOLMES_BORDER_LINE と同じ値にすること。
+  const HOLMES_LOW_THRESHOLD = 60;
+  const HOLMES_BORDER_TOP = 70;
+  const HOLMES_BORDER_NOTE = "境界域：やや信頼しにくい";
+  function holmesIndexValue(r) {
+    if (!r || isObstacleRace(r)) return null;
     const s = String(r.holmes_index == null ? "" : r.holmes_index).trim();
-    if (!/^\d+(\.\d+)?$/.test(s)) return false;
-    return Number(s) < HOLMES_LOW_THRESHOLD;
+    if (!/^\d+(\.\d+)?$/.test(s)) return null;
+    return Number(s);
+  }
+  function isHolmesLow(r) {
+    const v = holmesIndexValue(r);
+    return v != null && v < HOLMES_LOW_THRESHOLD;
+  }
+  function isHolmesBorder(r) {
+    const v = holmesIndexValue(r);
+    return v != null && v >= HOLMES_LOW_THRESHOLD && v < HOLMES_BORDER_TOP;
   }
 
   function jumpClass(rank) {
@@ -541,7 +553,9 @@
     const tip0 = r.holmes_rank_text && r.holmes_rank_text !== "算出前"
       ? `${r.place} ${rn}R ${normalizeStartTime(r.start_time)}（${r.holmes_rank_text}）`
       : `${r.place} ${rn}R ${normalizeStartTime(r.start_time)}`.trim();
-    const tip = isHolmesLow(r) ? `${tip0} ・ホームズ指数${HOLMES_LOW_THRESHOLD}未満（非推奨）` : tip0;
+    const tip = isHolmesLow(r)
+      ? `${tip0} ・ホームズ指数${HOLMES_LOW_THRESHOLD}未満（非推奨）`
+      : isHolmesBorder(r) ? `${tip0} ・${HOLMES_BORDER_NOTE}` : tip0;
     b.title = isPreRaceDone(r) ? `${tip} ・直前予想済み` : tip;
     if (isPreRaceDone(r)) b.setAttribute("aria-label", `${rn}R 直前予想済み`);
     b.addEventListener("click", () => selectRace(r.race_id, r.place, { scroll: false }));
@@ -853,7 +867,7 @@
       <p class="meta">発走 ${escapeHtml(r.start_time || "-")}${coursePart} ／ 天気:${escapeHtml(r.weather || "-")} 馬場:${escapeHtml(r.baba || "-")}${fieldSizePart}</p>
       ${paceLine}
       <p class="meta">期待値偏差: <strong>${escapeHtml(r.dev)}</strong>（ランク ${escapeHtml(r.rank || "-")}）</p>
-      <p class="meta">ホームズ指数: <strong>${escapeHtml(formatHolmesIndexDisplay(r))}</strong>${r.holmes_morning_delta_text ? `<span class="holmes-delta">${escapeHtml(r.holmes_morning_delta_text)}</span>` : ""} ／ 当日レース内順位: <strong>${escapeHtml(r.holmes_rank_text || "算出前")}</strong></p>
+      <p class="meta">ホームズ指数: <strong>${escapeHtml(formatHolmesIndexDisplay(r))}</strong>${isHolmesBorder(r) ? `<span class="holmes-band-note">（${HOLMES_BORDER_NOTE}）</span>` : ""}${r.holmes_morning_delta_text ? `<span class="holmes-delta">${escapeHtml(r.holmes_morning_delta_text)}</span>` : ""} ／ 当日レース内順位: <strong>${escapeHtml(r.holmes_rank_text || "算出前")}</strong></p>
       ${r.reference_only ? `<p class="meta race-reference-only">${escapeHtml(r.reference_only_reason || "学習・ホームズ指数の対象外（参考予想）")}</p>` : ""}
       <p class="meta">${formatHolmesRecommendHtml(r)}</p>
       <div class="marks">

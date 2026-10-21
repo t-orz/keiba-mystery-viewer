@@ -1177,7 +1177,7 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
   background: var(--obstacle);
   border-color: var(--obstacle-b);
 }
-/* ホームズ指数70未満（非推奨）。順位色より後ろに置き、障害より薄い灰色にする。 */
+/* ホームズ指数60未満（非推奨）。順位色より後ろに置き、障害より薄い灰色にする。 */
 .jump.is-holmes-low {
   background: var(--holmes-low);
   border-color: var(--holmes-low-b);
