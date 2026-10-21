@@ -375,6 +375,15 @@
     return /障害|ジャンプ/.test(String(r.name || r.race_name || ""));
   }
 
+  // この値未満のレースは「非推奨」。順位が上位でも順位色を付けない（2026-10-24 の新しい計算から）。
+  const HOLMES_LOW_THRESHOLD = 70;
+  function isHolmesLow(r) {
+    if (!r || isObstacleRace(r)) return false;
+    const s = String(r.holmes_index == null ? "" : r.holmes_index).trim();
+    if (!/^\d+(\.\d+)?$/.test(s)) return false;
+    return Number(s) < HOLMES_LOW_THRESHOLD;
+  }
+
   function jumpClass(rank) {
     const r = Number(rank);
     if (r === 1) return "jump rank-top";
@@ -522,15 +531,17 @@
     const nearest = nearestId != null && String(r.race_id) === String(nearestId);
     let cls = jumpClass(r.holmes_index_rank);
     if (isObstacleRace(r)) cls += " is-obstacle";
+    else if (isHolmesLow(r)) cls += " is-holmes-low";
     if (selected) cls += " is-selected";
     if (nearest) cls += " is-nearest-prepost";
     b.className = cls;
     const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
     b.textContent = `${rn}R`;
     b.setAttribute("aria-pressed", selected ? "true" : "false");
-    const tip = r.holmes_rank_text && r.holmes_rank_text !== "算出前"
+    const tip0 = r.holmes_rank_text && r.holmes_rank_text !== "算出前"
       ? `${r.place} ${rn}R ${normalizeStartTime(r.start_time)}（${r.holmes_rank_text}）`
       : `${r.place} ${rn}R ${normalizeStartTime(r.start_time)}`.trim();
+    const tip = isHolmesLow(r) ? `${tip0} ・ホームズ指数${HOLMES_LOW_THRESHOLD}未満（非推奨）` : tip0;
     b.title = isPreRaceDone(r) ? `${tip} ・直前予想済み` : tip;
     if (isPreRaceDone(r)) b.setAttribute("aria-label", `${rn}R 直前予想済み`);
     b.addEventListener("click", () => selectRace(r.race_id, r.place, { scroll: false }));

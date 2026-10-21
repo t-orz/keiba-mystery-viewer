@@ -13,6 +13,8 @@
   --gold-b: rgba(176, 118, 0, 0.75);
   --obstacle: #c9c9c9;
   --obstacle-b: rgba(0, 0, 0, 0.32);
+  --holmes-low: #e8e8e8;
+  --holmes-low-b: rgba(0, 0, 0, 0.18);
   --accent: #0b3d2e;
   --pad: clamp(0.75rem, 3.5vw, 1.25rem);
   --touch: 44px;
@@ -1174,6 +1176,11 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
 .jump.is-obstacle {
   background: var(--obstacle);
   border-color: var(--obstacle-b);
+}
+/* ホームズ指数70未満（非推奨）。順位色より後ろに置き、障害より薄い灰色にする。 */
+.jump.is-holmes-low {
+  background: var(--holmes-low);
+  border-color: var(--holmes-low-b);
 }
 
 /* 発走表モード: 会場列 × 発走時刻行（バレー得点推移表イメージ） */

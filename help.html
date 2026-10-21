@@ -7,7 +7,7 @@
   <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
   <title>項目説明ヘルプ｜競馬AI ミステリー予想</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261019160709" />
+  <link rel="stylesheet" href="styles.css?v=20261021091338" />
   <style>
     /* このページは通常の縦スクロール。styles.css が SPA 本体（index.html）向けに
        ≥721px で html,body に付けている overflow:hidden / height:100% を打ち消す。 */
@@ -43,7 +43,7 @@
       <dt>レースジャンプ</dt>
       <dd>レースを選ぶボタン。「場内」は選んだ会場のR順、「発走表」は全会場を発走時刻順に並べた表です。どちらを使うかはブラウザに記憶されます。</dd>
       <dt>ジャンプボタンの色</dt>
-      <dd>金＝ホームズ指数1位／青＝2〜5位／緑＝6〜10位／灰＝障害競走／赤枠＝最終更新に最も近い発走前のレース。</dd>
+      <dd>金＝ホームズ指数1位／青＝2〜5位／緑＝6〜10位／灰＝障害競走／薄い灰＝ホームズ指数70未満の非推奨レース（順位が10位以内でも色を付けません）／赤枠＝最終更新に最も近い発走前のレース。</dd>
       <dt>会場マトリクス</dt>
       <dd>開催場ごとの一覧。行を選ぶとレース要約が表示されます。列は偏差・ホームズ推・ホームズ指数・ワトソン・アイリーン・第3探偵です。</dd>
       <dt>偏差</dt>
@@ -177,7 +177,7 @@
     <p><a href="index.html">本日の予想サマリーへ戻る</a></p>
   </footer>
 
-  <script src="config.js?v=20261019160709"></script>
+  <script src="config.js?v=20261021091338"></script>
   <script>
     (function () {
       var cfg = window.PUBLIC_VIEWER_CONFIG || {};
