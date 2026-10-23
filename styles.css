@@ -299,16 +299,17 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   flex-direction: column;
   gap: 0.3rem;
 }
+/* 1場1行。幅224pxで「稍重・稍重・風速12.3」まで収まる間隔（10-24 新潟の稍重で1px溢れて風が2行目に落ちた） */
 .track-cond-item {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.28rem 0.42rem;
+  gap: 0.28rem 0.3rem;
   font-size: 0.79rem;
   line-height: 1.3;
 }
 .track-cond-place {
-  min-width: 2.7em;
+  min-width: 2.4em;
   font-weight: 700;
   color: var(--accent);
 }
