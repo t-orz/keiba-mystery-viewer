@@ -329,7 +329,9 @@
       const now = new Date();
       const places = [];
       for (const v of data.venues || []) if (v.place && !places.includes(v.place)) places.push(v.place);
-      const maxR = Math.max(12, ...races.map(rnum));
+      // 列はその日の実際の最終レースまで（夏の短縮開催など12R未満の日に空の列を出さない）。
+      // 場ごとにレース数が違う日は、足りない場の右端が空欄になる
+      const maxR = Math.max(1, ...races.map(rnum));
       // 次に発走するレース（全場で1つ）
       let next = null, nextT = Infinity;
       for (const r of races) {
