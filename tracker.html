@@ -301,7 +301,7 @@
       <button type="button" id="soundToggle" aria-pressed="false">🔕 音OFF</button>
       <button type="button" id="soundTest">テスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
+      <span class="sound-hint">音のあとにログを読み上げ／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
   </header>
 
@@ -322,7 +322,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ）。読み上げの声はブラウザに入っている日本語の声を使います（Chrome 推奨）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -888,6 +888,68 @@
       }
     }
 
+
+    // ---- 読み上げ（通知音のあとにログを読む。音のON/OFFと連動。2026-10-25） ----
+    // Chrome を第一に考える（Google 日本語の声があれば使う）。Edge/Safari は日本語の声があれば動く。
+    const SOUND_LEN_MS = { normal: 650, hi: 1400, top: 3000 };   // 通知音が鳴り終わるまで待ってから読む
+    const SPOKEN_KIND = { pre_race: "直前予想", graded_1h: "重賞1時間前予想", weather: "馬場変更で再予想" };
+    let jaVoice = null;
+    function pickVoice() {
+      if (!window.speechSynthesis) return null;
+      const vs = speechSynthesis.getVoices().filter((v) => /^ja/i.test(v.lang));
+      jaVoice = vs.find((v) => /google/i.test(v.name)) || vs.find((v) => /natural|online/i.test(v.name)) || vs[0] || null;
+      return jaVoice;
+    }
+    if (window.speechSynthesis) {
+      pickVoice();
+      speechSynthesis.addEventListener("voiceschanged", pickVoice);
+    }
+    function raceSpoken(e) { return `${e.place || ""}${e.R || ""}レース`; }
+    /** 1件を耳で聞く用の短い文に。例「京都12レース、直前予想。ホームズ指数46、1上がって、当日31位」 */
+    function spokenOne(e) {
+      if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `。${e.n}レース` : ""}`;
+      const parts = [`${raceSpoken(e)}、${SPOKEN_KIND[e.kind] || "予想を更新"}`];
+      if (e.kind === "weather" && e.note) parts.push(String(e.note).replace(/\s*→\s*/g, "から").replace(/\s+/g, "、"));
+      if (e.obstacle) return parts.join("。") + "。障害なので指数は参考です";
+      const bits = [];
+      if (e.after != null) {
+        let idx = `ホームズ指数${e.after}`;
+        if (e.before != null) {
+          const d = e.after - e.before;
+          idx += d > 0 ? `、${d}上がって` : d < 0 ? `、${-d}下がって` : "、変わらず";
+        }
+        bits.push(idx);
+      }
+      if (e.after_rank != null) bits.push(Number(e.after_rank) === 1 ? "当日1位になりました" : `当日${e.after_rank}位`);
+      return parts.join("。") + (bits.length ? "。" + bits.join("、") : "");
+    }
+    /** 1回の読み直しで増えた分をまとめて1つの文に。3件以上は件数と最上位だけ */
+    function spokenFor(evs) {
+      if (!evs.length) return "";
+      if (evs.length < 3) return evs.map(spokenOne).join("。　");
+      const kinds = new Set(evs.map((e) => e.kind));
+      const SUMMARY = { weather: "馬場変更で{n}レースを再予想しました", pre_race: "直前予想で{n}レースを更新しました",
+        graded_1h: "重賞1時間前予想で{n}レースを更新しました" };
+      const head = (kinds.size === 1 && SUMMARY[evs[0].kind] ? SUMMARY[evs[0].kind] : "{n}件の更新がありました").replace("{n}", evs.length);
+      const ranked = evs.filter((e) => !e.obstacle && e.after_rank != null).sort((a, b) => a.after_rank - b.after_rank);
+      if (!ranked.length) return head;
+      const b = ranked[0];
+      return `${head}。最上位は${raceSpoken(b)}、ホームズ指数${b.after}、当日${b.after_rank}位`;
+    }
+    function speak(text, delayMs) {
+      if (!soundOn || !text || !window.speechSynthesis || volume <= 0) return;
+      setTimeout(() => {
+        if (!soundOn) return;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "ja-JP";
+        const v = jaVoice || pickVoice();
+        if (v) u.voice = v;
+        u.rate = 1.1;
+        u.volume = Math.max(0, Math.min(1, volume / 100));
+        speechSynthesis.speak(u);
+      }, Math.max(0, delayMs || 0));
+    }
+
     /** 新しく増えたログの音の種類。予想後の当日順位が1位=top、2〜5位=hi、それ以外=normal。
      *  すでに上位だったレースの予想し直しも予想後の順位で鳴らす（2026-10-25 変更）。 */
     function eventSound(e) {
@@ -933,13 +995,19 @@
       if (day !== knownDay) { knownDay = day; knownKeys = null; knownLiveCount = null; }
       if (serverEvents) {
         const fresh = new Map();
+        const freshEvents = [];
         if (knownKeys) {
-          for (const e of serverEvents) if (!knownKeys.has(evKey(e))) fresh.set(evKey(e), eventSound(e));
+          for (const e of serverEvents) {
+            if (!knownKeys.has(evKey(e))) { fresh.set(evKey(e), eventSound(e)); freshEvents.push(e); }
+          }
         }
         knownKeys = new Set(serverEvents.map(evKey));
         if (fresh.size) {
-          // 1回の読み直しで複数増えても音は1回。いちばん上の種類を鳴らす
-          play([...fresh.values()].reduce((x, y) => (SOUND_RANK[y] > SOUND_RANK[x] ? y : x), "normal"));
+          // 1回の読み直しで複数増えても音は1回。いちばん上の種類を鳴らし、鳴り終わってから読み上げる
+          const kind = [...fresh.values()].reduce((x, y) => (SOUND_RANK[y] > SOUND_RANK[x] ? y : x), "normal");
+          play(kind);
+          freshEvents.sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+          speak(spokenFor(freshEvents), SOUND_LEN_MS[kind]);
         }
         const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e), fresh: fresh.get(evKey(e)) }))
           .sort((a, b) => b.t.getTime() - a.t.getTime());
@@ -1010,12 +1078,25 @@
       try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch (e) { /* noop */ }
       renderSoundButton();
       if (soundOn) play("normal");   // ONにした操作で音を有効にし、鳴ることをその場で確かめる
+      else if (window.speechSynthesis) speechSynthesis.cancel();   // OFFにしたら読みかけも止める
     });
     $("soundTest").addEventListener("click", () => {
       // OFFでも試聴はできる（3種類を順に）
       play("normal", true);
       setTimeout(() => play("hi", true), 1000);
       setTimeout(() => play("top", true), 2700);
+      // 読み上げの試聴（音がOFFでも聞けるよう一時的に読む）
+      if (window.speechSynthesis) {
+        setTimeout(() => {
+          const u = new SpeechSynthesisUtterance(spokenOne({ kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 }));
+          u.lang = "ja-JP";
+          const v = jaVoice || pickVoice();
+          if (v) u.voice = v;
+          u.rate = 1.1;
+          u.volume = Math.max(0, Math.min(1, volume / 100));
+          speechSynthesis.speak(u);
+        }, 2700 + SOUND_LEN_MS.top);
+      }
     });
     const volEl = $("soundVol");
     volEl.value = String(volume);
