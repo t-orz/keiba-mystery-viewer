@@ -151,16 +151,6 @@
       font-weight: 700;
       cursor: pointer;
     }
-    .sound select {
-      min-height: 40px;
-      padding: 0.3rem 0.6rem;
-      border-radius: 999px;
-      border: 1px solid var(--rule);
-      background: #fff;
-      color: var(--ink);
-      font: inherit;
-      font-weight: 700;
-    }
     .sound button[aria-pressed="true"] { background: #00707e; border-color: #00707e; color: #fff; }
     .sound .sound-hint { font-size: 0.75rem; color: var(--muted); }
     ol.log li.is-new { animation: logflash 2.4s ease-out 1; }
@@ -177,13 +167,8 @@
     <span class="meta" id="meta">読み込み中…</span>
     <div class="sound">
       <button type="button" id="soundToggle" aria-pressed="false">🔕 音OFF</button>
-      <select id="soundVoice" aria-label="音色">
-        <option value="marimba">マリンバ</option>
-        <option value="bell">ベル</option>
-        <option value="soft">やわらか電子音</option>
-      </select>
       <button type="button" id="soundTest">テスト</button>
-      <span class="sound-hint">ログ更新=1音／2〜5位に入った=上がる2音／1位に入った=上がる3音＋和音</span>
+      <span class="sound-hint">ログ更新=上がる2音／2〜5位に入った=ド・ミ・ソ＋和音／1位に入った=ファンファーレ</span>
     </div>
   </header>
 
@@ -199,7 +184,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF。音色は3種類から選べます）は、新しいログが増えたときに鳴ります。その更新で当日順位1位に入ったら上がる3音＋和音、2〜5位に入ったら上がる2音、それ以外は1音（すでに上位だったレースの予想し直しも1音）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。その更新で当日順位1位に入ったらファンファーレ、2〜5位に入ったらド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも上がる2音）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -250,39 +235,33 @@
       o.start(at);
       o.stop(at + atk + dec + 0.05);
     }
-    // 音色（2026-10-24 作り直し）。どれも「1音＝打つ音」を voice(c, out, 周波数, 時刻, 強さ) で鳴らす
-    const VOICES = {
-      // マリンバ: 基音＋4倍音（すぐ消える）。木を叩いたような柔らかい音
-      marimba: (c, out, f, at, v) => {
-        partial(c, out, f, at, { vol: 0.32 * v, atk: 0.004, dec: 0.55 });
-        partial(c, out, f * 4, at, { vol: 0.07 * v, atk: 0.002, dec: 0.08 });
-      },
-      // ベル: 整数倍でない部分音を重ねた澄んだ金属音。余韻長め
-      bell: (c, out, f, at, v) => {
-        partial(c, out, f, at, { vol: 0.22 * v, atk: 0.003, dec: 1.4 });
-        partial(c, out, f * 2.76, at, { vol: 0.09 * v, atk: 0.002, dec: 0.7 });
-        partial(c, out, f * 5.4, at, { vol: 0.04 * v, atk: 0.002, dec: 0.35 });
-      },
-      // やわらか電子音: 三角波を低域フィルタで丸め、少しだけ音程を上げる
-      soft: (c, out, f, at, v) => {
-        const lp = c.createBiquadFilter();
-        lp.type = "lowpass";
-        lp.frequency.value = f * 2.2;
-        lp.connect(out);
-        partial(c, lp, f * 0.985, at, { type: "triangle", vol: 0.42 * v, atk: 0.015, dec: 0.4, glide: 1.015 });
-      },
+    // 音色は「やわらか電子音」1本（2026-10-24 ユーザー決定）。三角波を低域フィルタで丸め、少しだけ音程を上げる。
+    // len は余韻の長さの倍率（和音を長く伸ばすときに使う）
+    function voice(c, out, f, at, v, len = 1) {
+      const lp = c.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = Math.min(f * 2.2, 9000);
+      lp.connect(out);
+      partial(c, lp, f * 0.985, at, { type: "triangle", vol: 0.42 * v, atk: 0.015, dec: 0.4 * len, glide: 1.015 });
+    }
+    const NOTE = {
+      C4: 261.63, C5: 523.25, E5: 659.25, G5: 783.99, A5: 880.0,
+      C6: 1046.5, E6: 1318.5, G6: 1568.0, C7: 2093.0, E7: 2637.0,
     };
-    // 鳴り方（音名で書く）。normal=1音 / hi=上がる2音 / top=上がる3音＋最後に和音
-    const NOTE = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880.0, C6: 1046.5, E6: 1318.5, G6: 1568.0 };
+    // [音名, 鳴らし始め(秒), 強さ, 余韻の倍率]
     const PATTERNS = {
-      normal: [["G5", 0, 0.8]],
-      hi: [["E5", 0, 0.85], ["A5", 0.14, 1]],
-      top: [["C5", 0, 0.8], ["E5", 0.12, 0.85], ["G5", 0.24, 0.9], ["C6", 0.4, 1], ["E6", 0.4, 0.45]],
+      // 通常のログ更新: 上がっていく2音
+      normal: [["E5", 0, 0.85], ["A5", 0.14, 1]],
+      // 2〜5位に入った: ド・ミ・ソと上がって最後に和音
+      hi: [["C5", 0, 0.8], ["E5", 0.12, 0.85], ["G5", 0.24, 0.9], ["C6", 0.4, 1, 1.6], ["E6", 0.4, 0.45, 1.6]],
+      // 1位に入った: 速い駆け上がり → 低音つきの大きな和音を長く → きらめきの高音
+      top: [
+        ["C5", 0, 0.7], ["E5", 0.08, 0.72], ["G5", 0.16, 0.75], ["C6", 0.24, 0.8], ["E6", 0.32, 0.8], ["G6", 0.4, 0.8],
+        ["C4", 0.56, 0.8, 3.5], ["C5", 0.56, 0.6, 3.5], ["G5", 0.56, 0.55, 3.5],
+        ["C6", 0.56, 0.75, 3.5], ["E6", 0.56, 0.55, 3.5], ["G6", 0.56, 0.45, 3.5],
+        ["G6", 0.95, 0.35, 0.6], ["C7", 1.05, 0.3, 0.6], ["E7", 1.15, 0.25, 0.8], ["C7", 1.3, 0.22, 1.5],
+      ],
     };
-    const VOICE_KEY = "holmesTrackerVoice";
-    const VOICE_LABEL = { marimba: "マリンバ", bell: "ベル", soft: "やわらか電子音" };
-    let voiceName = "marimba";
-    try { const v = localStorage.getItem(VOICE_KEY); if (VOICES[v]) voiceName = v; } catch (e) { /* noop */ }
     function play(kind, force) {
       if (!soundOn && !force) return;
       const c = ctx();
@@ -293,8 +272,7 @@
       master.gain.value = 0.9;
       master.connect(comp).connect(c.destination);
       const t0 = c.currentTime + 0.03;
-      const voice = VOICES[voiceName] || VOICES.marimba;
-      for (const [n, dt, v] of PATTERNS[kind] || PATTERNS.normal) voice(c, master, NOTE[n], t0 + dt, v);
+      for (const [n, dt, v, len] of PATTERNS[kind] || PATTERNS.normal) voice(c, master, NOTE[n], t0 + dt, v, len);
     }
     function renderSoundButton() {
       const b = document.getElementById("soundToggle");
@@ -599,17 +577,10 @@
       if (soundOn) play("normal");   // ONにした操作で音を有効にし、鳴ることをその場で確かめる
     });
     $("soundTest").addEventListener("click", () => {
-      // OFFでも試聴はできる（選んでいる音色の3種類を順に）
+      // OFFでも試聴はできる（3種類を順に）
       play("normal", true);
-      setTimeout(() => play("hi", true), 1100);
-      setTimeout(() => play("top", true), 2400);
-    });
-    $("soundVoice").value = voiceName;
-    $("soundVoice").addEventListener("change", (ev) => {
-      if (!VOICES[ev.target.value]) return;
-      voiceName = ev.target.value;
-      try { localStorage.setItem(VOICE_KEY, voiceName); } catch (e) { /* noop */ }
-      play("normal", true);   // 選んだ音色をその場で1音
+      setTimeout(() => play("hi", true), 1000);
+      setTimeout(() => play("top", true), 2700);
     });
     // 前回ONのまま開き直したときは、ブラウザの制限でページに一度触れるまで鳴らない。最初の操作で有効にする
     document.addEventListener("pointerdown", () => { if (soundOn) ctx(); }, { once: true });
