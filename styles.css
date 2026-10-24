@@ -988,11 +988,12 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   min-height: var(--touch);
   padding: 0.45rem 1.1rem;
   border-radius: 10px;
-  background: var(--accent);
+  /* 閲覧サイトでほかに使っていない深い青緑（白文字とのコントラスト比 約6:1） */
+  background: #00707e;
   color: #fff;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 .tracker-btn:hover,
 .tracker-btn:focus-visible {
