@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261025052948" />
+  <link rel="stylesheet" href="styles.css?v=20261025084337" />
 </head>
 <body>
   <div class="layout">
@@ -46,6 +46,8 @@
       <section class="sidebar-subscribe" aria-labelledby="subscribeTitle">
         <h2 class="sidebar-subscribe-title" id="subscribeTitle">配信を受け取る</h2>
         <p class="sidebar-subscribe-hint">発走直前予想などの通知はこちらから登録できます。</p>
+        <!-- スマホではボタンを最下段へ移し、ここは案内だけ（2026-10-25）。本題（指数上位）までのスクロールを短くする -->
+        <p class="cta-guide mobile-only"><a href="#bottomCta">Discord配信（人数限定）とホームズ指数追跡ページのボタンは、ページ最下部にあります ↓</a></p>
         <div class="cta-row sidebar-cta">
           <div class="sidebar-discord-wrap">
             <a class="btn btn-discord" id="discordCta" href="#" target="_blank" rel="noopener">Discord配信に参加</a>
@@ -281,6 +283,24 @@
         </div>
       </section>
 
+      <!-- スマホだけ: 左の欄のボタン一式をここに出す（PCは左の欄のまま）。招待URLは app.js setCtas で同じ値を入れる -->
+      <section class="bottom-cta mobile-only" id="bottomCta" aria-labelledby="bottomCtaTitle">
+        <h2 class="sidebar-subscribe-title" id="bottomCtaTitle">配信を受け取る</h2>
+        <p class="sidebar-subscribe-hint">発走直前予想などの通知はこちらから登録できます。</p>
+        <div class="cta-row sidebar-cta">
+          <div class="sidebar-discord-wrap">
+            <a class="btn btn-discord" id="discordCtaBottom" href="#" target="_blank" rel="noopener">Discord配信に参加</a>
+            <p class="sidebar-limited-note">※人数限定</p>
+          </div>
+          <div class="sidebar-discord-wrap">
+            <p class="sidebar-discord-lead">直前予想のその先へ！Discord限定5分前予想（試験運用中）</p>
+            <a class="btn btn-discord btn-discord-dark" id="discordCta5mBottom" href="#" target="_blank" rel="noopener">Discord配信に参加</a>
+            <p class="sidebar-limited-note">※人数限定</p>
+          </div>
+        </div>
+        <p class="tracker-link"><a class="tracker-btn" href="tracker.html" target="holmesTracker" rel="noopener">ホームズ指数をリアルタイムで追う（別窓）</a></p>
+      </section>
+
       <footer class="site-footer">
         <p>本ページは閲覧専用です。予想の自動実行やオッズ取得は行いません。</p>
         <p><a href="help.html" target="_blank" rel="noopener noreferrer">項目説明ヘルプ（印・評価・PDFの見方）</a></p>
@@ -288,13 +308,13 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261025052948"></script>
+  <script src="config.js?v=20261025084337"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="app.js?v=20261025052948"></script>
+  <script src="app.js?v=20261025084337"></script>
 </body>
 </html>

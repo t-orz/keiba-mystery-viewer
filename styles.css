@@ -1783,6 +1783,32 @@ table.shutuba td.rs-cell { text-align: center; }
   .sidebar-jumps {
     display: none !important;
   }
+  /* スマホは Discord・追跡ボタンを最下段（#bottomCta）へ。左の欄（上）には案内文だけ残す（2026-10-25） */
+  .site-sidebar .sidebar-cta,
+  .site-sidebar .tracker-link,
+  .site-sidebar .sidebar-subscribe-hint {
+    display: none !important;
+  }
+  .cta-guide.mobile-only {
+    display: block;
+    margin: 0.2rem 0 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .bottom-cta.mobile-only {
+    display: block;
+    margin: 1.2rem 0 0.5rem;
+    padding: 0.9rem 0.85rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    text-align: center;
+  }
+  .bottom-cta .sidebar-cta {
+    display: flex;
+  }
+  .bottom-cta .tracker-link {
+    margin-top: 0.9rem;
+  }
   .matrix-nav.mobile-only {
     display: block;
     /* 上の見出し（会場マトリクス）に競馬場ボタンが詰まって見えないよう少し空ける */

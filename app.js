@@ -75,6 +75,9 @@
     setDiscordCta(disc, cfg.DISCORD_INVITE_URL, "DISCORD_INVITE_URL");
     // 超直前予想（Discord通知限定）の参加ボタン（2026-10-13）
     setDiscordCta($("discordCta5m"), cfg.DISCORD_5M_INVITE_URL, "DISCORD_5M_INVITE_URL");
+    // スマホ用に最下段へ出している同じボタン（2026-10-25）
+    setDiscordCta($("discordCtaBottom"), cfg.DISCORD_INVITE_URL, "DISCORD_INVITE_URL");
+    setDiscordCta($("discordCta5mBottom"), cfg.DISCORD_5M_INVITE_URL, "DISCORD_5M_INVITE_URL");
   }
 
   function setDiscordCta(el, url, key) {
