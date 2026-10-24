@@ -172,7 +172,7 @@
       <button type="button" id="soundToggle" aria-pressed="false">🔕 音OFF</button>
       <button type="button" id="soundTest">テスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">ログ更新=上がる2音／2〜5位に入った=ド・ミ・ソ＋和音／1位に入った=ファンファーレ</span>
+      <span class="sound-hint">ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
   </header>
 
@@ -188,7 +188,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。その更新で当日順位1位に入ったらファンファーレ、2〜5位に入ったらド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも上がる2音）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -473,13 +473,13 @@
       }
     }
 
-    /** 新しく増えたログの音の種類。その更新で1位に入った=top、2〜5位に入った=hi、それ以外=normal。
-     *  すでに1位（2〜5位）だったレースの予想し直しは通常の音（新しく上位に来たときだけ知らせる）。 */
+    /** 新しく増えたログの音の種類。予想後の当日順位が1位=top、2〜5位=hi、それ以外=normal。
+     *  すでに上位だったレースの予想し直しも予想後の順位で鳴らす（2026-10-25 変更）。 */
     function eventSound(e) {
       if (e.kind === "morning" || e.obstacle) return "normal";
-      const a = Number(e.after_rank), b = e.before_rank == null ? Infinity : Number(e.before_rank);
-      if (a === 1 && b > 1) return "top";
-      if (a >= 2 && a <= 5 && b > 5) return "hi";
+      const a = Number(e.after_rank);
+      if (a === 1) return "top";
+      if (a >= 2 && a <= 5) return "hi";
       return "normal";
     }
     const SOUND_RANK = { normal: 1, hi: 2, top: 3 };
