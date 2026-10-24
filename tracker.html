@@ -142,7 +142,7 @@
   <section>
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
-    <p class="note">● はこのページを開いている間に見つけた更新です（指数は直前に表示していた値から）。それ以外は公開データから組み立てていて、直前予想の指数は朝一斉からの変化です。30秒ごとに自動で読み直します。</p>
+    <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数はその1つ前の値から）。30秒ごとに自動で読み直します。</p>
   </section>
 
   <script src="config.js"></script>
@@ -296,7 +296,52 @@
       saveLive();
     }
 
-    function renderLog(races) {
+    const KIND_LABEL = {
+      pre_race: "直前予想",
+      graded_1h: "重賞1時間前予想",
+      weather: "馬場状態変更による再予想",
+    };
+    /** サーバーの更新ログ events/<日>.json の1件を文にする。 */
+    function eventMsg(e) {
+      if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `（${e.n}レース）` : ""}`;
+      const lbl = `${e.place || ""}${e.R || ""}R`;
+      const what = KIND_LABEL[e.kind] || "予想の更新";
+      const bits = [];
+      if (e.note) bits.push(e.note);
+      if (e.obstacle) bits.push("障害・指数は参考");
+      else if (e.before != null && e.after != null) bits.push(`ホームズ指数 ${e.before}→${e.after}`);
+      else if (e.after != null) bits.push(`ホームズ指数 ${e.after}`);
+      return `${lbl}の${what}を行いました${bits.length ? `（${bits.join("、")}）` : ""}`;
+    }
+    function eventsUrl(day) {
+      const base = String(cfg.SNAPSHOT_URL || "").split("?")[0];
+      if (!/snapshots\/latest\.json$/.test(base) || !day) return "";
+      return base.replace(/snapshots\/latest\.json$/, `events/${day}.json`);
+    }
+    async function loadEvents(day) {
+      const url = eventsUrl(day);
+      if (!url) return null;
+      try {
+        const res = await fetch(`${url}?cb=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return null;
+        const j = await res.json();
+        if (String(j.schedule_date || "") !== day || !Array.isArray(j.events) || !j.events.length) return null;
+        return j.events;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function renderLog(races, serverEvents) {
+      if (serverEvents) {
+        const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e) }))
+          .sort((a, b) => b.t.getTime() - a.t.getTime());
+        $("log").innerHTML = rows.map((e) => `<li><span class="t">${hhmm(e.t)}</span><span class="msg">${esc(e.msg)}</span></li>`).join("");
+        $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数はその1つ前の値から）。30秒ごとに自動で読み直します。";
+        return;
+      }
+      // サーバーの記録がまだ無い日（記録を始める前の日など）は、公開データとこのページで見た変化から組み立てる
+      $("logNote").textContent = "● はこのページを開いている間に見つけた更新です（指数は直前に表示していた値から）。それ以外は公開データから組み立てていて、各レースの最後の更新だけが残ります（直前予想の指数は朝一斉からの変化）。30秒ごとに自動で読み直します。";
       const items = baseLog(races).map((e) => ({ ...e, live: false }));
       // 開いている間に見つけた更新は、同じレースの公開データ由来の行より優先して出す
       const liveMsgs = live.entries.map((e) => ({ t: new Date(e.ts), msg: e.msg, live: true }));
@@ -323,9 +368,10 @@
           $("log").innerHTML = "";
           return;
         }
-        trackLive(String(data.schedule_date || ""), races);
+        const day = String(data.schedule_date || "");
+        trackLive(day, races);
         renderGrid(data, races);
-        renderLog(races);
+        renderLog(races, await loadEvents(day));
         const upd = parseTs(data.updated_at);
         $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
       } catch (e) {
