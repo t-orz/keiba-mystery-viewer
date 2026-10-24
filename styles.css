@@ -977,6 +977,17 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+/* 6位以下でホームズ指数70以上（「その他：京都3R・72　／　東京9R・71」） */
+.top5-others {
+  margin: 0.35rem 0 0;
+  font-size: 0.92em;
+  line-height: 2;
+}
+.top5-others a {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 .tabs {
   display: flex;

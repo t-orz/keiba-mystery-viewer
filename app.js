@@ -149,6 +149,40 @@
       li.appendChild(a);
       ol.appendChild(li);
     }
+    renderTop5Others(items);
+  }
+
+  /** Top5 の外（6位以下）でホームズ指数が HOLMES_BORDER_TOP 以上のレースを
+   *  「その他：京都3R・72　／　東京9R・71」の1行で出す（2026-10-24 ユーザー決定で解禁）。 */
+  function renderTop5Others(top5Items) {
+    const p = $("top5Others");
+    if (!p) return;
+    p.innerHTML = "";
+    const inTop5 = new Set((top5Items || []).map((it) => String(it.race_id)));
+    const rows = allRaces()
+      .filter((r) => {
+        const v = holmesIndexValue(r);
+        const rank = Number(r.holmes_index_rank);
+        return v != null && v >= HOLMES_BORDER_TOP && Number.isFinite(rank) && rank >= 6
+          && !inTop5.has(String(r.race_id));
+      })
+      .sort((a, b) => Number(a.holmes_index_rank) - Number(b.holmes_index_rank));
+    p.hidden = !rows.length;
+    if (!rows.length) return;
+    p.appendChild(document.createTextNode("その他："));
+    rows.forEach((r, i) => {
+      if (i) p.appendChild(document.createTextNode("　／　"));
+      const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
+      const a = document.createElement("a");
+      a.href = "#raceDetailCard";
+      a.textContent = `${r.place || ""}${rn}R・${holmesIndexValue(r)}`;
+      a.title = `ホームズ指数 ${holmesIndexValue(r)}（${r.holmes_index_rank}位）`;
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        selectRace(r.race_id, r.place);
+      });
+      p.appendChild(a);
+    });
   }
 
   function allRaces() {
