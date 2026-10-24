@@ -65,6 +65,7 @@
       /* スマホで横に送っても競馬場名が見えるように左に固定する */
       position: sticky; left: 0; z-index: 1; background: var(--card);
     }
+    th.venue .cond { font-size: 0.72rem; font-weight: 700; color: var(--muted); line-height: 1.35; margin-top: 2px; }
     td.cell {
       width: 3.6rem;
       min-width: 3.6rem;
@@ -323,6 +324,30 @@
       return d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" });
     }
     function label(r) { return `${r.place || ""}${rnum(r)}R`; }
+    /** 競馬場の天候と馬場。各レースの値（予想した時点のもの）のうち、いちばん新しく予想したレースの値を出す。
+     *  馬場は芝とダートで別なので、それぞれのコースのレースから取る。 */
+    const WEATHER_ICON = { "晴": "☀", "曇": "☁", "小雨": "☂", "雨": "☂", "小雪": "❄", "雪": "❄" };
+    function venueCond(races, place) {
+      const latest = (pred) => {
+        let best = null, bt = -Infinity;
+        for (const r of races) {
+          if (r.place !== place || !pred(r)) continue;
+          const t = (parseTs(r.predicted_at) || new Date(0)).getTime();
+          if (t >= bt) { bt = t; best = r; }
+        }
+        return best;
+      };
+      const w = latest((r) => r.weather);
+      const turf = latest((r) => /^芝/.test(String(r.course || "")) && r.baba);
+      const dirt = latest((r) => /^ダ/.test(String(r.course || "")) && r.baba);
+      const parts = [];
+      if (w) parts.push(`${WEATHER_ICON[w.weather] || ""}${esc(w.weather)}`);
+      const baba = [];
+      if (turf) baba.push(`芝 ${esc(turf.baba)}`);
+      if (dirt) baba.push(`ダ ${esc(dirt.baba)}`);
+      if (!parts.length && !baba.length) return "";
+      return `<div class="cond">${parts.join("")}${parts.length && baba.length ? "<br>" : ""}${baba.join("　")}</div>`;
+    }
 
     function renderGrid(data, races) {
       const day = data.schedule_date;
@@ -342,7 +367,7 @@
       for (let i = 1; i <= maxR; i++) h += `<th>${i}</th>`;
       h += "</tr></thead><tbody>";
       for (const p of places) {
-        h += `<tr><th class="venue" scope="row">${esc(p)}</th>`;
+        h += `<tr><th class="venue" scope="row">${esc(p)}${venueCond(races, p)}</th>`;
         for (let i = 1; i <= maxR; i++) {
           const r = races.find((x) => x.place === p && rnum(x) === i);
           if (!r) { h += '<td class="cell empty"></td>'; continue; }
