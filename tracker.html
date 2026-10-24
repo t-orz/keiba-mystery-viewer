@@ -109,7 +109,18 @@
     }
     .legend { margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); }
     .legend span { white-space: nowrap; }
-    ol.log { list-style: none; margin: 0; padding: 0; }
+    /* 見えるのは最新8件まで。残りは枠の中でスクロール（高さは fitLog() が実際の8行分に合わせる） */
+    ol.log {
+      list-style: none;
+      margin: 0;
+      padding: 0 0.4rem 0 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+    }
+    .log-more { margin: 4px 0 0; font-size: 0.78rem; color: var(--muted); text-align: right; }
     ol.log li {
       display: grid;
       grid-template-columns: 3.4rem 1fr;
@@ -187,6 +198,7 @@
   <section>
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
+    <p class="log-more" id="logMore" hidden></p>
     <p class="note">音（右上で切り替え・初期はOFF。音色は3種類から選べます）は、新しいログが増えたときに鳴ります。その更新で当日順位1位に入ったら上がる3音＋和音、2〜5位に入ったら上がる2音、それ以外は1音（すでに上位だったレースの予想し直しも1音）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
@@ -484,6 +496,32 @@
     let knownLiveCount = null;
     const evKey = (e) => `${e.ts}|${e.race_id || ""}|${e.kind}`;
 
+    const LOG_VISIBLE = 8;
+    /** ログを書き換える。スクロール位置は保ったまま、枠の高さを最新8行ぶんに合わせる。 */
+    function setLog(html) {
+      const ol = $("log");
+      const top = ol.scrollTop;
+      ol.innerHTML = html;
+      fitLog();
+      ol.scrollTop = top;
+    }
+    function fitLog() {
+      const ol = $("log");
+      const items = ol.children;
+      const n = items.length;
+      if (n <= LOG_VISIBLE) {
+        ol.style.maxHeight = "";
+      } else {
+        // 行の高さは折り返しで変わるので、実際の8行目の下端で切る
+        const last = items[LOG_VISIBLE - 1];
+        ol.style.maxHeight = `${last.offsetTop - items[0].offsetTop + last.offsetHeight + 1}px`;
+      }
+      const more = $("logMore");
+      more.hidden = n <= LOG_VISIBLE;
+      more.textContent = n > LOG_VISIBLE ? `全${n}件（最新${LOG_VISIBLE}件を表示・それより前は枠の中をスクロール）` : "";
+    }
+    window.addEventListener("resize", fitLog);
+
     function renderLog(races, serverEvents, day) {
       if (day !== knownDay) { knownDay = day; knownKeys = null; knownLiveCount = null; }
       if (serverEvents) {
@@ -504,10 +542,10 @@
           .replace(/((?:ホームズ指数|当日順位) [^　）、]+)/g, '<span class="nw">$1</span>')
           .replace(/(→\d+ )(\+\d+|-\d+|↑\d+|↓\d+|±0)/g, (_, a, d) =>
             `${a}<span class="chg ${"+↑".includes(d[0]) ? "up" : "-↓".includes(d[0]) ? "down" : "flat"}">${d}</span>`);
-        $("log").innerHTML = rows.map((e) => {
+        setLog(rows.map((e) => {
           const cls = e.fresh ? `is-new${e.fresh === "top" ? " top" : ""}` : "";
           return `<li class="${cls}"><span class="t">${hhmm(e.t)}</span><span class="msg">${keep(e.msg)}</span></li>`;
-        }).join("");
+        }).join(""));
         $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。";
         return;
       }
@@ -522,9 +560,9 @@
       const liveKeys = new Set(liveMsgs.map((e) => e.msg.split("の")[0] + "|" + hhmm(e.t)));
       const merged = items.filter((e) => !liveKeys.has(e.msg.split("の")[0] + "|" + hhmm(e.t))).concat(liveMsgs);
       merged.sort((a, b) => (b.t ? b.t.getTime() : 0) - (a.t ? a.t.getTime() : 0));
-      $("log").innerHTML = merged.length
+      setLog(merged.length
         ? merged.map((e) => `<li class="${e.live ? "live" : ""}"><span class="t">${hhmm(e.t)}</span><span class="msg">${esc(e.msg)}</span></li>`).join("")
-        : "<li><span class='t'></span><span class='msg'>まだ予想がありません</span></li>";
+        : "<li><span class='t'></span><span class='msg'>まだ予想がありません</span></li>");
     }
 
     async function load() {
@@ -539,7 +577,7 @@
         if (data.cleared || !races.length) {
           $("meta").textContent = "本日の開催はありません（またはサイトクローズ後です）";
           $("grid").innerHTML = "<div class='closed'>表示できるレースがありません</div>";
-          $("log").innerHTML = "";
+          setLog("");
           return;
         }
         const day = String(data.schedule_date || "");
