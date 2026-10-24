@@ -120,6 +120,7 @@
     ol.log li:last-child { border-bottom: 0; }
     ol.log .t { color: var(--muted); font-variant-numeric: tabular-nums; }
     ol.log .msg { overflow-wrap: anywhere; }
+    ol.log .nw { white-space: nowrap; }
     ol.log li.live .msg::before { content: "● "; color: var(--next); }
     .note { margin: 8px 0 0; font-size: 0.78rem; color: var(--muted); }
     .closed { padding: 1.5rem 0; text-align: center; color: var(--muted); }
@@ -142,7 +143,7 @@
   <section>
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
-    <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数はその1つ前の値から）。30秒ごとに自動で読み直します。</p>
+    <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の＋は上がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
   <script src="config.js"></script>
@@ -301,6 +302,7 @@
       graded_1h: "重賞1時間前予想",
       weather: "馬場状態変更による再予想",
     };
+    function signed(d) { return d > 0 ? `+${d}` : d < 0 ? `${d}` : "±0"; }
     /** サーバーの更新ログ events/<日>.json の1件を文にする。 */
     function eventMsg(e) {
       if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `（${e.n}レース）` : ""}`;
@@ -309,8 +311,17 @@
       const bits = [];
       if (e.note) bits.push(e.note);
       if (e.obstacle) bits.push("障害・指数は参考");
-      else if (e.before != null && e.after != null) bits.push(`ホームズ指数 ${e.before}→${e.after}`);
-      else if (e.after != null) bits.push(`ホームズ指数 ${e.after}`);
+      else {
+        let idx = "";
+        if (e.before != null && e.after != null) idx = `ホームズ指数 ${e.before}→${e.after} ${signed(e.after - e.before)}`;
+        else if (e.after != null) idx = `ホームズ指数 ${e.after}`;
+        // 順位は数字が小さいほど上。上がったら＋（例: 20→15 は +5）
+        let rk = "";
+        if (e.before_rank != null && e.after_rank != null) rk = `当日順位 ${e.before_rank}→${e.after_rank} ${signed(e.before_rank - e.after_rank)}`;
+        else if (e.after_rank != null) rk = `当日順位 ${e.after_rank}`;
+        const both = [idx, rk].filter(Boolean).join("　");
+        if (both) bits.push(both);
+      }
       return `${lbl}の${what}を行いました${bits.length ? `（${bits.join("、")}）` : ""}`;
     }
     function eventsUrl(day) {
@@ -336,8 +347,10 @@
       if (serverEvents) {
         const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e) }))
           .sort((a, b) => b.t.getTime() - a.t.getTime());
-        $("log").innerHTML = rows.map((e) => `<li><span class="t">${hhmm(e.t)}</span><span class="msg">${esc(e.msg)}</span></li>`).join("");
-        $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数はその1つ前の値から）。30秒ごとに自動で読み直します。";
+        // 「ホームズ指数 50→56 +6」「当日順位 22→25 -3」はまとまりの途中で折り返さない
+        const keep = (m) => esc(m).replace(/((?:ホームズ指数|当日順位) [^　）、]+)/g, '<span class="nw">$1</span>');
+        $("log").innerHTML = rows.map((e) => `<li><span class="t">${hhmm(e.t)}</span><span class="msg">${keep(e.msg)}</span></li>`).join("");
+        $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の＋は上がった数）。30秒ごとに自動で読み直します。";
         return;
       }
       // サーバーの記録がまだ無い日（記録を始める前の日など）は、公開データとこのページで見た変化から組み立てる
