@@ -979,7 +979,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 /* 追跡ページ（tracker.html）を別窓で開くボタン */
 .tracker-link {
-  margin: 0.75rem 0 0;
+  margin: 0.5rem 0 0.9rem;
 }
 .tracker-btn {
   display: inline-flex;
@@ -999,9 +999,8 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 .tracker-btn:focus-visible {
   filter: brightness(1.15);
 }
-@media (max-width: 480px) {
-  .tracker-btn { display: flex; width: 100%; }
-}
+/* 左の欄では欄の幅いっぱいに置く */
+.tracker-link .tracker-btn { display: flex; width: 100%; text-align: center; }
 /* 6位以下でホームズ指数70以上（「その他：京都3R・72　／　東京9R・71」） */
 .top5-others {
   margin: 0.35rem 0 0;
