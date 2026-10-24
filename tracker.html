@@ -299,7 +299,8 @@
     <span class="meta" id="meta">読み込み中…</span>
     <div class="sound">
       <button type="button" id="soundToggle" aria-pressed="false">🔕 音OFF</button>
-      <button type="button" id="soundTest">テスト</button>
+      <button type="button" id="soundTest">通知音テスト</button>
+        <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
       <span class="sound-hint">音のあとにログを読み上げ／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
@@ -1085,18 +1086,18 @@
       play("normal", true);
       setTimeout(() => play("hi", true), 1000);
       setTimeout(() => play("top", true), 2700);
-      // 読み上げの試聴（音がOFFでも聞けるよう一時的に読む）
-      if (window.speechSynthesis) {
-        setTimeout(() => {
-          const u = new SpeechSynthesisUtterance(spokenOne({ kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 }));
-          u.lang = "ja-JP";
-          const v = jaVoice || pickVoice();
-          if (v) u.voice = v;
-          u.rate = 1.1;
-          u.volume = Math.max(0, Math.min(1, volume / 100));
-          speechSynthesis.speak(u);
-        }, 2700 + SOUND_LEN_MS.top);
-      }
+    });
+    $("speechTest").addEventListener("click", () => {
+      // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
+      if (!window.speechSynthesis) { $("speechTest").textContent = "読み上げ非対応"; return; }
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(spokenOne({ kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 }));
+      u.lang = "ja-JP";
+      const v = jaVoice || pickVoice();
+      if (v) u.voice = v;
+      u.rate = 1.1;
+      u.volume = Math.max(0, Math.min(1, volume / 100));
+      speechSynthesis.speak(u);
     });
     const volEl = $("soundVol");
     volEl.value = String(volume);
