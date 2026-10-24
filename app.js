@@ -139,7 +139,7 @@
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = "#raceDetailCard";
-      a.textContent = it.line || `${it.place} ${it.R}R`;
+      a.textContent = top5LineText(it);
       const idxDisp = formatHolmesIndexDisplay(it);
       if (idxDisp && idxDisp !== "-") a.title = `ホームズ指数 ${idxDisp}`;
       a.addEventListener("click", (e) => {
@@ -150,6 +150,16 @@
       ol.appendChild(li);
     }
     renderTop5Others(items);
+  }
+
+  /** 上位欄の1行。探偵名の（）注釈はこの欄では出さない（2026-10-25 ユーザー指示）。
+   *  line は「東京 5R / ホプキンス（新馬戦特化） / ホームズ指数 86（1位/23レース中）」の形で、
+   *  2つ目の区切りが探偵名。指数側の（1位/…）は残す。 */
+  function top5LineText(it) {
+    if (!it.line) return `${it.place} ${it.R}R`;
+    const parts = String(it.line).split(" / ");
+    if (parts.length >= 2) parts[1] = parts[1].replace(/\s*[（(][^）)]*[）)]\s*$/, "");
+    return parts.join(" / ");
   }
 
   /** Top5 の外（6位以下）でホームズ指数が HOLMES_BORDER_TOP 以上のレースを
