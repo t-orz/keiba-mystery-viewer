@@ -2517,4 +2517,15 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) loadSnapshot({ silent: true });
   });
+  // 追跡ページは別ウインドウで開く（2026-10-24 ユーザー指示。target だけだと多くのブラウザで別タブになる）。
+  // 同じ名前の窓が開いていればそこに読み直して前に出す。ポップアップが止められた・スマホ等では従来どおり別タブ
+  document.addEventListener("click", (e) => {
+    const a = e.target && e.target.closest ? e.target.closest("a.tracker-btn") : null;
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    const w = window.open(a.href, "holmesTracker", "popup=yes,width=1180,height=900");
+    if (w) {
+      e.preventDefault();
+      try { w.focus(); } catch (err) { /* noop */ }
+    }
+  });
 })();
