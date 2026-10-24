@@ -26,8 +26,8 @@
       --obstacle-hatch: rgba(0, 0, 0, 0.18);
       --obstacle-b: rgba(0, 0, 0, 0.32);
       --next: #c62828;
-      --up: #1b7a3a;
-      --down: #b3261e;
+      --up: #c62828;     /* 上がった（指数・順位とも） */
+      --down: #1565c0;   /* 下がった */
     }
     * { box-sizing: border-box; }
     body {
@@ -48,7 +48,7 @@
     }
     h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
     .meta { color: var(--muted); font-size: 0.9rem; }
-    .meta .err { color: var(--down); }
+    .meta .err { color: var(--next); }
     section {
       background: var(--card);
       border: 1px solid var(--rule);
@@ -121,6 +121,10 @@
     ol.log .t { color: var(--muted); font-variant-numeric: tabular-nums; }
     ol.log .msg { overflow-wrap: anywhere; }
     ol.log .nw { white-space: nowrap; }
+    ol.log .chg { font-weight: 700; }
+    ol.log .chg.up { color: var(--up); }
+    ol.log .chg.down { color: var(--down); }
+    ol.log .chg.flat { color: var(--muted); }
     ol.log li.live .msg::before { content: "● "; color: var(--next); }
     .note { margin: 8px 0 0; font-size: 0.78rem; color: var(--muted); }
     .closed { padding: 1.5rem 0; text-align: center; color: var(--muted); }
@@ -348,7 +352,11 @@
         const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e) }))
           .sort((a, b) => b.t.getTime() - a.t.getTime());
         // 「ホームズ指数 50→56 +6」「当日順位 22→25 -3」はまとまりの途中で折り返さない
-        const keep = (m) => esc(m).replace(/((?:ホームズ指数|当日順位) [^　）、]+)/g, '<span class="nw">$1</span>');
+        // 増減幅は 上がった=赤・下がった=青・変わらず=灰（順位も上がったほうが＋）
+        const keep = (m) => esc(m)
+          .replace(/((?:ホームズ指数|当日順位) [^　）、]+)/g, '<span class="nw">$1</span>')
+          .replace(/(→\d+ )(\+\d+|-\d+|±0)/g, (_, a, d) =>
+            `${a}<span class="chg ${d[0] === "+" ? "up" : d[0] === "-" ? "down" : "flat"}">${d}</span>`);
         $("log").innerHTML = rows.map((e) => `<li><span class="t">${hhmm(e.t)}</span><span class="msg">${keep(e.msg)}</span></li>`).join("");
         $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の＋は上がった数）。30秒ごとに自動で読み直します。";
         return;
