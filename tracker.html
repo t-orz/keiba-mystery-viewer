@@ -127,6 +127,25 @@
     ol.log .chg.down { color: var(--down); }
     ol.log .chg.flat { color: var(--muted); }
     ol.log li.live .msg::before { content: "● "; color: var(--next); }
+    /* 音のON/OFF（初期はOFF。ONにする操作がブラウザの「一度触れるまで鳴らさない」制限の解除を兼ねる） */
+    .sound { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-left: auto; }
+    .sound button {
+      min-height: 40px;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--rule);
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .sound button[aria-pressed="true"] { background: #00707e; border-color: #00707e; color: #fff; }
+    .sound .sound-hint { font-size: 0.75rem; color: var(--muted); }
+    ol.log li.is-new { animation: logflash 2.4s ease-out 1; }
+    ol.log li.is-new.top { animation-name: logflash-top; }
+    @keyframes logflash { from { background: rgba(0, 112, 126, 0.22); } to { background: transparent; } }
+    @keyframes logflash-top { from { background: rgba(240, 163, 10, 0.45); } to { background: transparent; } }
     .note { margin: 8px 0 0; font-size: 0.78rem; color: var(--muted); }
     .closed { padding: 1.5rem 0; text-align: center; color: var(--muted); }
   </style>
@@ -135,6 +154,11 @@
   <header>
     <h1>ホームズ指数追跡</h1>
     <span class="meta" id="meta">読み込み中…</span>
+    <div class="sound">
+      <button type="button" id="soundToggle" aria-pressed="false">🔕 音OFF</button>
+      <button type="button" id="soundTest">テスト</button>
+      <span class="sound-hint">ログ更新=ポン／2〜5位に入った=2音／1位に入った=チャイム</span>
+    </div>
   </header>
 
   <section>
@@ -148,6 +172,7 @@
   <section>
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。その更新で当日順位1位に入ったらチャイム、2〜5位に入ったら2音、それ以外はポン（すでに上位だったレースの予想し直しはポン）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -168,6 +193,50 @@
     } catch (e) { /* 保存できない環境でも動く */ }
     function saveLive() {
       try { localStorage.setItem(STORE_KEY, JSON.stringify(live)); } catch (e) { /* noop */ }
+    }
+
+    // ---- 音（Web Audio で合成。素材ファイルなし） ----
+    const SOUND_KEY = "holmesTrackerSound";
+    let soundOn = false;   // 初期状態はOFF（2026-10-24 ユーザー決定）
+    try { soundOn = localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { /* noop */ }
+    let audioCtx = null;
+    function ctx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+    function tone(c, freq, at, dur, vol) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = "sine";
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(vol, at + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g).connect(c.destination);
+      o.start(at);
+      o.stop(at + dur + 0.05);
+    }
+    const SOUNDS = {
+      normal: [[880, 0, 0.25]],                                   // ポン
+      hi: [[660, 0, 0.22], [990, 0.18, 0.35]],                    // 上がっていく2音
+      top: [[784, 0, 0.3], [988, 0.2, 0.3], [1319, 0.4, 0.6]],   // チャイム
+    };
+    function play(kind, force) {
+      if (!soundOn && !force) return;
+      const c = ctx();
+      if (!c) return;
+      const t0 = c.currentTime + 0.03;
+      for (const [f, dt, dur] of SOUNDS[kind] || SOUNDS.normal) tone(c, f, t0 + dt, dur, kind === "top" ? 0.28 : 0.2);
+    }
+    function renderSoundButton() {
+      const b = document.getElementById("soundToggle");
+      b.setAttribute("aria-pressed", soundOn ? "true" : "false");
+      b.textContent = soundOn ? "🔔 音ON" : "🔕 音OFF";
     }
 
     const $ = (id) => document.getElementById(id);
@@ -349,9 +418,34 @@
       }
     }
 
-    function renderLog(races, serverEvents) {
+    /** 新しく増えたログの音の種類。その更新で1位に入った=top、2〜5位に入った=hi、それ以外=normal。
+     *  すでに1位（2〜5位）だったレースの予想し直しは通常の音（新しく上位に来たときだけ知らせる）。 */
+    function eventSound(e) {
+      if (e.kind === "morning" || e.obstacle) return "normal";
+      const a = Number(e.after_rank), b = e.before_rank == null ? Infinity : Number(e.before_rank);
+      if (a === 1 && b > 1) return "top";
+      if (a >= 2 && a <= 5 && b > 5) return "hi";
+      return "normal";
+    }
+    const SOUND_RANK = { normal: 1, hi: 2, top: 3 };
+    let knownDay = "";
+    let knownKeys = null;   // 開いた直後のログでは鳴らさない
+    let knownLiveCount = null;
+    const evKey = (e) => `${e.ts}|${e.race_id || ""}|${e.kind}`;
+
+    function renderLog(races, serverEvents, day) {
+      if (day !== knownDay) { knownDay = day; knownKeys = null; knownLiveCount = null; }
       if (serverEvents) {
-        const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e) }))
+        const fresh = new Map();
+        if (knownKeys) {
+          for (const e of serverEvents) if (!knownKeys.has(evKey(e))) fresh.set(evKey(e), eventSound(e));
+        }
+        knownKeys = new Set(serverEvents.map(evKey));
+        if (fresh.size) {
+          // 1回の読み直しで複数増えても音は1回。いちばん上の種類を鳴らす
+          play([...fresh.values()].reduce((x, y) => (SOUND_RANK[y] > SOUND_RANK[x] ? y : x), "normal"));
+        }
+        const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e), fresh: fresh.get(evKey(e)) }))
           .sort((a, b) => b.t.getTime() - a.t.getTime());
         // 「ホームズ指数 50→56 +6」「当日順位 22→25 -3」はまとまりの途中で折り返さない
         // 増減幅は 上がった=赤・下がった=青・変わらず=灰（順位も上がったほうが＋）
@@ -359,12 +453,18 @@
           .replace(/((?:ホームズ指数|当日順位) [^　）、]+)/g, '<span class="nw">$1</span>')
           .replace(/(→\d+ )(\+\d+|-\d+|↑\d+|↓\d+|±0)/g, (_, a, d) =>
             `${a}<span class="chg ${"+↑".includes(d[0]) ? "up" : "-↓".includes(d[0]) ? "down" : "flat"}">${d}</span>`);
-        $("log").innerHTML = rows.map((e) => `<li><span class="t">${hhmm(e.t)}</span><span class="msg">${keep(e.msg)}</span></li>`).join("");
+        $("log").innerHTML = rows.map((e) => {
+          const cls = e.fresh ? `is-new${e.fresh === "top" ? " top" : ""}` : "";
+          return `<li class="${cls}"><span class="t">${hhmm(e.t)}</span><span class="msg">${keep(e.msg)}</span></li>`;
+        }).join("");
         $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。";
         return;
       }
       // サーバーの記録がまだ無い日（記録を始める前の日など）は、公開データとこのページで見た変化から組み立てる
       $("logNote").textContent = "● はこのページを開いている間に見つけた更新です（指数は直前に表示していた値から）。それ以外は公開データから組み立てていて、各レースの最後の更新だけが残ります（直前予想の指数は朝一斉からの変化）。30秒ごとに自動で読み直します。";
+      // この形では順位の前後が分からないので、増えたときは通常の音だけ
+      if (knownLiveCount != null && live.entries.length > knownLiveCount) play("normal");
+      knownLiveCount = live.entries.length;
       const items = baseLog(races).map((e) => ({ ...e, live: false }));
       // 開いている間に見つけた更新は、同じレースの公開データ由来の行より優先して出す
       const liveMsgs = live.entries.map((e) => ({ t: new Date(e.ts), msg: e.msg, live: true }));
@@ -394,13 +494,29 @@
         const day = String(data.schedule_date || "");
         trackLive(day, races);
         renderGrid(data, races);
-        renderLog(races, await loadEvents(day));
+        renderLog(races, await loadEvents(day), day);
         const upd = parseTs(data.updated_at);
         $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
       } catch (e) {
         $("meta").innerHTML = `<span class='err'>読み込みに失敗しました（${esc(e.message)}）。30秒後に再試行します</span>`;
       }
     }
+
+    renderSoundButton();
+    $("soundToggle").addEventListener("click", () => {
+      soundOn = !soundOn;
+      try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch (e) { /* noop */ }
+      renderSoundButton();
+      if (soundOn) play("normal");   // ONにした操作で音を有効にし、鳴ることをその場で確かめる
+    });
+    $("soundTest").addEventListener("click", () => {
+      // OFFでも試聴はできる（3種類を順に）
+      play("normal", true);
+      setTimeout(() => play("hi", true), 900);
+      setTimeout(() => play("top", true), 2000);
+    });
+    // 前回ONのまま開き直したときは、ブラウザの制限でページに一度触れるまで鳴らない。最初の操作で有効にする
+    document.addEventListener("pointerdown", () => { if (soundOn) ctx(); }, { once: true });
 
     load();
     setInterval(load, POLL_MS);
