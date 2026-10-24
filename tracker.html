@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ホームズ指数追跡</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <style>
+    /* 閲覧サイトとは別窓で開きっぱなしにする前提のページ（2026-10-24）。
+       色はジャンプボタン（styles.css）と同じ: 金=1位 / 青=2〜5位 / 緑=6〜10位 / 灰=60未満 / 網掛け=障害 */
+    :root {
+      --bg: #f3f0e8;
+      --ink: #1a1a1a;
+      --muted: #5c5c5c;
+      --card: #fffcf5;
+      --accent: #0b3d2e;
+      --rule: rgba(11, 61, 46, 0.16);
+      --blue: rgba(66, 133, 244, 0.22);
+      --blue-b: rgba(66, 133, 244, 0.55);
+      --green: rgba(52, 168, 83, 0.22);
+      --green-b: rgba(52, 168, 83, 0.55);
+      --gold: rgba(240, 163, 10, 0.34);
+      --gold-b: rgba(176, 118, 0, 0.75);
+      --holmes-low: #c9c9c9;
+      --holmes-low-b: rgba(0, 0, 0, 0.32);
+      --obstacle-hatch: rgba(0, 0, 0, 0.18);
+      --obstacle-b: rgba(0, 0, 0, 0.32);
+      --next: #c62828;
+      --up: #1b7a3a;
+      --down: #b3261e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.25rem 1rem;
+      margin-bottom: 12px;
+    }
+    h1 { margin: 0; font-size: 1.25rem; color: var(--accent); }
+    .meta { color: var(--muted); font-size: 0.9rem; }
+    .meta .err { color: var(--down); }
+    section {
+      background: var(--card);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    h2 { margin: 0 0 8px; font-size: 1rem; color: var(--accent); }
+    .grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { border-collapse: separate; border-spacing: 4px; }
+    th { font-weight: 700; font-size: 0.85rem; color: var(--muted); }
+    th.venue {
+      text-align: left; padding-right: 6px; color: var(--ink); font-size: 0.95rem; white-space: nowrap;
+      /* スマホで横に送っても競馬場名が見えるように左に固定する */
+      position: sticky; left: 0; z-index: 1; background: var(--card);
+    }
+    td.cell {
+      width: 3.6rem;
+      min-width: 3.6rem;
+      height: 3.4rem;
+      text-align: center;
+      vertical-align: middle;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      border-radius: 8px;
+      background: #fff;
+      position: relative;
+    }
+    td.cell .v { font-size: 1.2rem; font-weight: 700; line-height: 1.1; }
+    td.cell .d { font-size: 0.7rem; color: var(--muted); line-height: 1.2; }
+    td.cell .d.up { color: var(--up); }
+    td.cell .d.down { color: var(--down); }
+    td.cell.empty { background: transparent; border-style: dashed; color: var(--muted); }
+    td.cell.rank-top { background: var(--gold); border-color: var(--gold-b); }
+    td.cell.rank-hi { background: var(--blue); border-color: var(--blue-b); }
+    td.cell.rank-mid { background: var(--green); border-color: var(--green-b); }
+    td.cell.is-low { background: var(--holmes-low); border-color: var(--holmes-low-b); }
+    td.cell.is-obstacle {
+      background:
+        repeating-linear-gradient(135deg, var(--obstacle-hatch) 0 2px, transparent 2px 6px),
+        var(--card);
+      border-color: var(--obstacle-b);
+    }
+    td.cell.is-obstacle .v { font-size: 1rem; color: var(--muted); }
+    td.cell.is-done { opacity: 0.6; }
+    td.cell.is-next { outline: 3px solid var(--next); outline-offset: 1px; }
+    td.cell.is-fresh::after {
+      content: "更新";
+      position: absolute;
+      top: -7px;
+      right: -5px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--next);
+      border-radius: 6px;
+      padding: 0 4px;
+      line-height: 1.4;
+    }
+    .legend { margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); }
+    .legend span { white-space: nowrap; }
+    ol.log { list-style: none; margin: 0; padding: 0; }
+    ol.log li {
+      display: grid;
+      grid-template-columns: 3.4rem 1fr;
+      gap: 0.5rem;
+      padding: 0.55rem 0.15rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    ol.log li:last-child { border-bottom: 0; }
+    ol.log .t { color: var(--muted); font-variant-numeric: tabular-nums; }
+    ol.log .msg { overflow-wrap: anywhere; }
+    ol.log li.live .msg::before { content: "● "; color: var(--next); }
+    .note { margin: 8px 0 0; font-size: 0.78rem; color: var(--muted); }
+    .closed { padding: 1.5rem 0; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ホームズ指数追跡</h1>
+    <span class="meta" id="meta">読み込み中…</span>
+  </header>
+
+  <section>
+    <h2>指数表示</h2>
+    <div class="grid-wrap" id="grid"></div>
+    <p class="legend">
+      <span>金=1位</span>／<span>青=2〜5位</span>／<span>緑=6〜10位</span>／<span>灰=60未満（非推奨）</span>／<span>網掛け=障害（順位対象外）</span>／<span>赤枠=次に発走</span>／<span>薄い表示=発走済み</span>／<span>小さい数字=朝一斉からの増減</span>
+    </p>
+  </section>
+
+  <section>
+    <h2>ログ</h2>
+    <ol class="log" id="log"></ol>
+    <p class="note">● はこのページを開いている間に見つけた更新です（指数は直前に表示していた値から）。それ以外は公開データから組み立てていて、直前予想の指数は朝一斉からの変化です。30秒ごとに自動で読み直します。</p>
+  </section>
+
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    const cfg = window.PUBLIC_VIEWER_CONFIG || {};
+    const POLL_MS = Math.max(15000, Number(cfg.POLL_INTERVAL_MS) || 30000);
+    const LOW = 60;          // app.js の HOLMES_LOW_THRESHOLD と同じ
+    const FRESH_MS = 10 * 60 * 1000;
+    const STORE_KEY = "holmesTrackerLive";
+
+    let live = { day: "", entries: [], seen: {} };   // このページで見つけた更新（日付ごと）
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+      if (s && typeof s === "object" && Array.isArray(s.entries)) live = s;
+    } catch (e) { /* 保存できない環境でも動く */ }
+    function saveLive() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(live)); } catch (e) { /* noop */ }
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+    function isObstacle(r) {
+      if (r.reference_only && /障害/.test(String(r.reference_only_reason || ""))) return true;
+      if (/^障|障害/.test(String(r.course || "").trim())) return true;
+      return /障害|ジャンプ/.test(String(r.name || ""));
+    }
+    function idxNum(r) {
+      const s = String(r.holmes_index == null ? "" : r.holmes_index).trim();
+      return /^\d+(\.\d+)?$/.test(s) ? Number(s) : null;
+    }
+    function rnum(r) { return Number(String(r.R || "").replace(/[Rr]$/, "")) || 0; }
+    function jstDate(day, hm) {
+      const m = String(hm || "").match(/^(\d{1,2}):(\d{2})/);
+      if (!m || !day) return null;
+      const d = new Date(`${day}T${m[1].padStart(2, "0")}:${m[2]}:00+09:00`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    function parseTs(s) {
+      // "2026-10-24 11:04:49"（JST・タイムゾーン無し）
+      const m = String(s || "").match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2})(?::(\d{2}))?/);
+      if (!m) return null;
+      const d = new Date(`${m[1]}T${m[2]}:${m[3] || "00"}+09:00`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    function hhmm(d) {
+      if (!d) return "--:--";
+      return d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" });
+    }
+    function label(r) { return `${r.place || ""}${rnum(r)}R`; }
+
+    function renderGrid(data, races) {
+      const day = data.schedule_date;
+      const now = new Date();
+      const places = [];
+      for (const v of data.venues || []) if (v.place && !places.includes(v.place)) places.push(v.place);
+      const maxR = Math.max(12, ...races.map(rnum));
+      // 次に発走するレース（全場で1つ）
+      let next = null, nextT = Infinity;
+      for (const r of races) {
+        const t = jstDate(day, r.start_time);
+        if (t && t > now && t.getTime() < nextT) { nextT = t.getTime(); next = r.race_id; }
+      }
+      let h = "<table><thead><tr><th></th>";
+      for (let i = 1; i <= maxR; i++) h += `<th>${i}</th>`;
+      h += "</tr></thead><tbody>";
+      for (const p of places) {
+        h += `<tr><th class="venue" scope="row">${esc(p)}</th>`;
+        for (let i = 1; i <= maxR; i++) {
+          const r = races.find((x) => x.place === p && rnum(x) === i);
+          if (!r) { h += '<td class="cell empty"></td>'; continue; }
+          const v = idxNum(r);
+          const cls = ["cell"];
+          const obst = isObstacle(r);
+          const pending = r.holmes_rank_text === "算出前" || !r.predicted;
+          const rank = Number(r.holmes_index_rank);
+          if (obst) cls.push("is-obstacle");
+          else if (!pending && v != null && v < LOW) cls.push("is-low");
+          else if (!pending && rank === 1) cls.push("rank-top");
+          else if (!pending && rank >= 2 && rank <= 5) cls.push("rank-hi");
+          else if (!pending && rank >= 6 && rank <= 10) cls.push("rank-mid");
+          const st = jstDate(day, r.start_time);
+          if (st && st <= now) cls.push("is-done");
+          if (r.race_id === next) cls.push("is-next");
+          const pa = parseTs(r.predicted_at);
+          if (pa && r.update_kind && r.update_kind !== "morning" && now - pa < FRESH_MS) cls.push("is-fresh");
+          let dHtml = "";
+          const dv = Number(r.holmes_morning_delta);
+          if (r.holmes_morning_delta != null && Number.isFinite(dv)) {
+            const dc = dv > 0 ? "up" : dv < 0 ? "down" : "";
+            dHtml = `<div class="d ${dc}">${dv > 0 ? "+" + dv : dv < 0 ? dv : "±0"}</div>`;
+          }
+          const tip = [`${label(r)} ${r.start_time || ""}`, r.name || "",
+            v != null ? `ホームズ指数 ${v}` : "", r.holmes_rank_text || "",
+            r.holmes_morning_delta_text || ""].filter(Boolean).join(" ");
+          h += `<td class="${cls.join(" ")}" title="${esc(tip)}"><div class="v">${v == null ? "-" : v}</div>${dHtml}</td>`;
+        }
+        h += "</tr>";
+      }
+      h += "</tbody></table>";
+      $("grid").innerHTML = h;
+    }
+
+    /** 公開データだけから組み立てるログ（各レースの「最後の更新」まで）。 */
+    function baseLog(races) {
+      const out = [];
+      const morning = races.filter((r) => r.predicted && (!r.update_kind || r.update_kind === "morning"));
+      const mt = morning.map((r) => parseTs(r.predicted_at)).filter(Boolean).sort((a, b) => a - b);
+      if (races.some((r) => r.predicted)) {
+        out.push({ t: mt[0] || null, msg: "朝一斉予想を行いました" });
+      }
+      const weather = races.filter((r) => r.update_kind === "weather");
+      if (weather.length) {
+        const wt = weather.map((r) => parseTs(r.predicted_at)).filter(Boolean).sort((a, b) => a - b);
+        const names = weather.sort((a, b) => (a.place + rnum(a)).localeCompare(b.place + rnum(b), "ja")).map(label).join("・");
+        out.push({ t: wt[0] || null, msg: `天候・馬場状態の変更による予想変更を行いました（${names}）` });
+      }
+      for (const r of races) {
+        if (r.update_kind !== "pre_race" && r.update_kind !== "graded_1h") continue;
+        const kind = r.update_kind === "graded_1h" ? "重賞1時間前予想" : "直前予想";
+        const v = idxNum(r);
+        const m = r.holmes_morning_index;
+        let idx = "";
+        if (isObstacle(r)) idx = "（障害・指数は参考）";
+        else if (v != null && m != null && m !== "") idx = `（ホームズ指数 ${m}→${v}）`;
+        else if (v != null) idx = `（ホームズ指数 ${v}）`;
+        out.push({ t: parseTs(r.predicted_at), msg: `${label(r)}の${kind}を行いました${idx}` });
+      }
+      return out;
+    }
+
+    /** 開いている間に見つけた更新（前回表示していた値 → 新しい値）。 */
+    function trackLive(day, races) {
+      if (live.day !== day) live = { day, entries: [], seen: {} };
+      const first = !Object.keys(live.seen).length;
+      for (const r of races) {
+        const key = String(r.race_id);
+        const cur = { at: String(r.predicted_at || ""), v: idxNum(r), kind: r.update_kind || "" };
+        const prev = live.seen[key];
+        live.seen[key] = cur;
+        if (first || !prev || prev.at === cur.at || !cur.at) continue;
+        const kind = cur.kind === "pre_race" ? "直前予想" : cur.kind === "graded_1h" ? "重賞1時間前予想"
+          : cur.kind === "weather" ? "天候・馬場状態の変更による予想変更" : "予想の更新";
+        let idx = "";
+        if (isObstacle(r)) idx = "（障害・指数は参考）";
+        else if (prev.v != null && cur.v != null) idx = `（ホームズ指数 ${prev.v}→${cur.v}）`;
+        live.entries.push({ ts: (parseTs(cur.at) || new Date()).toISOString(), msg: `${label(r)}の${kind}を行いました${idx}` });
+      }
+      saveLive();
+    }
+
+    function renderLog(races) {
+      const items = baseLog(races).map((e) => ({ ...e, live: false }));
+      // 開いている間に見つけた更新は、同じレースの公開データ由来の行より優先して出す
+      const liveMsgs = live.entries.map((e) => ({ t: new Date(e.ts), msg: e.msg, live: true }));
+      const liveKeys = new Set(liveMsgs.map((e) => e.msg.split("の")[0] + "|" + hhmm(e.t)));
+      const merged = items.filter((e) => !liveKeys.has(e.msg.split("の")[0] + "|" + hhmm(e.t))).concat(liveMsgs);
+      merged.sort((a, b) => (b.t ? b.t.getTime() : 0) - (a.t ? a.t.getTime() : 0));
+      $("log").innerHTML = merged.length
+        ? merged.map((e) => `<li class="${e.live ? "live" : ""}"><span class="t">${hhmm(e.t)}</span><span class="msg">${esc(e.msg)}</span></li>`).join("")
+        : "<li><span class='t'></span><span class='msg'>まだ予想がありません</span></li>";
+    }
+
+    async function load() {
+      const url = String(cfg.SNAPSHOT_URL || "").split("?")[0];
+      if (!url) { $("meta").innerHTML = "<span class='err'>config.js の SNAPSHOT_URL がありません</span>"; return; }
+      try {
+        const res = await fetch(`${url}?cb=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const races = [];
+        for (const v of data.venues || []) for (const r of v.races || []) races.push(r.place ? r : { ...r, place: v.place });
+        if (data.cleared || !races.length) {
+          $("meta").textContent = "本日の開催はありません（またはサイトクローズ後です）";
+          $("grid").innerHTML = "<div class='closed'>表示できるレースがありません</div>";
+          $("log").innerHTML = "";
+          return;
+        }
+        trackLive(String(data.schedule_date || ""), races);
+        renderGrid(data, races);
+        renderLog(races);
+        const upd = parseTs(data.updated_at);
+        $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
+      } catch (e) {
+        $("meta").innerHTML = `<span class='err'>読み込みに失敗しました（${esc(e.message)}）。30秒後に再試行します</span>`;
+      }
+    }
+
+    load();
+    setInterval(load, POLL_MS);
+    // 発走済みの薄い表示・次の発走の赤枠は時刻だけで変わるので、裏で放置されていても戻ったら読み直す
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+  })();
+  </script>
+</body>
+</html>
