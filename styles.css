@@ -11,10 +11,10 @@
   --green-b: rgba(52, 168, 83, 0.55);
   --gold: rgba(240, 163, 10, 0.34);
   --gold-b: rgba(176, 118, 0, 0.75);
-  --obstacle: #c9c9c9;
+  --obstacle-hatch: rgba(0, 0, 0, 0.18);
   --obstacle-b: rgba(0, 0, 0, 0.32);
-  --holmes-low: #e8e8e8;
-  --holmes-low-b: rgba(0, 0, 0, 0.18);
+  --holmes-low: #c9c9c9;
+  --holmes-low-b: rgba(0, 0, 0, 0.32);
   --accent: #0b3d2e;
   --pad: clamp(0.75rem, 3.5vw, 1.25rem);
   --touch: 44px;
@@ -1172,13 +1172,16 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
   margin-left: 0.5em;
 }
 
-/* 障害競走はホームズ指数の対象外（参考予想）。順位色を付けず薄い灰色で示す。
+/* 障害競走はホームズ指数の対象外（参考予想）。順位色を付けず斜めの網掛けで示す
+   （2026-10-24 灰から変更。灰は60未満に回した）。
    rank-* と同じ詳細度なので、必ずこの順（後ろ）に置く。 */
 .jump.is-obstacle {
-  background: var(--obstacle);
+  background:
+    repeating-linear-gradient(135deg, var(--obstacle-hatch) 0 2px, transparent 2px 6px),
+    var(--card);
   border-color: var(--obstacle-b);
 }
-/* ホームズ指数60未満（非推奨）。順位色より後ろに置き、障害より薄い灰色にする。 */
+/* ホームズ指数60未満（非推奨）。順位色より後ろに置く。色は以前の障害の灰。 */
 .jump.is-holmes-low {
   background: var(--holmes-low);
   border-color: var(--holmes-low-b);
