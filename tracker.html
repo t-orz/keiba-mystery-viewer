@@ -738,6 +738,7 @@
     }
   }
     /* ---- ここまで ---- */
+    const TRACK_COND_FROM = "2026-10-31";
     function renderGrid(data, races) {
       const day = data.schedule_date;
       const now = new Date();
@@ -990,8 +991,11 @@
         trackLive(day, races);
         renderGrid(data, races);
       state.data = data;
-      renderTrackConditions(data);
-      loadWind(data);
+      // 天候・馬場・風の欄は 2026-10-31 の開催から出す（10-25 ユーザー指示。それより前の日は隠したまま）
+      if (String(data.schedule_date || "") >= TRACK_COND_FROM) {
+        renderTrackConditions(data);
+        loadWind(data);
+      }
         renderLog(races, await loadEvents(day), day);
         const upd = parseTs(data.updated_at);
         $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
