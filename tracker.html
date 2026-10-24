@@ -152,6 +152,9 @@
       cursor: pointer;
     }
     .sound button[aria-pressed="true"] { background: #00707e; border-color: #00707e; color: #fff; }
+    .sound .vol { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; font-weight: 700; }
+    .sound .vol input { width: 7.5rem; accent-color: #00707e; }
+    .sound .vol span { min-width: 2.6rem; font-variant-numeric: tabular-nums; color: var(--muted); }
     .sound .sound-hint { font-size: 0.75rem; color: var(--muted); }
     ol.log li.is-new { animation: logflash 2.4s ease-out 1; }
     ol.log li.is-new.top { animation-name: logflash-top; }
@@ -168,6 +171,7 @@
     <div class="sound">
       <button type="button" id="soundToggle" aria-pressed="false">🔕 音OFF</button>
       <button type="button" id="soundTest">テスト</button>
+      <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
       <span class="sound-hint">ログ更新=上がる2音／2〜5位に入った=ド・ミ・ソ＋和音／1位に入った=ファンファーレ</span>
     </div>
   </header>
@@ -211,6 +215,12 @@
     const SOUND_KEY = "holmesTrackerSound";
     let soundOn = false;   // 初期状態はOFF（2026-10-24 ユーザー決定）
     try { soundOn = localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { /* noop */ }
+    const VOL_KEY = "holmesTrackerVolume";
+    let volume = 80;
+    try {
+      const v = Number(localStorage.getItem(VOL_KEY));
+      if (localStorage.getItem(VOL_KEY) != null && Number.isFinite(v)) volume = Math.max(0, Math.min(100, v));
+    } catch (e) { /* noop */ }
     let audioCtx = null;
     function ctx() {
       if (!audioCtx) {
@@ -269,7 +279,9 @@
       // 全体の音量と、強い音が割れないように軽く抑える
       const comp = c.createDynamicsCompressor();
       const master = c.createGain();
-      master.gain.value = 0.9;
+      // つまみ 0〜100% を音量に。耳の感じ方に合わせて2乗で効かせる（初期値80%=つまみを付ける前と同じ音量、100%=約1.6倍）
+      master.gain.value = 0.9 * Math.pow(volume / 80, 2);
+      if (volume <= 0) return;
       master.connect(comp).connect(c.destination);
       const t0 = c.currentTime + 0.03;
       for (const [n, dt, v, len] of PATTERNS[kind] || PATTERNS.normal) voice(c, master, NOTE[n], t0 + dt, v, len);
@@ -582,6 +594,15 @@
       setTimeout(() => play("hi", true), 1000);
       setTimeout(() => play("top", true), 2700);
     });
+    const volEl = $("soundVol");
+    volEl.value = String(volume);
+    $("soundVolTxt").textContent = `${volume}%`;
+    volEl.addEventListener("input", () => {
+      volume = Number(volEl.value);
+      $("soundVolTxt").textContent = `${volume}%`;
+      try { localStorage.setItem(VOL_KEY, String(volume)); } catch (e) { /* noop */ }
+    });
+    volEl.addEventListener("change", () => play("normal", true));   // 指を離したらその音量で1回鳴らす
     // 前回ONのまま開き直したときは、ブラウザの制限でページに一度触れるまで鳴らない。最初の操作で有効にする
     document.addEventListener("pointerdown", () => { if (soundOn) ctx(); }, { once: true });
 
