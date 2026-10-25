@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-HTMLS=(index.html help.html tracker.html admin/index.html)
+HTMLS=(index.html help.html tracker.html mini.html admin/index.html)
 
 if [[ "${1:-}" == "--staged" ]]; then
   git diff --cached --name-only | grep -qxE "app\.js|styles\.css|config\.js|track_cond\.js" || exit 0

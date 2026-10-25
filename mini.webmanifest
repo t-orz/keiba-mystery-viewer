@@ -1,0 +1,13 @@
+{
+  "name": "簡略指数追跡",
+  "short_name": "指数追跡",
+  "start_url": "mini.html?app=1",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f0e8",
+  "theme_color": "#f3f0e8",
+  "icons": [
+    { "src": "assets/mini_icon_180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/mini_icon_512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
