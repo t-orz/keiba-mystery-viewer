@@ -302,6 +302,8 @@
     @keyframes logflash-top { from { background: rgba(240, 163, 10, 0.45); } to { background: transparent; } }
     .note { margin: 8px 0 0; font-size: 0.78rem; color: var(--muted); }
     .closed { padding: 1.5rem 0; text-align: center; color: var(--muted); }
+      /* 試聴中は両方のテストボタンを押せなくする（二重起動防止、2026-10-25） */
+    #soundTest:disabled, #speechTest:disabled { opacity: .5; cursor: wait; }
   </style>
 </head>
 <body>
@@ -313,7 +315,7 @@
       <button type="button" id="soundTest">通知音テスト</button>
         <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">音のあとにログを読み上げ（VOICEVOX:冥鳴ひまり）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
+      <span class="sound-hint">音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
   </header>
 
@@ -336,7 +338,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は VOICEVOX:冥鳴ひまり です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -647,6 +649,7 @@
         if (!res.ok) return null;
         const j = await res.json();
         if (String(j.schedule_date || "") !== day || !Array.isArray(j.events) || !j.events.length) return null;
+        setVoice(j.voice, j.voice_label);
         return j.events;
       } catch (e) {
         return null;
@@ -719,8 +722,17 @@
     }
 
 
-    // ---- VOICEVOX（冥鳴ひまり）の部品音声をつないで読む（2026-10-25）。部品は voice/himari/ ----
-    const VOICE_BASE = "voice/himari/";
+    // ---- VOICEVOX の部品音声をつないで読む（2026-10-25）。部品は voice/<声>/ ----
+    // 声はサーバーが決める（events/<日>.json の voice。auto-x holmes_voice.VOICES・.env HWM_TRACKER_VOICE）。
+    // ログがまだ無いときは DEFAULT_VOICE。閲覧者が選ぶ機能は付けない（ユーザー指示）。冥鳴ひまりの部品も voice/himari/ に残してある
+    const DEFAULT_VOICE = "tsumugi";
+    const VOICE_LABELS = { tsumugi: "春日部つむぎ", himari: "冥鳴ひまり" };
+    let VOICE_BASE = `voice/${DEFAULT_VOICE}/`;
+    function setVoice(v, label) {
+      if (!VOICE_LABELS[v]) return;
+      VOICE_BASE = `voice/${v}/`;
+      document.querySelectorAll(".voice-credit").forEach((el) => { el.textContent = `VOICEVOX:${label || VOICE_LABELS[v]}`; });
+    }
     const VOICE_PLACES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"];
     const VOICE_BABA = ["良", "稍重", "重", "不良"];
     const pad = (n, w) => String(n).padStart(w, "0");
@@ -795,8 +807,8 @@
     }
     const clipCache = new Map();
     async function loadClip(c, item) {
-      const key = typeof item === "string" ? item : item.url;
       const src = typeof item === "string" ? VOICE_BASE + item + ".mp3" : item.url;
+      const key = src;   // 声が替わったら別の部品として読み直す
       if (!clipCache.has(key)) {
         clipCache.set(key, fetch(src).then((r) => {
           if (!r.ok) throw new Error(`clip ${key} ${r.status}`);
@@ -823,6 +835,7 @@
         src.start(t);
         t += src.buffer.duration + 0.06;
       }
+      return t - c.currentTime;   // 鳴り終わるまでの秒数（テストの二重起動防止に使う）
     }
     /** 通知音が鳴り終わってから読む。部品で読めれば VOICEVOX、だめならブラウザ読み上げ */
     function sayEvents(evs, delayMs) {
@@ -965,19 +978,40 @@
       if (soundOn) play("normal");   // ONにした操作で音を有効にし、鳴ることをその場で確かめる
       else if (window.speechSynthesis) speechSynthesis.cancel();   // OFFにしたら読みかけも止める
     });
-    $("soundTest").addEventListener("click", () => {
+    // 通知音テストと読み上げテストは、どちらかが鳴り終わるまで両方とも押せない（二重起動防止、2026-10-25）
+    let testBusy = false;
+    const waitMs = (ms) => new Promise((ok) => setTimeout(ok, ms));
+    function runTest(fn) {
+      if (testBusy) return;
+      testBusy = true;
+      $("soundTest").disabled = $("speechTest").disabled = true;
+      Promise.resolve().then(fn).catch(() => {}).finally(() => {
+        testBusy = false;
+        $("soundTest").disabled = $("speechTest").disabled = false;
+      });
+    }
+    $("soundTest").addEventListener("click", () => runTest(async () => {
       // OFFでも試聴はできる（3種類を順に）
       play("normal", true);
       setTimeout(() => play("hi", true), 1000);
       setTimeout(() => play("top", true), 2700);
-    });
-    $("speechTest").addEventListener("click", () => {
+      await waitMs(2700 + SOUND_LEN_MS.top);
+    }));
+    $("speechTest").addEventListener("click", () => runTest(async () => {
       // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
       const sample = { kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 };
-      playClips(clipKeysOne(sample), true).catch(() => browserSample(sample));
-    });
+      let sec;
+      try {
+        sec = await playClips(clipKeysOne(sample), true);
+      } catch (e) {
+        await browserSample(sample);
+        return;
+      }
+      await waitMs((sec || 0) * 1000 + 200);
+    }));
+    /** ブラウザの声で試聴。読み終わったら（または15秒で）解決する */
     function browserSample(sample) {
-      if (!window.speechSynthesis) { $("speechTest").textContent = "読み上げ非対応"; return; }
+      if (!window.speechSynthesis) { $("speechTest").textContent = "読み上げ非対応"; return Promise.resolve(); }
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(spokenOne(sample));
       u.lang = "ja-JP";
@@ -985,7 +1019,11 @@
       if (v) u.voice = v;
       u.rate = 1.1;
       u.volume = Math.max(0, Math.min(1, volume / 100));
-      speechSynthesis.speak(u);
+      return new Promise((ok) => {
+        u.onend = u.onerror = () => ok();
+        setTimeout(ok, 15000);
+        speechSynthesis.speak(u);
+      });
     }
     const volEl = $("soundVol");
     volEl.value = String(volume);
