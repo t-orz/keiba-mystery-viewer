@@ -302,7 +302,7 @@
       <button type="button" id="soundTest">通知音テスト</button>
         <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">音のあとにログを読み上げ／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
+      <span class="sound-hint">音のあとにログを読み上げ（VOICEVOX:冥鳴ひまり）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
   </header>
 
@@ -323,7 +323,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ）。読み上げの声はブラウザに入っている日本語の声を使います（Chrome 推奨）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ）。読み上げの声は VOICEVOX:冥鳴ひまり です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -951,6 +951,117 @@
       }, Math.max(0, delayMs || 0));
     }
 
+
+    // ---- VOICEVOX（冥鳴ひまり）の部品音声をつないで読む（2026-10-25）。部品は voice/himari/ ----
+    const VOICE_BASE = "voice/himari/";
+    const VOICE_PLACES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"];
+    const VOICE_BABA = ["良", "稍重", "重", "不良"];
+    const pad = (n, w) => String(n).padStart(w, "0");
+    /** 1件を部品キーの並びに。作れない言い回しが混じったら null（ブラウザ読み上げに任せる） */
+    function clipKeysOne(e) {
+      if (e.kind === "morning") {
+        const n = Number(e.n);
+        return n >= 1 && n <= 40 ? ["morning", `races_${pad(n, 2)}`] : ["morning"];
+      }
+      const pi = VOICE_PLACES.indexOf(String(e.place || ""));
+      const r = Number(e.R);
+      if (pi < 0 || !(r >= 1 && r <= 12)) return null;
+      const keys = [`race_${pad(pi, 2)}_${pad(r, 2)}`, { pre_race: "kind_pre_race", weather: "kind_weather", graded_1h: "kind_graded_1h" }[e.kind] || "kind_other"];
+      if (e.kind === "weather" && e.note) {
+        const m = String(e.note).match(/^(芝|ダート)\s*(良|稍重|重|不良)\s*→\s*(良|稍重|重|不良)$/);
+        if (!m) return null;
+        keys.push(`baba_${m[1] === "芝" ? "turf" : "dirt"}_${VOICE_BABA.indexOf(m[2])}${VOICE_BABA.indexOf(m[3])}`);
+      }
+      if (e.obstacle) return keys.concat("obstacle");
+      if (e.after != null) {
+        const a = Number(e.after);
+        if (!(a >= 0 && a <= 100)) return null;
+        keys.push(`idx_${pad(a, 3)}`);
+        if (e.before != null) {
+          const d = a - Number(e.before);
+          if (Math.abs(d) > 60) return null;
+          keys.push(d > 0 ? `up_${pad(d, 2)}` : d < 0 ? `down_${pad(-d, 2)}` : "flat");
+        }
+      }
+      if (e.after_rank != null) {
+        const k = Number(e.after_rank);
+        if (k === 1) keys.push("rank1");
+        else if (k >= 2 && k <= 40) keys.push(`rank_${pad(k, 2)}`);
+        else return null;
+      }
+      return keys;
+    }
+    /** 1回の読み直しで増えた分。"|" は文の切れ目（少し長めに間を空ける） */
+    function clipKeysFor(evs) {
+      if (!evs.length) return null;
+      if (evs.length < 3) {
+        const out = [];
+        for (const e of evs) {
+          // サーバー（holmes_voice.py）が付けた部品の並び、または低頻度の言い回し用に作った1回限りの音声
+          const k = e.voice_url ? [{ url: e.voice_url }] : (Array.isArray(e.voice_keys) && e.voice_keys.length ? e.voice_keys : clipKeysOne(e));
+          if (!k) return null;
+          if (out.length) out.push("|");
+          out.push(...k);
+        }
+        return out;
+      }
+      const n = evs.length;
+      if (n > 40) return null;
+      const kinds = new Set(evs.map((e) => e.kind));
+      const k0 = evs[0].kind;
+      const head = kinds.size === 1 && ["weather", "pre_race"].includes(k0) ? `sum_${k0}_${pad(n, 2)}`
+        : kinds.size === 1 && k0 === "graded_1h" && n <= 12 ? `sum_graded_1h_${pad(n, 2)}` : `sum_any_${pad(n, 2)}`;
+      const ranked = evs.filter((e) => !e.obstacle && e.after_rank != null).sort((a, b) => a.after_rank - b.after_rank);
+      if (!ranked.length) return [head];
+      const b = ranked[0];
+      const pi = VOICE_PLACES.indexOf(String(b.place || ""));
+      const rk = Number(b.after_rank);
+      if (pi < 0 || !(Number(b.R) >= 1 && Number(b.R) <= 12) || !(Number(b.after) >= 0 && Number(b.after) <= 100)) return [head];
+      return [head, "|", "top_is", `race_${pad(pi, 2)}_${pad(Number(b.R), 2)}`, `idx_${pad(Number(b.after), 3)}`, rk === 1 ? "rank1" : `rank_${pad(rk, 2)}`];
+    }
+    const clipCache = new Map();
+    async function loadClip(c, item) {
+      const key = typeof item === "string" ? item : item.url;
+      const src = typeof item === "string" ? VOICE_BASE + item + ".mp3" : item.url;
+      if (!clipCache.has(key)) {
+        clipCache.set(key, fetch(src).then((r) => {
+          if (!r.ok) throw new Error(`clip ${key} ${r.status}`);
+          return r.arrayBuffer();
+        }).then((buf) => new Promise((ok, ng) => c.decodeAudioData(buf, ok, ng))));
+      }
+      return clipCache.get(key);
+    }
+    /** 部品をつないで鳴らす。読み込めない部品があれば例外（呼び出し側でブラウザ読み上げに切り替える） */
+    async function playClips(keys, force) {
+      if ((!soundOn && !force) || volume <= 0) return;
+      const c = ctx();
+      if (!c) throw new Error("no audio");
+      const bufs = await Promise.all(keys.filter((k) => k !== "|").map((k) => loadClip(c, k)));
+      const g = c.createGain();
+      g.gain.value = Math.min(1.6, volume / 80);
+      g.connect(c.destination);
+      let t = c.currentTime + 0.05, i = 0;
+      for (const k of keys) {
+        if (k === "|") { t += 0.35; continue; }
+        const src = c.createBufferSource();
+        src.buffer = bufs[i++];
+        src.connect(g);
+        src.start(t);
+        t += src.buffer.duration + 0.06;
+      }
+    }
+    /** 通知音が鳴り終わってから読む。部品で読めれば VOICEVOX、だめならブラウザ読み上げ */
+    function sayEvents(evs, delayMs) {
+      if (!soundOn) return;
+      const keys = clipKeysFor(evs);
+      const fallback = () => speak(spokenFor(evs), 0);
+      setTimeout(() => {
+        if (!soundOn) return;
+        if (!keys) { fallback(); return; }
+        playClips(keys).catch(fallback);
+      }, Math.max(0, delayMs || 0));
+    }
+
     /** 新しく増えたログの音の種類。予想後の当日順位が1位=top、2〜5位=hi、それ以外=normal。
      *  すでに上位だったレースの予想し直しも予想後の順位で鳴らす（2026-10-25 変更）。 */
     function eventSound(e) {
@@ -1008,7 +1119,7 @@
           const kind = [...fresh.values()].reduce((x, y) => (SOUND_RANK[y] > SOUND_RANK[x] ? y : x), "normal");
           play(kind);
           freshEvents.sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-          speak(spokenFor(freshEvents), SOUND_LEN_MS[kind]);
+          sayEvents(freshEvents, SOUND_LEN_MS[kind]);
         }
         const rows = serverEvents.map((e) => ({ t: new Date(e.ts), msg: eventMsg(e), fresh: fresh.get(evKey(e)) }))
           .sort((a, b) => b.t.getTime() - a.t.getTime());
@@ -1089,16 +1200,20 @@
     });
     $("speechTest").addEventListener("click", () => {
       // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
+      const sample = { kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 };
+      playClips(clipKeysOne(sample), true).catch(() => browserSample(sample));
+    });
+    function browserSample(sample) {
       if (!window.speechSynthesis) { $("speechTest").textContent = "読み上げ非対応"; return; }
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(spokenOne({ kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 }));
+      const u = new SpeechSynthesisUtterance(spokenOne(sample));
       u.lang = "ja-JP";
       const v = jaVoice || pickVoice();
       if (v) u.voice = v;
       u.rate = 1.1;
       u.volume = Math.max(0, Math.min(1, volume / 100));
       speechSynthesis.speak(u);
-    });
+    }
     const volEl = $("soundVol");
     volEl.value = String(volume);
     $("soundVolTxt").textContent = `${volume}%`;
