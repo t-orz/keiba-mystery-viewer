@@ -914,14 +914,14 @@
     function spokenOne(e) {
       if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `。${e.n}レース` : ""}`;
       const parts = [`${raceSpoken(e)}、${SPOKEN_KIND[e.kind] || "予想を更新"}`];
-      if (e.kind === "weather" && e.note) parts.push(String(e.note).replace(/\s*→\s*/g, "から").replace(/\s+/g, "、"));
+      if (e.kind === "weather" && e.note) parts.push(String(e.note).replace(/\s*→\s*/g, "から").replace(/\s+/g, "、").replace(/(^|[^不])良/g, "$1りょう"));
       if (e.obstacle) return parts.join("。") + "。障害なので指数は参考です";
       const bits = [];
       if (e.after != null) {
         let idx = `ホームズ指数${e.after}`;
         if (e.before != null) {
           const d = e.after - e.before;
-          idx += d > 0 ? `、${d}上がって` : d < 0 ? `、${-d}下がって` : "、変わらず";
+          idx += d > 0 ? `、${d}あがって` : d < 0 ? `、${-d}さがって` : "、変わらず";   // 漢字だと読み間違える声がある
         }
         bits.push(idx);
       }
