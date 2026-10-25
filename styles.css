@@ -1208,7 +1208,7 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
 }
 
 /* 障害競走はホームズ指数の対象外（参考予想）。順位色を付けず斜めの網掛けで示す
-   （2026-10-24 灰から変更。灰は60未満に回した）。
+   （2026-10-24 灰から変更。灰は非推奨（10-31〜65未満）に回した）。
    rank-* と同じ詳細度なので、必ずこの順（後ろ）に置く。 */
 .jump.is-obstacle {
   background:
@@ -1216,7 +1216,7 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
     var(--card);
   border-color: var(--obstacle-b);
 }
-/* ホームズ指数60未満（非推奨）。順位色より後ろに置く。色は以前の障害の灰。 */
+/* ホームズ指数65未満（非推奨、10-31〜。それまでは60未満）。順位色より後ろに置く。色は以前の障害の灰。 */
 .jump.is-holmes-low {
   background: var(--holmes-low);
   border-color: var(--holmes-low-b);

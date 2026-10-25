@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261025165456" />
+  <link rel="stylesheet" href="styles.css?v=20261025235740" />
 </head>
 <body>
   <div class="layout">
@@ -40,7 +40,7 @@
           <button type="button" class="jump-layout-btn" data-jump-layout="timeline" aria-pressed="false">発走表</button>
         </div>
         <div id="venueTabsSidebar" class="tabs sidebar-venue-tabs" role="tablist" aria-label="会場"></div>
-        <p class="hint jump-legend sidebar-jump-legend">金=ホームズ指数1位 / 青=2〜5位 / 緑=6〜10位 / 網掛け=障害 / 灰=ホームズ指数60未満（非推奨） / 赤枠=最終更新に最も近い発走前</p>
+        <p class="hint jump-legend sidebar-jump-legend">金=ホームズ指数1位 / 青=2〜5位 / 緑=6〜10位 / 網掛け=障害 / 灰=ホームズ指数65未満（非推奨） / 赤枠=最終更新に最も近い発走前</p>
         <div id="jumpButtonsSidebar" class="jump-row sidebar-jump-row"></div>
       </section>
       <section class="sidebar-subscribe" aria-labelledby="subscribeTitle">
@@ -220,7 +220,7 @@
                 <button type="button" class="jump-layout-btn active" data-jump-layout="venue" aria-pressed="true">場内</button>
                 <button type="button" class="jump-layout-btn" data-jump-layout="timeline" aria-pressed="false">発走表</button>
               </div>
-              <p class="hint jump-legend">ジャンプ色: 金=ホームズ指数1位 / 青=2〜5位 / 緑=6〜10位 / 網掛け=障害 / 灰=ホームズ指数60未満（非推奨） / 赤枠=最終更新に最も近い発走前</p>
+              <p class="hint jump-legend">ジャンプ色: 金=ホームズ指数1位 / 青=2〜5位 / 緑=6〜10位 / 網掛け=障害 / 灰=ホームズ指数65未満（非推奨） / 赤枠=最終更新に最も近い発走前</p>
               <div id="jumpButtons" class="jump-row"></div>
             </div>
           </div>
@@ -309,14 +309,14 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261025165456"></script>
+  <script src="config.js?v=20261025235740"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="track_cond.js?v=20261025165456"></script>
-  <script src="app.js?v=20261025165456"></script>
+  <script src="track_cond.js?v=20261025235740"></script>
+  <script src="app.js?v=20261025235740"></script>
 </body>
 </html>

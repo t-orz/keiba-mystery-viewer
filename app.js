@@ -425,7 +425,8 @@
   // この値未満のレースは「非推奨」。順位が上位でも順位色を付けない（2026-10-24 の新しい計算から）。
   // HOLMES_LOW_THRESHOLD 以上 HOLMES_BORDER_TOP 未満は「境界域」で、色は変えず要約に説明を添える。
   // 線は race_edge_board.py の HOLMES_LOW_LINE / HOLMES_BORDER_LINE と同じ値にすること。
-  const HOLMES_LOW_THRESHOLD = 60;
+  // 2026-10-31〜 60 → 65（案①: 65未満=非推奨・65〜69=境界域）。物差し直しで指数が約5上がったため。
+  const HOLMES_LOW_THRESHOLD = 65;
   const HOLMES_BORDER_TOP = 70;
   const HOLMES_BORDER_NOTE = "境界域：やや信頼しにくい";
   const HOLMES_LOW_NOTE = "非推奨";
