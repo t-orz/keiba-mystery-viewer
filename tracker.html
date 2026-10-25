@@ -914,7 +914,7 @@
     function spokenOne(e) {
       if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `。${e.n}レース` : ""}`;
       const parts = [`${raceSpoken(e)}、${SPOKEN_KIND[e.kind] || "予想を更新"}`];
-      if (e.kind === "weather" && e.note) parts.push(String(e.note).replace(/\s*→\s*/g, "から").replace(/\s+/g, "、").replace(/(^|[^不])良/g, "$1りょう"));
+      if (e.kind === "weather" && e.note) parts.push(String(e.note).replace(/\s*→\s*/g, "から").replace(/\s+/g, "、").replace(/(^|[^不])良/g, "$1りょう").replace(/(^|[^稍])重/g, "$1おも"));
       if (e.obstacle) return parts.join("。") + "。障害なので指数は参考です";
       const bits = [];
       if (e.after != null) {
