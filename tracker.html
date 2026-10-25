@@ -323,7 +323,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ）。読み上げの声は VOICEVOX:冥鳴ひまり です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は VOICEVOX:冥鳴ひまり です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
   </section>
 
@@ -852,7 +852,8 @@
     /** サーバーの更新ログ events/<日>.json の1件を文にする。 */
     function eventMsg(e) {
       if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `（${e.n}レース）` : ""}`;
-      const lbl = `${e.place || ""}${e.R || ""}R`;
+      // 重賞（G1〜G3）は格だけ添える。レース名は読み上げだけで使う（2026-10-25）
+      const lbl = `${e.place || ""}${e.R || ""}R${e.grade ? `〔${e.grade}〕` : ""}`;
       const what = KIND_LABEL[e.kind] || "予想の更新";
       const bits = [];
       if (e.note) bits.push(e.note);
@@ -905,7 +906,10 @@
       pickVoice();
       speechSynthesis.addEventListener("voiceschanged", pickVoice);
     }
-    function raceSpoken(e) { return `${e.place || ""}${e.R || ""}レース`; }
+    function raceSpoken(e) {
+      if (e.grade && (e.race_spoken || e.race_name)) return e.race_spoken || e.race_name;   // 重賞はレース名で読む
+      return `${e.place || ""}${e.R || ""}レース`;
+    }
     /** 1件を耳で聞く用の短い文に。例「京都12レース、直前予想。ホームズ指数46、1上がって、当日31位」 */
     function spokenOne(e) {
       if (e.kind === "morning") return `朝一斉予想を行いました${e.n ? `。${e.n}レース` : ""}`;
@@ -957,8 +961,14 @@
     const VOICE_PLACES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"];
     const VOICE_BABA = ["良", "稍重", "重", "不良"];
     const pad = (n, w) => String(n).padStart(w, "0");
-    /** 1件を部品キーの並びに。作れない言い回しが混じったら null（ブラウザ読み上げに任せる） */
+    /** 1件を部品キーの並びに。重賞はレース名の音声（サーバーが作った voice_name_url）を先頭に使う */
     function clipKeysOne(e) {
+      const k = clipKeysOneBase(e);
+      if (k && e.voice_name_url && typeof k[0] === "string" && k[0].startsWith("race_")) k[0] = { url: e.voice_name_url };
+      return k;
+    }
+    /** 1件を部品キーの並びに。作れない言い回しが混じったら null（ブラウザ読み上げに任せる） */
+    function clipKeysOneBase(e) {
       if (e.kind === "morning") {
         const n = Number(e.n);
         return n >= 1 && n <= 40 ? ["morning", `races_${pad(n, 2)}`] : ["morning"];
@@ -1017,7 +1027,8 @@
       const pi = VOICE_PLACES.indexOf(String(b.place || ""));
       const rk = Number(b.after_rank);
       if (pi < 0 || !(Number(b.R) >= 1 && Number(b.R) <= 12) || !(Number(b.after) >= 0 && Number(b.after) <= 100)) return [head];
-      return [head, "|", "top_is", `race_${pad(pi, 2)}_${pad(Number(b.R), 2)}`, `idx_${pad(Number(b.after), 3)}`, rk === 1 ? "rank1" : `rank_${pad(rk, 2)}`];
+      const raceClip = b.voice_name_url ? { url: b.voice_name_url } : `race_${pad(pi, 2)}_${pad(Number(b.R), 2)}`;
+      return [head, "|", "top_is", raceClip, `idx_${pad(Number(b.after), 3)}`, rk === 1 ? "rank1" : `rank_${pad(rk, 2)}`];
     }
     const clipCache = new Map();
     async function loadClip(c, item) {
