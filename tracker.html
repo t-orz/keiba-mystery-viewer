@@ -315,7 +315,7 @@
       <button type="button" id="soundTest">通知音テスト</button>
         <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
+      <span class="sound-hint">指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
   </header>
 
@@ -338,7 +338,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
@@ -821,25 +821,147 @@
       }
       return clipCache.get(key);
     }
-    /** 部品をつないで鳴らす。読み込めない部品があれば例外（呼び出し側でブラウザ読み上げに切り替える） */
-    async function playClips(keys, force) {
-      if ((!soundOn && !force) || volume <= 0) return;
-      const c = ctx();
-      if (!c) throw new Error("no audio");
-      const bufs = await Promise.all(keys.filter((k) => k !== "|").map((k) => loadClip(c, k)));
+    // 予約済みの読み上げ [開始, 終了]（AudioContext の秒）。ログの読み上げと締切アナウンスが重ならないよう後ろへずらす
+    let speechSlots = [];
+    function clipsLength(keys, bufs) {
+      let len = 0, i = 0;
+      for (const k of keys) len += k === "|" ? 0.35 : bufs[i++].duration + 0.06;
+      return len;
+    }
+    function freeSlot(c, t, len) {
+      speechSlots = speechSlots.filter(([, e]) => e > c.currentTime);
+      for (let moved = true; moved;) {
+        moved = false;
+        for (const [a, e] of speechSlots) {
+          if (t < e + 0.3 && t + len > a - 0.3) { t = e + 0.3; moved = true; }
+        }
+      }
+      return t;
+    }
+    /** 読み込んだ部品を t0（AudioContext の秒）から鳴らす。止められるよう鳴らす部品を返す */
+    function startClips(c, keys, bufs, t0) {
       const g = c.createGain();
       g.gain.value = Math.min(1.6, volume / 80);
       g.connect(c.destination);
-      let t = c.currentTime + 0.05, i = 0;
+      const sources = [];
+      let t = t0, i = 0;
       for (const k of keys) {
         if (k === "|") { t += 0.35; continue; }
         const src = c.createBufferSource();
         src.buffer = bufs[i++];
         src.connect(g);
         src.start(t);
+        sources.push(src);
         t += src.buffer.duration + 0.06;
       }
-      return t - c.currentTime;   // 鳴り終わるまでの秒数（テストの二重起動防止に使う）
+      speechSlots.push([t0, t]);
+      return { sources, end: t };
+    }
+    /** 部品をつないで鳴らす。読み込めない部品があれば例外（呼び出し側でブラウザ読み上げに切り替える） */
+    async function playClips(keys, force) {
+      if ((!soundOn && !force) || volume <= 0) return;
+      const c = ctx();
+      if (!c) throw new Error("no audio");
+      const bufs = await Promise.all(keys.filter((k) => k !== "|").map((k) => loadClip(c, k)));
+      const t0 = freeSlot(c, c.currentTime + 0.05, clipsLength(keys, bufs));
+      return startClips(c, keys, bufs, t0).end - c.currentTime;   // 鳴り終わるまでの秒数（テストの二重起動防止に使う）
+    }
+
+    // ---- 発売締切90秒前のアナウンス（2026-10-27 ユーザー指示） ----
+    // 対象: 障害以外で、その時点のホームズ指数70以上 または 当日5位以内。音のON/OFFと連動（別のスイッチは付けない）。
+    // 文: 「東京11レース（重賞は続けてレース名）、発売締め切り90秒前です。このレースのホームズ指数は85、当日順位は1位です」
+    // 隠れた窓・最小化した窓ではページの時計が1分に1回ほどまで間引かれるので、75秒前までに部品を読み込み、
+    // 鳴らす時刻は Web Audio の時計で予約する。締切30秒前を過ぎてしまう遅れなら鳴らさない。
+    const SALES_CLOSE_BEFORE_MS = 2 * 60 * 1000;   // JRAの発売締切は発走2分前
+    const ANNOUNCE_BEFORE_MS = 90 * 1000;
+    const ANNOUNCE_LOOKAHEAD_MS = 75 * 1000;
+    const ANNOUNCE_LATE_MS = 60 * 1000;
+    const ANNOUNCE_INDEX_LINE = 70;
+    const ANNOUNCE_RANK_LINE = 5;
+    let annDay = "";
+    let annRaces = [];
+    let annEvents = [];
+    const annState = new Map();   // "日|race_id" → { sources, timer, end }
+    function startDateOf(day, st) {
+      const m = String(st || "").match(/^(\d{1,2}):(\d{2})/);
+      if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+      const d = new Date(`${day}T${m[1].padStart(2, "0")}:${m[2]}:00+09:00`);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    /** 対象なら { v, rank }、対象外なら null */
+    function announceTarget(r) {
+      if (isObstacle(r) || !r.predicted || r.holmes_rank_text === "算出前") return null;
+      const v = idxNum(r);
+      const rank = Number(r.holmes_index_rank);
+      if (v == null || !(rank >= 1)) return null;
+      return v >= ANNOUNCE_INDEX_LINE || rank <= ANNOUNCE_RANK_LINE ? { v: Math.round(v), rank } : null;
+    }
+    /** 重賞のレース名の音声と読み。サーバーのログ（直前予想など）に付いているものを使う */
+    function announceName(r) {
+      const e = annEvents.find((x) => String(x.race_id) === String(r.race_id) && x.grade && (x.voice_name_url || x.race_spoken || x.race_name));
+      return e ? { url: e.voice_name_url || "", spoken: e.race_spoken || e.race_name || "" } : null;
+    }
+    function announceKeys(r, t, name) {
+      const pi = VOICE_PLACES.indexOf(String(r.place || ""));
+      const rn = rnum(r);
+      if (pi < 0 || !(rn >= 1 && rn <= 12) || !(t.v >= 0 && t.v <= 100) || t.rank > 40) return null;
+      const keys = [`race_${pad(pi, 2)}_${pad(rn, 2)}`];
+      if (name && name.url) keys.push({ url: name.url });
+      return keys.concat("|", "close90", `cidx_${pad(t.v, 3)}`, `crank_${pad(t.rank, 2)}`);
+    }
+    function announceText(r, t, name) {
+      return `${r.place || ""}${rnum(r)}レース${name && name.spoken ? `、${name.spoken}` : ""}、発売締め切り90秒前です。`
+        + `このレースのホームズ指数は${t.v}、当日順位は${t.rank}位です`;
+    }
+    async function scheduleAnnounce(r, t, at, key) {
+      const rec = { sources: [], timer: 0, end: 0 };
+      annState.set(key, rec);
+      const name = announceName(r);
+      const keys = announceKeys(r, t, name);
+      const c = ctx();
+      if (keys && c) {
+        try {
+          const bufs = await Promise.all(keys.filter((k) => k !== "|").map((k) => loadClip(c, k)));
+          if (!soundOn || annState.get(key) !== rec) return;
+          const want = c.currentTime + Math.max(0, (at - Date.now()) / 1000);
+          const t0 = freeSlot(c, want, clipsLength(keys, bufs));
+          if (Date.now() + (t0 - c.currentTime) * 1000 - at > ANNOUNCE_LATE_MS) return;
+          const h = startClips(c, keys, bufs, t0);
+          rec.sources = h.sources;
+          rec.end = h.end;
+          return;
+        } catch (e) {
+          if (annState.get(key) !== rec) return;
+        }
+      }
+      // 部品で作れないとき・読み込めないときはブラウザの声で（こちらは時計の間引きで遅れることがある）
+      rec.timer = setTimeout(() => {
+        if (soundOn && Date.now() - at <= ANNOUNCE_LATE_MS) speak(announceText(r, t, name), 0);
+      }, Math.max(0, at - Date.now()));
+    }
+    function announceTick() {
+      if (!soundOn || volume <= 0 || !annDay) return;
+      const now = Date.now();
+      for (const r of annRaces) {
+        const key = `${annDay}|${r.race_id}`;
+        if (annState.has(key)) continue;
+        const st = startDateOf(annDay, r.start_time);
+        if (!st) continue;
+        const at = st.getTime() - SALES_CLOSE_BEFORE_MS - ANNOUNCE_BEFORE_MS;
+        if (at - now > ANNOUNCE_LOOKAHEAD_MS || now - at > ANNOUNCE_LATE_MS) continue;
+        const t = announceTarget(r);   // 指数・順位はこの時点（直前予想のあと）の値で決める
+        if (t) scheduleAnnounce(r, t, at, key);
+      }
+    }
+    /** 音をOFFにしたら、まだ鳴っていない予約を取り消す（ONに戻せば締切前のものはまた予約される） */
+    function cancelAnnounces() {
+      const c = audioCtx;
+      for (const [key, rec] of annState) {
+        clearTimeout(rec.timer);
+        for (const src of rec.sources) { try { src.stop(); } catch (e) { /* noop */ } }
+        if (!c || !rec.end || rec.end > c.currentTime) annState.delete(key);
+      }
+      speechSlots = [];
     }
     /** 通知音が鳴り終わってから読む。部品で読めれば VOICEVOX、だめならブラウザ読み上げ */
     function sayEvents(evs, delayMs) {
@@ -956,6 +1078,7 @@
           $("meta").textContent = "本日の開催はありません（またはサイトクローズ後です）";
           $("grid").innerHTML = "<div class='closed'>表示できるレースがありません</div>";
           setLog("");
+          annRaces = [];
           return;
         }
         const day = String(data.schedule_date || "");
@@ -966,7 +1089,11 @@
       if (String(data.schedule_date || "") >= TRACK_COND_FROM) {
         showTrackConditions(data);
       }
-        renderLog(races, await loadEvents(day), day);
+        const evs = await loadEvents(day);
+        annDay = day;
+        annRaces = races;
+        annEvents = evs || [];
+        renderLog(races, evs, day);
         const upd = parseTs(data.updated_at);
         $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
       } catch (e) {
@@ -979,7 +1106,10 @@
       soundOn = !soundOn;
       renderSoundButton();
       if (soundOn) play("normal");   // ONにした操作で音を有効にし、鳴ることをその場で確かめる
-      else if (window.speechSynthesis) speechSynthesis.cancel();   // OFFにしたら読みかけも止める
+      else {
+        if (window.speechSynthesis) speechSynthesis.cancel();   // OFFにしたら読みかけも止める
+        cancelAnnounces();
+      }
     });
     // 通知音テストと読み上げテストは、どちらかが鳴り終わるまで両方とも押せない（二重起動防止、2026-10-25）
     let testBusy = false;
@@ -1002,7 +1132,10 @@
     }));
     $("speechTest").addEventListener("click", () => runTest(async () => {
       // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
-      const sample = { kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 };
+      // 見本は日本ダービー（東京11R・G1）を想定（2026-10-27 ユーザー指示）。レース名は固定の部品 sample_derby
+      const derbyUrl = `${VOICE_BASE}sample_derby.mp3`;
+      const sample = { kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1,
+        grade: "G1", race_name: "日本ダービー", race_spoken: "日本ダービー", voice_name_url: derbyUrl };
       let sec;
       try {
         sec = await playClips(clipKeysOne(sample), true);
@@ -1011,6 +1144,13 @@
         return;
       }
       await waitMs((sec || 0) * 1000 + 200);
+      // 続けて締切90秒前のアナウンスの見本
+      const ar = { place: "東京", R: 11 };
+      const at = { v: 88, rank: 1 };
+      try {
+        sec = await playClips(announceKeys(ar, at, { url: derbyUrl, spoken: "日本ダービー" }), true);
+        await waitMs((sec || 0) * 1000 + 200);
+      } catch (e) { /* 部品が読めないときは見本を省く */ }
     }));
     /** ブラウザの声で試聴。読み終わったら（または15秒で）解決する */
     function browserSample(sample) {
@@ -1047,6 +1187,7 @@
     }
     load();
     scheduleLoad();
+    setInterval(announceTick, 1000);
     // 発走済みの薄い表示・次の発走の赤枠は時刻だけで変わるので、裏で放置されていても戻ったら読み直す
     document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
   })();
