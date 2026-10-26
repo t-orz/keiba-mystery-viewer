@@ -1445,6 +1445,8 @@
   let nextRaceHtml = "";
   // ×で消した速報はこのページを開いている間だけ消したまま。覚えないので再読み込みで戻る（10-27 ユーザー決定）
   let nextRaceDismissed = false;
+  // 追跡ボタンで開いた別窓。×を押すとこの窓が前に出て別窓が後ろに隠れ「消えた」ように見えるので、×のあと前に戻す（10-27）
+  let trackerWin = null;
   function renderNextRaceBox() {
     const el = $("nextRace");
     const wrap = $("nextRaceWrap");
@@ -1536,6 +1538,9 @@
         // 追跡ボタンも一緒に消す（下の固定部分ごと。注記は残さない。10-27 ユーザー指示）
         const pin = close.closest(".sidebar-pin");
         if (pin) pin.classList.add("is-dismissed");
+        if (trackerWin && !trackerWin.closed) {
+          try { trackerWin.focus(); } catch (err) { /* noop */ }
+        }
       });
     });
     window.setInterval(renderNextRaceBox, 1000);
@@ -2450,6 +2455,7 @@
     if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
     const w = window.open(a.href, "holmesTracker", "popup=yes,width=1180,height=900");
     if (w) {
+      trackerWin = w;
       e.preventDefault();
       try { w.focus(); } catch (err) { /* noop */ }
     }
