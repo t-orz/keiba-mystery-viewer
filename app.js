@@ -1443,12 +1443,14 @@
   }
 
   let nextRaceHtml = "";
+  // ×で消した速報はこのページを開いている間だけ消したまま。覚えないので再読み込みで戻る（10-27 ユーザー決定）
+  let nextRaceDismissed = false;
   function renderNextRaceBox() {
     const el = $("nextRace");
     const wrap = $("nextRaceWrap");
     if (!el || !wrap) return;
     const data = state.data;
-    const p = data && !isDayClosedSnapshot(data) ? nextCloseRace(Date.now()) : null;
+    const p = data && !isDayClosedSnapshot(data) && !nextRaceDismissed ? nextCloseRace(Date.now()) : null;
     if (!p) {
       wrap.hidden = true;
       el.removeAttribute("data-rid");
@@ -1498,12 +1500,40 @@
     }
   }
 
+  /** 速報と追跡ボタンの囲み（.sidebar-pin）の置き場所。高さ700px以上のPCでは左の欄の一番下に固定（CSS の sticky）、
+   *  それ以外は従来どおりレースジャンプの上へ戻す。CSS の @media と同じ条件で切り替える（2026-10-27 ユーザー決定） */
+  const SIDEBAR_PIN_MQ = "(min-width: 721px) and (min-height: 700px)";
+  function placeSidebarPin() {
+    const pin = document.querySelector(".sidebar-pin");
+    const aside = pin && pin.closest(".site-sidebar");
+    const jumps = $("sidebarJumps");
+    if (!pin || !aside || !jumps) return;
+    if (window.matchMedia(SIDEBAR_PIN_MQ).matches) {
+      if (pin !== aside.lastElementChild) aside.appendChild(pin);
+    } else if (pin.nextElementSibling !== jumps) {
+      aside.insertBefore(pin, jumps);
+    }
+  }
+
   function initNextRaceBox() {
+    placeSidebarPin();
+    const mq = window.matchMedia(SIDEBAR_PIN_MQ);
+    if (mq.addEventListener) mq.addEventListener("change", placeSidebarPin);
     const el = $("nextRace");
     if (!el) return;
     el.addEventListener("click", () => {
       if (el.dataset.rid) selectRace(el.dataset.rid, el.dataset.place);
     });
+    const close = $("nextRaceClose");
+    if (close) {
+      close.addEventListener("click", () => {
+        nextRaceDismissed = true;
+        renderNextRaceBox();
+        // 追跡ボタンも一緒に消し、代わりに「再読み込みで戻る」注記の1行だけ残す（10-27 ユーザー指示）
+        const pin = close.closest(".sidebar-pin");
+        if (pin) pin.classList.add("is-dismissed");
+      });
+    }
     window.setInterval(renderNextRaceBox, 1000);
   }
 

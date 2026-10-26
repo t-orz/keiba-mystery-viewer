@@ -1004,20 +1004,44 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   text-align: center;
   cursor: pointer;
 }
-.next-race-wrap { margin: 0.5rem 0 0; }
+.next-race-wrap { position: relative; margin: 0.5rem 0 0; }
+/* 速報を消す×（説明の行の右端。小窓からは離す。押せる範囲は24px角。再読み込みで戻る。10-27 ユーザー決定）。
+   説明の1行の右の空きが狭いので、欄の左右の余白へ少しはみ出させる */
+.next-race-close {
+  position: absolute;
+  top: -3px;
+  right: -14px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+/* ×で消した後は速報と追跡ボタンを隠し、「再読み込みで戻る」の注記1行だけ残す（10-27） */
+.sidebar-pin-note { display: none; margin: 0; font-size: 0.68rem; color: var(--muted); }
+.sidebar-pin.is-dismissed .tracker-link { display: none; }
+.sidebar-pin.is-dismissed .sidebar-pin-note { display: block; }
+.next-race-close:hover,
+.next-race-close:focus-visible { background: rgba(11, 61, 46, 0.08); color: var(--accent); }
 .next-race-wrap[hidden] { display: none; }
-/* 小窓の説明は窓の外、上段の1行で（2026-10-26 ユーザー指示） */
+/* 小窓の説明は窓の外、上段の1行で（2026-10-26 ユーザー指示。10-27 下に固定するのに合わせ2行→1行） */
 .next-race-lead {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.15rem;
   color: var(--accent);
-  font-size: 0.78rem;
   font-weight: 700;
   line-height: 1.4;
+  white-space: nowrap;
 }
-.next-race-lead strong { display: block; font-size: 0.95rem; }
-.next-race-lead span { display: block; color: var(--muted); font-weight: 600; }
+.next-race-lead strong { font-size: 0.9rem; }
+.next-race-lead span { margin-left: 0.45em; color: var(--muted); font-size: 0.7rem; font-weight: 600; }
 /* 小窓の下の注意書き（端末の時計のずれ。1行に収める。10-27 ユーザー指示） */
-.next-race-note { margin: 0.25rem 0 0; font-size: 0.68rem; color: var(--muted); }
+.next-race-note { margin: 0.15rem 0 0; font-size: 0.68rem; color: var(--muted); }
 .next-race:hover,
 .next-race:focus-visible { filter: brightness(0.97); }
 /* 指数は小窓の高さの真ん中、順位はその下の余白の真ん中（10-27 ユーザー指示） */
@@ -1030,7 +1054,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 .next-race .nr-main > :first-child { grid-row: 2; }
 .next-race .nr-main > .nr-rank { grid-row: 3; align-self: center; }
-.next-race .nr-idx { font-size: 2.1rem; font-weight: 800; line-height: 1.05; }
+.next-race .nr-idx { font-size: 1.85rem; font-weight: 800; line-height: 1.05; }
 .next-race .nr-delta { margin-left: 0.15em; font-size: 0.95rem; font-weight: 700; }
 .next-race .nr-rank { font-size: 0.95rem; font-weight: 700; }
 .next-race .nr-rank small { font-size: 0.8em; font-weight: 600; }
@@ -1043,7 +1067,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   align-items: baseline;
   align-content: center;
   justify-content: center;
-  padding: calc(0.3rem + 3px) 0.1rem 0.3rem;
+  padding: calc(0.2rem + 3px) 0.1rem 0.2rem;
   border-bottom: 2px solid rgba(11, 61, 46, 0.5);
   font-size: 1.05rem;
   font-weight: 700;
@@ -1059,7 +1083,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   align-content: center;
   justify-content: center;
   gap: 0.25em;
-  padding: calc(0.25rem + 3px) 0.1rem 0.25rem;
+  padding: calc(0.15rem + 3px) 0.1rem 0.15rem;
   font-size: 1.55rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1123,6 +1147,30 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 /* 左の欄では欄の幅いっぱいに置く */
 .tracker-link .tracker-btn { display: flex; width: 100%; text-align: center; }
+/* PC表示（高さ700px以上）では速報と追跡ボタンを左の欄の一番下に固定する。中身の高さぶんだけ（割合では決めない）。
+   上を流れる欄と分かるよう背景と上の境界線を付け、追跡ボタンは小さく（2026-10-27 ユーザー決定）。低い画面は従来どおり流れる */
+@media (min-width: 721px) and (min-height: 700px) {
+  .site-sidebar { padding-bottom: 0; }
+  .sidebar-pin {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 1rem -1.25rem 0;
+    padding: 0.4rem 1.25rem 0.55rem;
+    border-top: 1px solid rgba(11, 61, 46, 0.18);
+    background: rgb(255, 252, 245);
+    box-shadow: 0 -4px 10px rgba(26, 26, 26, 0.05);
+  }
+  .sidebar-pin .next-race-wrap { margin-top: 0; }
+  .sidebar-pin .tracker-link { margin: 0.35rem 0 0; }
+  .sidebar-pin .tracker-btn {
+    min-height: 0;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+}
 /* 6位以下でホームズ指数70以上（「その他：京都3R・72　／　東京9R・71」） */
 .top5-others {
   margin: 0.35rem 0 0;
