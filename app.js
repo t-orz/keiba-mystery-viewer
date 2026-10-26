@@ -116,6 +116,19 @@
   function matrixHolmesText(row) {
     return formatHolmesIndexDisplay(row).replace(/[（(](\d+位)\/\d+レース中[）)]/, "（$1）");
   }
+  /** 当日のホームズ指数の対象レース数（障害を除く）。表示文「21位/35レース中」から取り、無ければ数える */
+  function holmesTargetRaceCount() {
+    for (const r of allRaces()) {
+      const m = String(r.holmes_rank_text || "").match(/(\d+)\s*レース中/);
+      if (m) return Number(m[1]);
+    }
+    return allRaces().filter((x) => !isObstacleRace(x)).length || null;
+  }
+  /** マトリクスの指数の見出し「ホームズ指数（35R中）」（10-27 ユーザー指示。数が取れないときは従来の「当日順位」） */
+  function matrixHolmesLabel() {
+    const n = holmesTargetRaceCount();
+    return n ? `ホームズ指数（${n}R中）` : "ホームズ指数（当日順位）";
+  }
 
   function formatHolmesIndexDisplay(r) {
     if (!r) return "-";
@@ -173,10 +186,12 @@
   }
 
   /** Top5 の外（6位以下）でホームズ指数が HOLMES_BORDER_TOP 以上のレースを
-   *  「その他：京都3R・72　／　東京9R・71」の1行で出す（2026-10-24 ユーザー決定で解禁）。 */
+   *  「その他：京都3R・72　／　東京9R・71」の1行で出す（2026-10-24 ユーザー決定で解禁）。
+   *  広いPC表示では上位5件の右に1件1行で並べ、6件以上はさらに2列（2026-10-27 ユーザー決定。並べ方は styles.css）。 */
   function renderTop5Others(top5Items) {
     const p = $("top5Others");
     if (!p) return;
+    const wrap = $("top5Wrap");
     p.innerHTML = "";
     const inTop5 = new Set((top5Items || []).map((it) => String(it.race_id)));
     const rows = allRaces()
@@ -188,10 +203,21 @@
       })
       .sort((a, b) => Number(a.holmes_index_rank) - Number(b.holmes_index_rank));
     p.hidden = !rows.length;
+    if (wrap) wrap.classList.toggle("is-split", rows.length > 0);
     if (!rows.length) return;
-    p.appendChild(document.createTextNode("その他："));
+    const label = document.createElement("span");
+    label.className = "top5-others-label";
+    label.textContent = "その他：";
+    const list = document.createElement("span");
+    list.className = `top5-others-items${rows.length >= 6 ? " is-many" : ""}`;
+    p.append(label, list);
     rows.forEach((r, i) => {
-      if (i) p.appendChild(document.createTextNode("　／　"));
+      if (i) {
+        const sep = document.createElement("span");
+        sep.className = "top5-others-sep";
+        sep.textContent = "　／　";
+        list.appendChild(sep);
+      }
       const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
       const a = document.createElement("a");
       a.href = "#raceDetailCard";
@@ -201,7 +227,7 @@
         e.preventDefault();
         selectRace(r.race_id, r.place);
       });
-      p.appendChild(a);
+      list.appendChild(a);
     });
   }
 
@@ -373,13 +399,14 @@
       race: "Race",
       dev: "偏差",
       sui: "ホームズ推奨",
-      holmes_index: "ホームズ指数（当日順位）",
+      holmes_index: matrixHolmesLabel(),
       ワトソン: "ワトソン",
       アイリーン: "アイリーン",
       第3探偵: "第3探偵",
     };
     let table = "<div class='matrix-desktop'><div class='table-wrap'><table class='matrix'><thead><tr>";
-    for (const c of cols) table += `<th>${labels[c] || c}</th>`;
+    const colCls = (c) => (c === "holmes_index" ? " class='col-center'" : "");
+    for (const c of cols) table += `<th${colCls(c)}>${labels[c] || c}</th>`;
     table += "</tr></thead><tbody>";
     let cards = "<div class='matrix-mobile'>";
     for (const row of v.matrix) {
@@ -397,7 +424,7 @@
         else if (c === "sui") val = sui;
         else if (c === "holmes_index") val = matrixHolmesText(row);
         else val = row[c] ?? "-";
-        table += `<td>${escapeHtml(val)}</td>`;
+        table += `<td${colCls(c)}>${escapeHtml(val)}</td>`;
       }
       table += "</tr>";
       cards += `
@@ -406,7 +433,7 @@
           <div class="matrix-card-grid">
             <div><span>偏差</span><strong>${escapeHtml(row.dev ?? "-")}</strong></div>
             <div><span>ホームズ推奨</span><strong>${escapeHtml(sui)}</strong></div>
-            <div class="matrix-card-full"><span>ホームズ指数（当日順位）</span><strong>${escapeHtml(matrixHolmesText(row))}</strong></div>
+            <div class="matrix-card-full"><span>${escapeHtml(labels.holmes_index)}</span><strong>${escapeHtml(matrixHolmesText(row))}</strong></div>
             <div><span>ワトソン</span><strong>${escapeHtml(watson)}</strong></div>
             <div><span>アイリーン</span><strong>${escapeHtml(irene)}</strong></div>
             <div class="matrix-card-full"><span>第3探偵</span><strong>${escapeHtml(third)}</strong></div>
@@ -1432,7 +1459,7 @@
     const html =
       `<span class="nr-main"><span><span class="nr-idx">${pending ? "-" : escapeHtml(v)}</span>` +
       `<span class="nr-delta">${escapeHtml(delta)}</span></span>` +
-      `<span class="nr-rank">${pending || !rank ? "-" : rank}<small> / ${total}</small></span></span>` +
+      `<span class="nr-rank">${pending || !rank ? "-" : rank}<small>/${total}R</small></span></span>` +   // 「21/35R」（10-27 ユーザー指示）
       `<span class="nr-place">${escapeHtml(r.place || "")}</span>` +
       `<span class="nr-race">${escapeHtml(rn)}<small>R</small></span>` +
       (phase === "closed" ? `<span class="nr-secs closed">締切</span>`

@@ -1134,6 +1134,24 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   font-weight: 600;
   white-space: nowrap;
 }
+/* 広いPC表示で「その他」があるときは左=上位5件・右=その他の2列。区切り線は出さない。
+   右は1件1行（上位5件の行と同じ間隔）、6件以上はさらに2列。狭い画面は従来の上下の並び（2026-10-27 ユーザー決定） */
+@media (min-width: 1000px) {
+  .top5-wrap.is-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+  .top5-wrap.is-split .top5-others { margin: 0; padding-top: 0.25rem; line-height: normal; }
+  .top5-wrap.is-split .top5-others-label,
+  .top5-wrap.is-split .top5-others a { display: block; padding: 0.35rem 0; margin-bottom: 0.25rem; }
+  .top5-wrap.is-split .top5-others-label { color: var(--muted); font-weight: 600; }
+  .top5-wrap.is-split .top5-others-items { display: block; }
+  .top5-wrap.is-split .top5-others-items.is-many { columns: 2; column-gap: 1rem; }
+  .top5-wrap.is-split .top5-others-items a { break-inside: avoid; }
+  .top5-wrap.is-split .top5-others-sep { display: none; }
+}
 
 .tabs {
   display: flex;
@@ -1202,6 +1220,8 @@ table.matrix td {
   text-align: left;
   white-space: nowrap;
 }
+table.matrix th.col-center,
+table.matrix td.col-center { text-align: center; }
 table.matrix tr { cursor: pointer; }
 table.matrix tr:hover td { background: rgba(11, 61, 46, 0.05); }
 table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
