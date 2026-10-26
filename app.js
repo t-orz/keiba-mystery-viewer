@@ -1451,12 +1451,16 @@
     if (!el || !wrap) return;
     const data = state.data;
     const p = data && !isDayClosedSnapshot(data) && !nextRaceDismissed ? nextCloseRace(Date.now()) : null;
+    // 速報が出ない日（非開催・全締切後など）は追跡ボタンの横に×を出す（10-27 ユーザー指示）
+    const pin = wrap.closest(".sidebar-pin");
     if (!p) {
       wrap.hidden = true;
+      if (pin) pin.classList.add("is-button-only");
       el.removeAttribute("data-rid");
       nextRaceHtml = "";
       return;
     }
+    if (pin) pin.classList.remove("is-button-only");
     const r = p.r;
     const v = holmesIndexValue(r);
     const pending = !r.predicted || v == null;
@@ -1524,8 +1528,8 @@
     el.addEventListener("click", () => {
       if (el.dataset.rid) selectRace(el.dataset.rid, el.dataset.place);
     });
-    const close = $("nextRaceClose");
-    if (close) {
+    // ×は速報の説明の行と、速報が出ない日の追跡ボタンの横の2か所。どちらも同じ動き
+    document.querySelectorAll(".sidebar-pin .next-race-close").forEach((close) => {
       close.addEventListener("click", () => {
         nextRaceDismissed = true;
         renderNextRaceBox();
@@ -1533,7 +1537,7 @@
         const pin = close.closest(".sidebar-pin");
         if (pin) pin.classList.add("is-dismissed");
       });
-    }
+    });
     window.setInterval(renderNextRaceBox, 1000);
   }
 

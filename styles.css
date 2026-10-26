@@ -1026,6 +1026,11 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 /* ×で消した後は速報と追跡ボタンを隠し、「再読み込みで戻る」の注記1行だけ残す（10-27） */
 .sidebar-pin-note { display: none; margin: 0; font-size: 0.68rem; color: var(--muted); }
 .sidebar-pin.is-dismissed .tracker-link { display: none; }
+/* 速報が出ない日は追跡ボタンの右に×（ボタンだけでも消せる。10-27 ユーザー指示）。
+   ボタンは幅いっぱい・1行のままにするため、×は欄の右の余白（1.25rem）に置く */
+.sidebar-pin .tracker-link { position: relative; }
+.sidebar-pin .tracker-close { display: none; top: 50%; right: -20px; width: 20px; transform: translateY(-50%); }
+.sidebar-pin.is-button-only .tracker-close { display: block; }
 .sidebar-pin.is-dismissed .sidebar-pin-note { display: block; }
 .next-race-close:hover,
 .next-race-close:focus-visible { background: rgba(11, 61, 46, 0.08); color: var(--accent); }
