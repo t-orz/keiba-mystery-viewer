@@ -1533,7 +1533,7 @@
       close.addEventListener("click", () => {
         nextRaceDismissed = true;
         renderNextRaceBox();
-        // 追跡ボタンも一緒に消し、代わりに「再読み込みで戻る」注記の1行だけ残す（10-27 ユーザー指示）
+        // 追跡ボタンも一緒に消す（下の固定部分ごと。注記は残さない。10-27 ユーザー指示）
         const pin = close.closest(".sidebar-pin");
         if (pin) pin.classList.add("is-dismissed");
       });
