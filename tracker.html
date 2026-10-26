@@ -315,7 +315,7 @@
       <button type="button" id="soundTest">通知音テスト</button>
         <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
+      <span class="sound-hint">重賞と、指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
     </div>
   </header>
 
@@ -338,7 +338,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、重賞（G1〜G3）と、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
@@ -868,7 +868,8 @@
     }
 
     // ---- 発売締切90秒前のアナウンス（2026-10-27 ユーザー指示） ----
-    // 対象: 障害以外で、その時点のホームズ指数70以上 または 当日5位以内。音のON/OFFと連動（別のスイッチは付けない）。
+    // 対象: 障害以外で、その時点のホームズ指数70以上 または 当日5位以内。重賞（G1〜G3）は指数にかかわらず必ず（10-27 ユーザー決定）。
+    // 音のON/OFFと連動（別のスイッチは付けない）。
     // 文: 「東京11レース（重賞は続けてレース名）、発売締め切り90秒前です。このレースのホームズ指数は85、当日順位は1位です」
     // 隠れた窓・最小化した窓ではページの時計が1分に1回ほどまで間引かれるので、75秒前までに部品を読み込み、
     // 鳴らす時刻は Web Audio の時計で予約する。締切30秒前を過ぎてしまう遅れなら鳴らさない。
@@ -888,13 +889,19 @@
       const d = new Date(`${day}T${m[1].padStart(2, "0")}:${m[2]}:00+09:00`);
       return Number.isNaN(d.getTime()) ? null : d;
     }
-    /** 対象なら { v, rank }、対象外なら null */
+    /** 重賞（G1〜G3）か。障害の J・G は isObstacle で先に外す（auto-x holmes_voice.race_grade と同じ線） */
+    function isGraded(r) {
+      const g = String(r.grade || "").normalize("NFKC").trim().toUpperCase();
+      return /^G(1|2|3|I|II|III)$/.test(g);
+    }
+    /** 対象なら { v, rank }（指数が出ていない重賞は v・rank が null）、対象外なら null */
     function announceTarget(r) {
-      if (isObstacle(r) || !r.predicted || r.holmes_rank_text === "算出前") return null;
-      const v = idxNum(r);
+      if (isObstacle(r)) return null;
+      const graded = isGraded(r);
+      const v = r.predicted && r.holmes_rank_text !== "算出前" ? idxNum(r) : null;
       const rank = Number(r.holmes_index_rank);
-      if (v == null || !(rank >= 1)) return null;
-      return v >= ANNOUNCE_INDEX_LINE || rank <= ANNOUNCE_RANK_LINE ? { v: Math.round(v), rank } : null;
+      if (v == null || !(rank >= 1)) return graded ? { v: null, rank: null } : null;
+      return graded || v >= ANNOUNCE_INDEX_LINE || rank <= ANNOUNCE_RANK_LINE ? { v: Math.round(v), rank } : null;
     }
     /** 重賞のレース名の音声と読み。サーバーのログ（直前予想など）に付いているものを使う */
     function announceName(r) {
@@ -904,14 +911,16 @@
     function announceKeys(r, t, name) {
       const pi = VOICE_PLACES.indexOf(String(r.place || ""));
       const rn = rnum(r);
-      if (pi < 0 || !(rn >= 1 && rn <= 12) || !(t.v >= 0 && t.v <= 100) || t.rank > 40) return null;
+      if (pi < 0 || !(rn >= 1 && rn <= 12)) return null;
       const keys = [`race_${pad(pi, 2)}_${pad(rn, 2)}`];
       if (name && name.url) keys.push({ url: name.url });
+      if (t.v == null) return keys.concat("|", "close90_only");   // 指数が出ていない重賞は締切だけ
+      if (!(t.v >= 0 && t.v <= 100) || t.rank > 40) return null;
       return keys.concat("|", "close90", `cidx_${pad(t.v, 3)}`, `crank_${pad(t.rank, 2)}`);
     }
     function announceText(r, t, name) {
-      return `${r.place || ""}${rnum(r)}レース${name && name.spoken ? `、${name.spoken}` : ""}、発売締め切り90秒前です。`
-        + `このレースのホームズ指数は${t.v}、当日順位は${t.rank}位です`;
+      return `${r.place || ""}${rnum(r)}レース${name && name.spoken ? `、${name.spoken}` : ""}、発売締め切り90秒前です`
+        + (t.v == null ? "" : `。このレースのホームズ指数は${t.v}、当日順位は${t.rank}位です`);
     }
     async function scheduleAnnounce(r, t, at, key) {
       const rec = { sources: [], timer: 0, end: 0 };
