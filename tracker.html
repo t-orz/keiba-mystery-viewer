@@ -338,7 +338,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
@@ -366,9 +366,10 @@
     }
 
     // ---- 音（Web Audio で合成。素材ファイルなし） ----
-    const SOUND_KEY = "holmesTrackerSound";
-    let soundOn = false;   // 初期状態はOFF（2026-10-24 ユーザー決定）
-    try { soundOn = localStorage.getItem(SOUND_KEY) === "on"; } catch (e) { /* noop */ }
+    // 開くたびに必ずOFFから（2026-10-26 ユーザー指示）。前回のONを覚えていると、ブラウザの制限で
+    // ページに一度触れるまで鳴らないのにONと表示されてしまうため。音量だけは覚える
+    let soundOn = false;
+    try { localStorage.removeItem("holmesTrackerSound"); } catch (e) { /* noop */ }   // 以前の記憶を消す
     const VOL_KEY = "holmesTrackerVolume";
     let volume = 80;
     try {
@@ -976,7 +977,6 @@
     renderSoundButton();
     $("soundToggle").addEventListener("click", () => {
       soundOn = !soundOn;
-      try { localStorage.setItem(SOUND_KEY, soundOn ? "on" : "off"); } catch (e) { /* noop */ }
       renderSoundButton();
       if (soundOn) play("normal");   // ONにした操作で音を有効にし、鳴ることをその場で確かめる
       else if (window.speechSynthesis) speechSynthesis.cancel();   // OFFにしたら読みかけも止める
@@ -1037,8 +1037,6 @@
       try { localStorage.setItem(VOL_KEY, String(volume)); } catch (e) { /* noop */ }
     });
     volEl.addEventListener("change", () => play("normal", true));   // 指を離したらその音量で1回鳴らす
-    // 前回ONのまま開き直したときは、ブラウザの制限でページに一度触れるまで鳴らない。最初の操作で有効にする
-    document.addEventListener("pointerdown", () => { if (soundOn) ctx(); }, { once: true });
 
     /** 次の「毎分0・20・40秒＋数秒」に読み直す。タイマーが少し早く起きても同じ回を二度読まない */
     function scheduleLoad() {
