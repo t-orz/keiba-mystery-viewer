@@ -984,7 +984,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 /* ホームズ指数速報（締切が最も近いレース。PC表示の左の欄、追跡ボタンの真上。2026-10-26 手書き図2枚目）
    左=指数(朝一斉比)と当日順位/対象レース数、右上=競馬場|レース番号、右下=締切までの秒数。
-   締切90秒前から残り時間の欄だけ、左から1秒ごとにオレンジに塗られていく（幅は app.js が --nr-fill で渡す） */
+   締切90秒前から残り時間の欄だけ、左から1秒ごとに警戒色の赤で塗られていく（順位の金・青・緑と混同しない色、10-27 ユーザー指示）（幅は app.js が --nr-fill で渡す） */
 .next-race {
   position: relative;
   display: grid;
@@ -1059,10 +1059,10 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   inset: 0 auto 0 0;
   z-index: -1;
   width: var(--nr-fill, 0%);
-  background: rgba(255, 140, 0, 0.42);
+  background: rgba(229, 57, 53, 0.34);
   pointer-events: none;
 }
-.next-race .nr-secs.soon { color: #c62828; }
+.next-race .nr-secs.soon { color: #8e0000; }
 /* 色は追跡ページ・レースジャンプと同じ（1位=金・2〜5位=青・6〜10位=緑・非推奨=灰） */
 .next-race.rank-top .nr-main { background: var(--gold); }
 .next-race.rank-hi .nr-main { background: var(--blue); }
