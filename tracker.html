@@ -315,7 +315,7 @@
       <button type="button" id="soundTest">通知音テスト</button>
         <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">重賞と、指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ</span>
+      <span class="sound-hint">重賞と、指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ／締切90秒前=ピン・ポーン（下がる2音）のあとに読み上げ</span>
     </div>
   </header>
 
@@ -338,7 +338,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、重賞（G1〜G3）と、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、重賞（G1〜G3）と、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に、合図音「ピン・ポーン」（下がる2音）のあと「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
@@ -419,6 +419,8 @@
       normal: [["E5", 0, 0.85], ["A5", 0.14, 1]],
       // 2〜5位に入った: ド・ミ・ソと上がって最後に和音
       hi: [["C5", 0, 0.8], ["E5", 0.12, 0.85], ["G5", 0.24, 0.9], ["C6", 0.4, 1, 1.6], ["E6", 0.4, 0.45, 1.6]],
+      // 発売締切90秒前の合図（2026-10-27）: 駅の案内の前のような「ピン・ポーン」と下がる2音。ログの音は上がる音なので向きで聞き分ける
+      close: [["E6", 0, 0.75], ["C6", 0.26, 0.85, 1.7]],
       // 1位に入った: 速い駆け上がり → 低音つきの大きな和音を長く → きらめきの高音
       top: [
         ["C5", 0, 0.7], ["E5", 0.08, 0.72], ["G5", 0.16, 0.75], ["C6", 0.24, 0.8], ["E6", 0.32, 0.8], ["G6", 0.4, 0.8],
@@ -427,19 +429,21 @@
         ["G6", 0.95, 0.35, 0.6], ["C7", 1.05, 0.3, 0.6], ["E7", 1.15, 0.25, 0.8], ["C7", 1.3, 0.22, 1.5],
       ],
     };
-    function play(kind, force) {
-      if (!soundOn && !force) return;
+    /** 通知音を鳴らす。at（AudioContext の秒）を渡すとその時刻に予約。止められるよう出口の音量ノードを返す */
+    function play(kind, force, at) {
+      if (!soundOn && !force) return null;
       const c = ctx();
-      if (!c) return;
+      if (!c) return null;
       // 全体の音量と、強い音が割れないように軽く抑える
       const comp = c.createDynamicsCompressor();
       const master = c.createGain();
       // つまみ 0〜100% を音量に。耳の感じ方に合わせて2乗で効かせる（初期値80%=つまみを付ける前と同じ音量、100%=約1.6倍）
       master.gain.value = 0.9 * Math.pow(volume / 80, 2);
-      if (volume <= 0) return;
+      if (volume <= 0) return null;
       master.connect(comp).connect(c.destination);
-      const t0 = c.currentTime + 0.03;
+      const t0 = at != null ? Math.max(at, c.currentTime + 0.03) : c.currentTime + 0.03;
       for (const [n, dt, v, len] of PATTERNS[kind] || PATTERNS.normal) voice(c, master, NOTE[n], t0 + dt, v, len);
+      return master;
     }
     function renderSoundButton() {
       const b = document.getElementById("soundToggle");
@@ -879,6 +883,7 @@
     const ANNOUNCE_LATE_MS = 60 * 1000;
     const ANNOUNCE_INDEX_LINE = 70;
     const ANNOUNCE_RANK_LINE = 5;
+    const ANNOUNCE_CHIME_SEC = 0.7;   // 合図音「ピン・ポーン」から声までの間
     let annDay = "";
     let annRaces = [];
     let annEvents = [];
@@ -923,7 +928,7 @@
         + (t.v == null ? "" : `。このレースのホームズ指数は${t.v}、当日順位は${t.rank}位です`);
     }
     async function scheduleAnnounce(r, t, at, key) {
-      const rec = { sources: [], timer: 0, end: 0 };
+      const rec = { sources: [], timer: 0, end: 0, chime: null };
       annState.set(key, rec);
       const name = announceName(r);
       const keys = announceKeys(r, t, name);
@@ -933,9 +938,11 @@
           const bufs = await Promise.all(keys.filter((k) => k !== "|").map((k) => loadClip(c, k)));
           if (!soundOn || annState.get(key) !== rec) return;
           const want = c.currentTime + Math.max(0, (at - Date.now()) / 1000);
-          const t0 = freeSlot(c, want, clipsLength(keys, bufs));
+          const t0 = freeSlot(c, want, ANNOUNCE_CHIME_SEC + clipsLength(keys, bufs));
           if (Date.now() + (t0 - c.currentTime) * 1000 - at > ANNOUNCE_LATE_MS) return;
-          const h = startClips(c, keys, bufs, t0);
+          rec.chime = play("close", false, t0);
+          const h = startClips(c, keys, bufs, t0 + ANNOUNCE_CHIME_SEC);
+          speechSlots[speechSlots.length - 1][0] = t0;   // 合図音の分も予約に含める
           rec.sources = h.sources;
           rec.end = h.end;
           return;
@@ -945,7 +952,9 @@
       }
       // 部品で作れないとき・読み込めないときはブラウザの声で（こちらは時計の間引きで遅れることがある）
       rec.timer = setTimeout(() => {
-        if (soundOn && Date.now() - at <= ANNOUNCE_LATE_MS) speak(announceText(r, t, name), 0);
+        if (!soundOn || Date.now() - at > ANNOUNCE_LATE_MS) return;
+        play("close");
+        speak(announceText(r, t, name), ANNOUNCE_CHIME_SEC * 1000);
       }, Math.max(0, at - Date.now()));
     }
     function announceTick() {
@@ -968,6 +977,7 @@
       for (const [key, rec] of annState) {
         clearTimeout(rec.timer);
         for (const src of rec.sources) { try { src.stop(); } catch (e) { /* noop */ } }
+        if (rec.chime) { try { rec.chime.disconnect(); } catch (e) { /* noop */ } }
         if (!c || !rec.end || rec.end > c.currentTime) annState.delete(key);
       }
       speechSlots = [];
@@ -1133,11 +1143,12 @@
       });
     }
     $("soundTest").addEventListener("click", () => runTest(async () => {
-      // OFFでも試聴はできる（3種類を順に）
+      // OFFでも試聴はできる（3種類を順に、最後に締切90秒前の合図音）
       play("normal", true);
       setTimeout(() => play("hi", true), 1000);
       setTimeout(() => play("top", true), 2700);
-      await waitMs(2700 + SOUND_LEN_MS.top);
+      setTimeout(() => play("close", true), 2700 + SOUND_LEN_MS.top + 300);
+      await waitMs(2700 + SOUND_LEN_MS.top + 300 + 1000);
     }));
     $("speechTest").addEventListener("click", () => runTest(async () => {
       // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
@@ -1157,6 +1168,8 @@
       const ar = { place: "東京", R: 11 };
       const at = { v: 88, rank: 1 };
       try {
+        play("close", true);
+        await waitMs(ANNOUNCE_CHIME_SEC * 1000);
         sec = await playClips(announceKeys(ar, at, { url: derbyUrl, spoken: "日本ダービー" }), true);
         await waitMs((sec || 0) * 1000 + 200);
       } catch (e) { /* 部品が読めないときは見本を省く */ }
