@@ -1016,6 +1016,8 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 .next-race-lead strong { display: block; font-size: 0.95rem; }
 .next-race-lead span { display: block; color: var(--muted); font-weight: 600; }
+/* 小窓の下の注意書き（端末の時計のずれ。1行に収める。10-27 ユーザー指示） */
+.next-race-note { margin: 0.25rem 0 0; font-size: 0.68rem; color: var(--muted); }
 .next-race:hover,
 .next-race:focus-visible { filter: brightness(0.97); }
 /* 指数は小窓の高さの真ん中、順位はその下の余白の真ん中（10-27 ユーザー指示） */
@@ -1024,7 +1026,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   display: grid;
   grid-template-rows: 1fr auto 1fr;
   padding: 0 0.2rem;
-  border-right: 1px solid rgba(11, 61, 46, 0.35);
+  border-right: 2px solid rgba(11, 61, 46, 0.5);
 }
 .next-race .nr-main > :first-child { grid-row: 2; }
 .next-race .nr-main > .nr-rank { grid-row: 3; align-self: center; }
@@ -1032,23 +1034,32 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 .next-race .nr-delta { margin-left: 0.15em; font-size: 0.95rem; font-weight: 700; }
 .next-race .nr-rank { font-size: 0.95rem; font-weight: 700; }
 .next-race .nr-rank small { font-size: 0.8em; font-weight: 600; }
+/* 右の3欄の文字は欄の高さの真ん中へ（小さい字とは下端で揃えたまま行ごと中央に）。
+   明朝体は字面が行の上寄りに出るので上の余白を3px多くして見た目の真ん中に（実測で約1.5px上だった。10-27） */
 .next-race .nr-place,
 .next-race .nr-race {
-  padding: 0.3rem 0.1rem;
-  border-bottom: 1px solid rgba(11, 61, 46, 0.35);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: center;
+  justify-content: center;
+  padding: calc(0.3rem + 3px) 0.1rem 0.3rem;
+  border-bottom: 2px solid rgba(11, 61, 46, 0.5);
   font-size: 1.05rem;
   font-weight: 700;
 }
-.next-race .nr-place { grid-area: place; border-right: 1px solid rgba(11, 61, 46, 0.35); }
+.next-race .nr-place { grid-area: place; border-right: 2px solid rgba(11, 61, 46, 0.5); }
 .next-race .nr-race { grid-area: race; }
 .next-race .nr-race small { margin-left: 0.05em; font-size: 0.75em; }
 .next-race .nr-secs {
   grid-area: secs;
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
+  align-content: center;
   justify-content: center;
   gap: 0.25em;
-  padding: 0.25rem 0.1rem;
+  padding: calc(0.25rem + 3px) 0.1rem 0.25rem;
   font-size: 1.55rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1068,6 +1079,18 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   pointer-events: none;
 }
 .next-race .nr-secs.soon { color: #8e0000; }
+/* 残り10秒未満「あとわずか」と締切後5秒の「締切」は欄全体を赤に（10-27 ユーザー決定） */
+.next-race .nr-secs.last,
+.next-race .nr-secs.closed { background: #d32f2f; color: #fff; font-size: 1.3rem; }
+.next-race .nr-secs.last::before,
+.next-race .nr-secs.closed::before { display: none; }
+/* 「あとわずか」は5文字を余裕をもって収める大きさで、白黒にゆっくり点滅（1秒で1往復。
+   速い点滅は光過敏の人に危ないので避ける）。動きを減らす設定なら止める（10-27） */
+.next-race .nr-secs.last { font-size: 1.15rem; animation: nr-blink 1s step-end infinite; }
+@keyframes nr-blink { 0% { color: #fff; } 50% { color: #000; } 100% { color: #000; } }
+@media (prefers-reduced-motion: reduce) {
+  .next-race .nr-secs.last { animation: none; }
+}
 /* 色は追跡ページ・レースジャンプと同じ（1位=金・2〜5位=青・6〜10位=緑・非推奨=灰） */
 .next-race.rank-top .nr-main { background: var(--gold); }
 .next-race.rank-hi .nr-main { background: var(--blue); }

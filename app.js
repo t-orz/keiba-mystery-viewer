@@ -1372,6 +1372,10 @@
      試験版の正方形の mini.html はこれに一本化して削除した（計算はここだけ）。 */
   const SALES_CLOSE_BEFORE_MS = 2 * 60 * 1000;
   const NEXT_RACE_FILL_SEC = 90;
+  // 締切直前は端末の時計のずれ（数秒）と同じ幅なので秒数を出さない。残り10秒未満は「あとわずか」、
+  // 締切から5秒は「締切」と出してから次のレースへ（10-27 ユーザー決定）
+  const NEXT_RACE_LAST_MS = 10 * 1000;
+  const NEXT_RACE_GRACE_MS = 5 * 1000;
   const NEXT_RACE_MMSS_SEC = 600;   // 10分以上残っているときは「分:秒」で（4桁の秒数は読みにくい。10-27 ユーザー決定）
   function nextRaceRemainText(sec) {
     if (sec < NEXT_RACE_MMSS_SEC) return String(sec);
@@ -1386,7 +1390,7 @@
       const st = raceStartDate(r, day);
       if (!st) continue;
       const close = st.getTime() - SALES_CLOSE_BEFORE_MS;
-      if (close > now && close < bestT) {
+      if (close + NEXT_RACE_GRACE_MS > now && close < bestT) {
         bestT = close;
         best = r;
       }
@@ -1416,7 +1420,9 @@
     const dv = Number(r.holmes_morning_delta);
     const hasDelta = !pending && r.holmes_morning_delta != null && r.holmes_morning_delta !== "" && Number.isFinite(dv);
     const delta = hasDelta ? `(${dv > 0 ? `+${dv}` : dv < 0 ? dv : "±0"})` : "";
-    const sec = Math.max(0, Math.floor((p.close - Date.now()) / 1000));
+    const ms = p.close - Date.now();
+    const sec = Math.max(0, Math.floor(ms / 1000));
+    const phase = ms <= 0 ? "closed" : ms < NEXT_RACE_LAST_MS ? "last" : "";
     const rn = String(r.R || "").replace(/[Rr]$/, "");
     let cls = "next-race";
     if (!pending && isHolmesLow(r)) cls += " is-low";
@@ -1429,14 +1435,17 @@
       `<span class="nr-rank">${pending || !rank ? "-" : rank}<small> / ${total}</small></span></span>` +
       `<span class="nr-place">${escapeHtml(r.place || "")}</span>` +
       `<span class="nr-race">${escapeHtml(rn)}<small>R</small></span>` +
-      `<span class="nr-secs${sec < 60 ? " soon" : ""}${sec >= NEXT_RACE_MMSS_SEC ? " mmss" : ""}"><small>締切まで</small>${nextRaceRemainText(sec)}</span>`;
+      (phase === "closed" ? `<span class="nr-secs closed">締切</span>`
+        : phase === "last" ? `<span class="nr-secs last">あとわずか</span>`
+        : `<span class="nr-secs${sec < 60 ? " soon" : ""}${sec >= NEXT_RACE_MMSS_SEC ? " mmss" : ""}"><small>締切まで</small>${nextRaceRemainText(sec)}</span>`);
     el.className = cls;
     wrap.hidden = false;
     const fill = Math.min(1, Math.max(0, (NEXT_RACE_FILL_SEC - sec) / NEXT_RACE_FILL_SEC));
     el.style.setProperty("--nr-fill", `${(fill * 100).toFixed(2)}%`);
     el.dataset.rid = r.race_id;
     el.dataset.place = r.place || "";
-    const label = `${r.place || ""}${rn}R ${r.name || ""} 発走${normalizeStartTime(r.start_time)}（締切まで${sec}秒）の予想へ`;
+    const remain = phase === "closed" ? "締切" : phase === "last" ? "締切あとわずか" : `締切まで${sec}秒`;
+    const label = `${r.place || ""}${rn}R ${r.name || ""} 発走${normalizeStartTime(r.start_time)}（${remain}）の予想へ`;
     el.title = label;
     el.setAttribute("aria-label", label);
     if (html !== nextRaceHtml) {
