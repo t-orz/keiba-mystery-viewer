@@ -129,6 +129,19 @@
     const n = holmesTargetRaceCount();
     return n ? `ホームズ指数（${n}R中）` : "ホームズ指数（当日順位）";
   }
+  /** マトリクスのレース欄。サーバーの row.race はレース名を9文字ほどで切っているので、
+   *  同じ会場のレース情報から「新潟 9R 柏崎特別(1勝クラス)」と切らずに組み直す（10-27 ユーザー指示。長すぎる分は CSS で…） */
+  function matrixRaceLabel(v, row) {
+    const r = (v.races || []).find((x) => String(x.race_id) === String(row.race_id));
+    if (!r || !r.name) return row.race || "-";
+    const rn = String(r.R || "").replace(/[Rr]$/, "");
+    return `${r.place || v.place || ""} ${rn}R ${r.name}`;
+  }
+  /** 表の見出し用。1行だと中身「57（21位）」の2倍の幅になり左右が空くので、括弧を小さく2段目へ（10-27 ユーザー決定） */
+  function matrixHolmesLabelHtml() {
+    const m = matrixHolmesLabel().match(/^(ホームズ指数)(（.+）)$/);
+    return m ? `${m[1]}<br><small>${escapeHtml(m[2])}</small>` : escapeHtml(matrixHolmesLabel());
+  }
 
   function formatHolmesIndexDisplay(r) {
     if (!r) return "-";
@@ -406,7 +419,7 @@
     };
     let table = "<div class='matrix-desktop'><div class='table-wrap'><table class='matrix'><thead><tr>";
     const colCls = (c) => (c === "holmes_index" ? " class='col-center'" : "");
-    for (const c of cols) table += `<th${colCls(c)}>${labels[c] || c}</th>`;
+    for (const c of cols) table += `<th${colCls(c)}>${c === "holmes_index" ? matrixHolmesLabelHtml() : labels[c] || c}</th>`;
     table += "</tr></thead><tbody>";
     let cards = "<div class='matrix-mobile'>";
     for (const row of v.matrix) {
@@ -415,6 +428,7 @@
       const watson = matrixCell(row, "ワトソン", "ワ");
       const irene = matrixCell(row, "アイリーン", "アイ");
       const sui = matrixSuiLabel(row.sui);
+      const raceLabel = matrixRaceLabel(v, row);
       table += `<tr class="${sel}" data-rid="${row.race_id}">`;
       for (const c of cols) {
         let val = "-";
@@ -423,13 +437,16 @@
         else if (c === "アイリーン") val = irene;
         else if (c === "sui") val = sui;
         else if (c === "holmes_index") val = matrixHolmesText(row);
+        else if (c === "race") val = raceLabel;
         else val = row[c] ?? "-";
-        table += `<td${colCls(c)}>${escapeHtml(val)}</td>`;
+        table += c === "race"
+          ? `<td class="col-race" title="${escapeAttr(val)}">${escapeHtml(val)}</td>`
+          : `<td${colCls(c)}>${escapeHtml(val)}</td>`;
       }
       table += "</tr>";
       cards += `
         <button type="button" class="matrix-card${sel}" data-rid="${escapeAttr(row.race_id)}">
-          <p class="matrix-card-title">${escapeHtml(row.race || "-")}</p>
+          <p class="matrix-card-title">${escapeHtml(raceLabel)}</p>
           <div class="matrix-card-grid">
             <div><span>偏差</span><strong>${escapeHtml(row.dev ?? "-")}</strong></div>
             <div><span>ホームズ推奨</span><strong>${escapeHtml(sui)}</strong></div>

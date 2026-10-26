@@ -1222,6 +1222,9 @@ table.matrix td {
 }
 table.matrix th.col-center,
 table.matrix td.col-center { text-align: center; }
+table.matrix th small { font-size: 0.85em; font-weight: 600; }
+/* レース名は切らずに出す。並外れて長い名前だけ末尾を…にして全文は title で（10-27） */
+table.matrix td.col-race { max-width: 22em; overflow: hidden; text-overflow: ellipsis; }
 table.matrix tr { cursor: pointer; }
 table.matrix tr:hover td { background: rgba(11, 61, 46, 0.05); }
 table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
