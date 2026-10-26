@@ -1372,6 +1372,11 @@
      試験版の正方形の mini.html はこれに一本化して削除した（計算はここだけ）。 */
   const SALES_CLOSE_BEFORE_MS = 2 * 60 * 1000;
   const NEXT_RACE_FILL_SEC = 90;
+  const NEXT_RACE_MMSS_SEC = 600;   // 10分以上残っているときは「分:秒」で（4桁の秒数は読みにくい。10-27 ユーザー決定）
+  function nextRaceRemainText(sec) {
+    if (sec < NEXT_RACE_MMSS_SEC) return String(sec);
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+  }
   function nextCloseRace(now) {
     const day = state.data && state.data.schedule_date;
     let best = null;
@@ -1423,8 +1428,8 @@
       `<span class="nr-delta">${escapeHtml(delta)}</span></span>` +
       `<span class="nr-rank">${pending || !rank ? "-" : rank}<small> / ${total}</small></span></span>` +
       `<span class="nr-place">${escapeHtml(r.place || "")}</span>` +
-      `<span class="nr-race">${escapeHtml(rn)}</span>` +
-      `<span class="nr-secs${sec < 60 ? " soon" : ""}"><small>締切まで</small>${sec}</span>`;
+      `<span class="nr-race">${escapeHtml(rn)}<small>R</small></span>` +
+      `<span class="nr-secs${sec < 60 ? " soon" : ""}${sec >= NEXT_RACE_MMSS_SEC ? " mmss" : ""}"><small>締切まで</small>${nextRaceRemainText(sec)}</span>`;
     el.className = cls;
     wrap.hidden = false;
     const fill = Math.min(1, Math.max(0, (NEXT_RACE_FILL_SEC - sec) / NEXT_RACE_FILL_SEC));

@@ -1018,17 +1018,19 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 .next-race-lead span { display: block; color: var(--muted); font-weight: 600; }
 .next-race:hover,
 .next-race:focus-visible { filter: brightness(0.97); }
+/* 指数は小窓の高さの真ん中、順位はその下の余白の真ん中（10-27 ユーザー指示） */
 .next-race .nr-main {
   grid-area: main;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0.35rem 0.2rem;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  padding: 0 0.2rem;
   border-right: 1px solid rgba(11, 61, 46, 0.35);
 }
+.next-race .nr-main > :first-child { grid-row: 2; }
+.next-race .nr-main > .nr-rank { grid-row: 3; align-self: center; }
 .next-race .nr-idx { font-size: 2.1rem; font-weight: 800; line-height: 1.05; }
 .next-race .nr-delta { margin-left: 0.15em; font-size: 0.95rem; font-weight: 700; }
-.next-race .nr-rank { margin-top: 0.15rem; font-size: 0.95rem; font-weight: 700; }
+.next-race .nr-rank { font-size: 0.95rem; font-weight: 700; }
 .next-race .nr-rank small { font-size: 0.8em; font-weight: 600; }
 .next-race .nr-place,
 .next-race .nr-race {
@@ -1039,6 +1041,7 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 .next-race .nr-place { grid-area: place; border-right: 1px solid rgba(11, 61, 46, 0.35); }
 .next-race .nr-race { grid-area: race; }
+.next-race .nr-race small { margin-left: 0.05em; font-size: 0.75em; }
 .next-race .nr-secs {
   grid-area: secs;
   display: flex;
@@ -1050,7 +1053,9 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-.next-race .nr-secs small { font-size: 0.75rem; font-weight: 700; }
+.next-race .nr-secs small { font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+/* 10分以上の「分:秒」は桁が増えるので少し小さく（「締切まで」を1行に収める。10-27） */
+.next-race .nr-secs.mmss { font-size: 1.3rem; }
 /* 塗りは残り時間の欄に限る（2026-10-26 ユーザー指示）。文字の下に敷く */
 .next-race .nr-secs { position: relative; isolation: isolate; }
 .next-race .nr-secs::before {
