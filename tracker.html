@@ -1132,10 +1132,10 @@
     }));
     $("speechTest").addEventListener("click", () => runTest(async () => {
       // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
-      // 見本は日本ダービー（東京11R・G1）を想定（2026-10-27 ユーザー指示）。レース名は固定の部品 sample_derby
+      // 締切アナウンスの見本だけ日本ダービー（東京11R・G1）を想定（2026-10-27 ユーザー指示）。レース名は固定の部品 sample_derby。
+      // ログの見本は元のまま（重賞名なし）
       const derbyUrl = `${VOICE_BASE}sample_derby.mp3`;
-      const sample = { kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1,
-        grade: "G1", race_name: "日本ダービー", race_spoken: "日本ダービー", voice_name_url: derbyUrl };
+      const sample = { kind: "pre_race", place: "東京", R: 11, before: 80, after: 88, after_rank: 1 };
       let sec;
       try {
         sec = await playClips(clipKeysOne(sample), true);
