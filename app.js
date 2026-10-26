@@ -47,7 +47,7 @@
           ? "馬番の小さい順"
           : mode === "ninki"
           ? "人気の高い順（単勝オッズが低い順）"
-          : "推定3着内率の高い順（本体UIと同じ）";
+          : "推定3着内率の高い順";
     }
   }
 
@@ -112,6 +112,11 @@
     return null;
   }
 
+  /** マトリクスの指数欄。「57（21位/35レース中）」の「/35レース中」は全行同じなので見出しに寄せて省く（2026-10-26） */
+  function matrixHolmesText(row) {
+    return formatHolmesIndexDisplay(row).replace(/[（(](\d+位)\/\d+レース中[）)]/, "（$1）");
+  }
+
   function formatHolmesIndexDisplay(r) {
     if (!r) return "-";
     if (typeof r.holmes_index_display === "string" && r.holmes_index_display.trim()) {
@@ -157,12 +162,14 @@
 
   /** 上位欄の1行。探偵名の（）注釈はこの欄では出さない（2026-10-25 ユーザー指示）。
    *  line は「東京 5R / ホプキンス（新馬戦特化） / ホームズ指数 86（1位/23レース中）」の形で、
-   *  2つ目の区切りが探偵名。指数側の（1位/…）は残す。 */
+   *  2つ目の区切りが探偵名。順位は行の番号と同じなので「指数86」だけにする（2026-10-26）。 */
   function top5LineText(it) {
     if (!it.line) return `${it.place} ${it.R}R`;
     const parts = String(it.line).split(" / ");
     if (parts.length >= 2) parts[1] = parts[1].replace(/\s*[（(][^）)]*[）)]\s*$/, "");
-    return parts.join(" / ");
+    return parts
+      .map((x) => x.replace(/^ホームズ指数\s*(\d+(?:\.\d+)?)\s*[（(]\d+位\/\d+レース中[）)]$/, "指数$1"))
+      .join(" / ");
   }
 
   /** Top5 の外（6位以下）でホームズ指数が HOLMES_BORDER_TOP 以上のレースを
@@ -365,8 +372,8 @@
     const labels = {
       race: "Race",
       dev: "偏差",
-      sui: "ホームズ推",
-      holmes_index: "ホームズ指数",
+      sui: "ホームズ推奨",
+      holmes_index: "ホームズ指数（当日順位）",
       ワトソン: "ワトソン",
       アイリーン: "アイリーン",
       第3探偵: "第3探偵",
@@ -388,7 +395,7 @@
         else if (c === "ワトソン") val = watson;
         else if (c === "アイリーン") val = irene;
         else if (c === "sui") val = sui;
-        else if (c === "holmes_index") val = formatHolmesIndexDisplay(row);
+        else if (c === "holmes_index") val = matrixHolmesText(row);
         else val = row[c] ?? "-";
         table += `<td>${escapeHtml(val)}</td>`;
       }
@@ -398,8 +405,8 @@
           <p class="matrix-card-title">${escapeHtml(row.race || "-")}</p>
           <div class="matrix-card-grid">
             <div><span>偏差</span><strong>${escapeHtml(row.dev ?? "-")}</strong></div>
-            <div><span>ホームズ推</span><strong>${escapeHtml(sui)}</strong></div>
-            <div class="matrix-card-full"><span>ホームズ指数</span><strong>${escapeHtml(formatHolmesIndexDisplay(row))}</strong></div>
+            <div><span>ホームズ推奨</span><strong>${escapeHtml(sui)}</strong></div>
+            <div class="matrix-card-full"><span>ホームズ指数（当日順位）</span><strong>${escapeHtml(matrixHolmesText(row))}</strong></div>
             <div><span>ワトソン</span><strong>${escapeHtml(watson)}</strong></div>
             <div><span>アイリーン</span><strong>${escapeHtml(irene)}</strong></div>
             <div class="matrix-card-full"><span>第3探偵</span><strong>${escapeHtml(third)}</strong></div>
@@ -922,19 +929,21 @@
       <p class="meta">${formatHolmesRecommendHtml(r)}</p>
       <div class="marks">
     `;
-    // 第3探偵の箱はハンター/ホプキンス → ベイカー → ウィギンズの順に、登場しているものを出す（設計上は排他）。
-    const pickSpecialist = (src) => {
-      for (const k of ["ハ/ホプ", "ベ", "ウ"]) {
-        if (src[k] && src[k] !== "-") return src[k];
-      }
-      return "-";
-    };
-    const specialistCell = pickSpecialist(cells);
-    const specialistMark = pickSpecialist(marks);
-    for (const [k, label] of [["ワ", "ワトソン"], ["アイ", "アイリーン"], ["モ", "モーリアティ"]]) {
-      html += `<div class="mark-box"><strong>${label}</strong>${escapeHtml(cells[k] || "-")}<br/><span>${escapeHtml(marks[k] || "-")}</span></div>`;
+    // 箱はワトソン・アイリーンと、そのレースを担当する第3探偵（モーリアティ／ハンター・ホプキンス／ベイカー／
+    // ウィギンズ。設計上は排他。障害はグレゴリー）の1つだけ。担当していない探偵の空の箱は出さない（2026-10-26）。
+    // 第3探偵の評価欄は探偵名そのもの（例 cells.ベ="ベイカー"）なので、見出しと重なるときは評価の行を省く
+    const blank = (x) => !x || x === "-";
+    const boxes = [["ワ", "ワトソン"], ["アイ", "アイリーン"]];
+    for (const [k, label] of [["モ", "モーリアティ"], ["ハ/ホプ", "ハンター/ホプキンス"], ["ベ", "ベイカー"], ["ウ", "ウィギンズ"], ["グ", "グレゴリー"]]) {
+      if (blank(cells[k]) && blank(marks[k])) continue;
+      boxes.push([k, k === "ハ/ホプ" && /^(ハンター|ホプキンス)$/.test(cells[k] || "") ? cells[k] : label]);
+      break;
     }
-    html += `<div class="mark-box"><strong>ベイカー/ハンター/ホプキンス/ウィギンズ</strong>${escapeHtml(specialistCell)}<br/><span>${escapeHtml(specialistMark)}</span></div>`;
+    for (const [k, label] of boxes) {
+      if (blank(cells[k]) && blank(marks[k])) continue;
+      const cell = blank(cells[k]) || cells[k] === label ? "" : `${escapeHtml(cells[k])}<br/>`;
+      html += `<div class="mark-box"><strong>${escapeHtml(label)}</strong>${cell}<span>${escapeHtml(marks[k] || "-")}</span></div>`;
+    }
     html += "</div><div class='pdf-links'>";
     if (r.pdf_url) html += `<a href="${escapeAttr(r.pdf_url)}" target="_blank" rel="noopener">予想詳細PDF</a>`;
     if (r.help_pdf_url) html += `<a href="${escapeAttr(r.help_pdf_url)}" target="_blank" rel="noopener">項目説明PDF</a>`;
@@ -1155,15 +1164,14 @@
     const m = s.match(
       /^(\d{4}-\d{2}-\d{2})(?:[T\s]+)(\d{2}:\d{2}(?::\d{2})?)?/
     );
-    // 【最終更新日時】であることが一目で分かるよう見出し付きで表示
-    const lines = ["【最終更新日時】"];
+    // 開催日を先に出し、更新日時は開催日と同じ日なら時刻だけ（分まで）。日付の二重表示をやめた（2026-10-26）
+    const lines = [`開催日 ${scheduleDate || "-"}`];
     if (m) {
-      lines.push(`📅${m[1]}`);
-      if (m[2]) lines.push(`⏰${m[2]}`);
+      const hm = m[2] ? m[2].slice(0, 5) : "";
+      lines.push(m[1] === String(scheduleDate || "") && hm ? `⏰最終更新 ${hm}` : `⏰最終更新 ${m[1]}${hm ? ` ${hm}` : ""}`);
     } else {
-      lines.push(s);
+      lines.push(`最終更新 ${s}`);
     }
-    lines.push(`開催日 ${scheduleDate || "-"}`);
     return lines.join("\n");
   }
 
@@ -1328,6 +1336,7 @@
     renderMatrix();
     renderJumps();
     syncBrandJump();
+    renderNextRaceBox();
     if (state.raceId) {
       renderDetail();
       renderShutuba();
@@ -1354,6 +1363,90 @@
         $("updatedAt").innerHTML = `<span class="error">スナップショット取得失敗: ${escapeHtml(e.message || e)}</span>`;
       }
     }
+  }
+
+  /* ===== ホームズ指数速報（締切が最も近いレース。PC表示の左の欄、追跡ボタンの真上） =====
+     2026-10-26 ユーザーの手書き図。発売締切（発走2分前）がまだ来ていない非障害レースのうち一番近いもの。
+     締切を過ぎたら次のレースへ。残りは秒数で、手元の時計で1秒ごとに進める。押すとそのレースの予想へ。
+     締切 NEXT_RACE_FILL_SEC 秒前から残り時間の欄を左から1秒ずつオレンジで塗る（手書き図は120秒、10-26 ユーザー指示で90秒）。
+     試験版の正方形の mini.html はこれに一本化して削除した（計算はここだけ）。 */
+  const SALES_CLOSE_BEFORE_MS = 2 * 60 * 1000;
+  const NEXT_RACE_FILL_SEC = 90;
+  function nextCloseRace(now) {
+    const day = state.data && state.data.schedule_date;
+    let best = null;
+    let bestT = Infinity;
+    for (const r of allRaces()) {
+      if (isObstacleRace(r)) continue;
+      const st = raceStartDate(r, day);
+      if (!st) continue;
+      const close = st.getTime() - SALES_CLOSE_BEFORE_MS;
+      if (close > now && close < bestT) {
+        bestT = close;
+        best = r;
+      }
+    }
+    return best && { r: best, close: bestT };
+  }
+
+  let nextRaceHtml = "";
+  function renderNextRaceBox() {
+    const el = $("nextRace");
+    const wrap = $("nextRaceWrap");
+    if (!el || !wrap) return;
+    const data = state.data;
+    const p = data && !isDayClosedSnapshot(data) ? nextCloseRace(Date.now()) : null;
+    if (!p) {
+      wrap.hidden = true;
+      el.removeAttribute("data-rid");
+      nextRaceHtml = "";
+      return;
+    }
+    const r = p.r;
+    const v = holmesIndexValue(r);
+    const pending = !r.predicted || v == null;
+    const rank = Number(r.holmes_index_rank);
+    const m = String(r.holmes_rank_text || "").match(/(\d+)\s*レース中/);
+    const total = m ? Number(m[1]) : allRaces().filter((x) => !isObstacleRace(x)).length;
+    const dv = Number(r.holmes_morning_delta);
+    const hasDelta = !pending && r.holmes_morning_delta != null && r.holmes_morning_delta !== "" && Number.isFinite(dv);
+    const delta = hasDelta ? `(${dv > 0 ? `+${dv}` : dv < 0 ? dv : "±0"})` : "";
+    const sec = Math.max(0, Math.floor((p.close - Date.now()) / 1000));
+    const rn = String(r.R || "").replace(/[Rr]$/, "");
+    let cls = "next-race";
+    if (!pending && isHolmesLow(r)) cls += " is-low";
+    else if (!pending && rank === 1) cls += " rank-top";
+    else if (!pending && rank >= 2 && rank <= 5) cls += " rank-hi";
+    else if (!pending && rank >= 6 && rank <= 10) cls += " rank-mid";
+    const html =
+      `<span class="nr-main"><span><span class="nr-idx">${pending ? "-" : escapeHtml(v)}</span>` +
+      `<span class="nr-delta">${escapeHtml(delta)}</span></span>` +
+      `<span class="nr-rank">${pending || !rank ? "-" : rank}<small> / ${total}</small></span></span>` +
+      `<span class="nr-place">${escapeHtml(r.place || "")}</span>` +
+      `<span class="nr-race">${escapeHtml(rn)}</span>` +
+      `<span class="nr-secs${sec < 60 ? " soon" : ""}"><small>締切まで</small>${sec}</span>`;
+    el.className = cls;
+    wrap.hidden = false;
+    const fill = Math.min(1, Math.max(0, (NEXT_RACE_FILL_SEC - sec) / NEXT_RACE_FILL_SEC));
+    el.style.setProperty("--nr-fill", `${(fill * 100).toFixed(2)}%`);
+    el.dataset.rid = r.race_id;
+    el.dataset.place = r.place || "";
+    const label = `${r.place || ""}${rn}R ${r.name || ""} 発走${normalizeStartTime(r.start_time)}（締切まで${sec}秒）の予想へ`;
+    el.title = label;
+    el.setAttribute("aria-label", label);
+    if (html !== nextRaceHtml) {
+      el.innerHTML = html;
+      nextRaceHtml = html;
+    }
+  }
+
+  function initNextRaceBox() {
+    const el = $("nextRace");
+    if (!el) return;
+    el.addEventListener("click", () => {
+      if (el.dataset.rid) selectRace(el.dataset.rid, el.dataset.place);
+    });
+    window.setInterval(renderNextRaceBox, 1000);
   }
 
   /* ===== サイトバナー → 発走が最も近いレース ================================
@@ -1749,13 +1842,17 @@
   function renderResult() {
     const box = $("raceResult");
     if (!box) return;
+    // 確定するまでは見出しごと隠す（開いても「まだ確定していません」だけだったため。2026-10-26）
+    const card = $("raceResultCard");
     const found = findRace(state.raceId);
     if (!found) {
+      if (card) card.hidden = true;
       box.innerHTML = "<p class='hint'>レースを選ぶと、確定したレースの結果が表示されます。</p>";
       return;
     }
     const r = found.race;
     const html = raceResultHtml(r);
+    if (card) card.hidden = !html;
     box.innerHTML =
       html ||
       `<p class="hint">${escapeHtml(r.place || "")} ${escapeHtml(String(r.R || ""))}R の結果はまだ確定していません（確定から20分ほどで表示されます）。</p>`;
@@ -2244,6 +2341,7 @@
   initJumpLayoutControls();
   initPrevPdfBlock();
   initBrandJump();
+  initNextRaceBox();
   loadSnapshot();
   const poll = Number(cfg.POLL_INTERVAL_MS) || 30000;
   if (poll > 0) {
