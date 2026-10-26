@@ -339,7 +339,7 @@
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
     <p class="note">音（右上で切り替え・初期はOFF）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
-    <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。</p>
+    <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
   <script src="config.js?v=20261025235740"></script>
@@ -348,7 +348,10 @@
   (function () {
     "use strict";
     const cfg = window.PUBLIC_VIEWER_CONFIG || {};
-    const POLL_MS = Math.max(15000, Number(cfg.POLL_INTERVAL_MS) || 30000);
+    // 読み直しはサーバーが更新ログを作る時刻（毎分0・20・40秒、auto-x holmes_events_public.py --ticks）に合わせ、
+    // 公開し終わる数秒後に読む（2026-10-26 ユーザー指示。ticks を変えたらここも直す）
+    const TICK_MS = 20000;
+    const TICK_LAG_MS = 6000;
     const LOW = 65;          // app.js の HOLMES_LOW_THRESHOLD と同じ（10-31〜 60→65）
     const FRESH_MS = 10 * 60 * 1000;
     const STORE_KEY = "holmesTrackerLive";
@@ -920,11 +923,11 @@
           const cls = e.fresh ? `is-new${e.fresh === "top" ? " top" : ""}` : "";
           return `<li class="${cls}"><span class="t">${hhmm(e.t)}</span><span class="msg">${keep(e.msg)}</span></li>`;
         }).join(""));
-        $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。30秒ごとに自動で読み直します。";
+        $("logNote").textContent = "朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。";
         return;
       }
       // サーバーの記録がまだ無い日（記録を始める前の日など）は、公開データとこのページで見た変化から組み立てる
-      $("logNote").textContent = "● はこのページを開いている間に見つけた更新です（指数は直前に表示していた値から）。それ以外は公開データから組み立てていて、各レースの最後の更新だけが残ります（直前予想の指数は朝一斉からの変化）。30秒ごとに自動で読み直します。";
+      $("logNote").textContent = "● はこのページを開いている間に見つけた更新です（指数は直前に表示していた値から）。それ以外は公開データから組み立てていて、各レースの最後の更新だけが残ります（直前予想の指数は朝一斉からの変化）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。";
       // この形では順位の前後が分からないので、増えたときは通常の音だけ
       if (knownLiveCount != null && live.entries.length > knownLiveCount) play("normal");
       knownLiveCount = live.entries.length;
@@ -966,7 +969,7 @@
         const upd = parseTs(data.updated_at);
         $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
       } catch (e) {
-        $("meta").innerHTML = `<span class='err'>読み込みに失敗しました（${esc(e.message)}）。30秒後に再試行します</span>`;
+        $("meta").innerHTML = `<span class='err'>読み込みに失敗しました（${esc(e.message)}）。20秒後に再試行します</span>`;
       }
     }
 
@@ -1037,8 +1040,15 @@
     // 前回ONのまま開き直したときは、ブラウザの制限でページに一度触れるまで鳴らない。最初の操作で有効にする
     document.addEventListener("pointerdown", () => { if (soundOn) ctx(); }, { once: true });
 
+    /** 次の「毎分0・20・40秒＋数秒」に読み直す。タイマーが少し早く起きても同じ回を二度読まない */
+    function scheduleLoad() {
+      const now = Date.now();
+      let next = Math.floor((now - TICK_LAG_MS) / TICK_MS) * TICK_MS + TICK_MS + TICK_LAG_MS;
+      if (next - now < 1000) next += TICK_MS;
+      setTimeout(() => { load(); scheduleLoad(); }, next - now);
+    }
     load();
-    setInterval(load, POLL_MS);
+    scheduleLoad();
     // 発走済みの薄い表示・次の発走の赤枠は時刻だけで変わるので、裏で放置されていても戻ったら読み直す
     document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
   })();
