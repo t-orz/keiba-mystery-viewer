@@ -532,6 +532,28 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
 .sidebar-dev-notes-list li + li {
   margin-top: 0.3rem;
 }
+/* 左の欄の【開発ノート】は別窓リンク（開閉の見出しと同じ色・大きさ） */
+.sidebar-dev-notes > a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.sidebar-dev-notes > a:hover,
+.sidebar-dev-notes > a:focus-visible {
+  text-decoration: underline;
+}
+/* 別ページの本文（devnotes.html） */
+.devnotes-card .sidebar-dev-notes-list {
+  margin: 0.6rem 0;
+  padding-left: 1.3rem;
+}
+.devnotes-card .sidebar-dev-notes-list li + li {
+  margin-top: 0.55rem;
+}
+.devnotes-card .sidebar-dev-notes-lead,
+.devnotes-card .sidebar-dev-notes-def {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 .sidebar-dev-notes-def {
   margin-top: 0.35rem;
 }

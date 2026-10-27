@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <title>開発ノート｜競馬AI ミステリー予想</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css?v=20261027192000" />
+  <style>
+    /* help.html と同じく通常の縦スクロールに戻す */
+    @media (min-width: 721px) {
+      html { height: auto; overflow: visible; }
+      body.help-page { height: auto; overflow: visible; overflow-x: hidden; }
+    }
+  </style>
+</head>
+<body class="help-page devnotes-page">
+  <header class="site-header">
+    <div class="brand" id="brandName">競馬AI ミステリー予想</div>
+    <p class="tagline">開発ノート</p>
+    <p class="nav-links">
+      <a href="index.html">← 本日の予想サマリーへ戻る</a>
+    </p>
+  </header>
+
+  <section class="card devnotes-card">
+    <h2>開発ノート</h2>
+    <p class="sidebar-dev-notes-lead">※制作運用上で感じた個人的感想。参考までに</p>
+    <ul class="sidebar-dev-notes-list">
+      <li>ワトソンが不人気の馬を本命にしたときは良く感じる</li>
+      <li>よくわからなかったらとりあえずアイリーンの◎ー〇▲（☆）を狙ってください。ワイドでいいです。買う基準は1通りが最低15倍くらいです。合成で5～10倍ぐらいが目安です。倍率が物足りなかったら馬連にするか見送ってください。もちろん自己責任で</li>
+      <li>最近の川田はすごい来なくなったわけじゃないけど、配当の割には来てない感はやはりあると思います</li>
+      <li>データ蓄積もそこそこ増えたので改めてホームズ指数を再検証したところ、60未満は明確に悪く、60台も微妙な結果、70以上の領域内では明確な差は判断できないが現状では悪くない部類になるので現状では買うなら指数70以上のレースに絞って検討すべきというのが現状良いかと思っています（70未満のレースは全体の6割弱）</li>
+      <li>土曜より日曜の方が自信ありニキ</li>
+      <li>どのようなレースを買えばいいかの仮説として、「直前予想でホームズ指数が70以上かつ当日内順位が5位以上になった時のみ買う（さらに厳選するなら1位のみ買う）」に手ごたえを感じ、検証データを集めています。買い方はみなさんの手腕にお任せします</li>
+    </ul>
+    <p class="sidebar-dev-notes-def">不人気→2桁人気もしくはそれに近い馬</p>
+  </section>
+
+  <footer class="site-footer">
+    <p><a href="index.html">本日の予想サマリーへ戻る</a></p>
+  </footer>
+
+  <script src="config.js?v=20261027192000"></script>
+  <script>
+    (function () {
+      var cfg = window.PUBLIC_VIEWER_CONFIG || {};
+      if (cfg.BRAND_NAME) {
+        var el = document.getElementById("brandName");
+        if (el) el.textContent = cfg.BRAND_NAME;
+        document.title = "開発ノート｜" + cfg.BRAND_NAME;
+      }
+    })();
+  </script>
+</body>
+</html>
