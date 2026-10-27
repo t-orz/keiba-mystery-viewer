@@ -7,7 +7,7 @@
   <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
   <title>開発ノート｜競馬AI ミステリー予想</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261027194355" />
+  <link rel="stylesheet" href="styles.css?v=20261027195039" />
   <style>
     /* help.html と同じく通常の縦スクロールに戻す */
     @media (min-width: 721px) {
@@ -20,8 +20,9 @@
   <header class="site-header">
     <div class="brand" id="brandName">競馬AI ミステリー予想</div>
     <p class="tagline">開発ノート</p>
+    <!-- サイドバーから別タブで開くので「戻る」ではなく閉じる。閉じられない開き方（直接開いた等）のときは予想サマリーへ移る（2026-10-27） -->
     <p class="nav-links">
-      <a href="index.html">← 本日の予想サマリーへ戻る</a>
+      <a href="index.html" id="closeTab">× このタブを閉じる</a>
     </p>
   </header>
 
@@ -39,11 +40,7 @@
     <p class="sidebar-dev-notes-def">不人気→2桁人気もしくはそれに近い馬</p>
   </section>
 
-  <footer class="site-footer">
-    <p><a href="index.html">本日の予想サマリーへ戻る</a></p>
-  </footer>
-
-  <script src="config.js?v=20261027194355"></script>
+  <script src="config.js?v=20261027195039"></script>
   <script>
     (function () {
       var cfg = window.PUBLIC_VIEWER_CONFIG || {};
@@ -51,6 +48,17 @@
         var el = document.getElementById("brandName");
         if (el) el.textContent = cfg.BRAND_NAME;
         document.title = "開発ノート｜" + cfg.BRAND_NAME;
+      }
+      var close = document.getElementById("closeTab");
+      if (close) {
+        close.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.close();
+          // ブラウザが閉じさせてくれなかったら予想サマリーへ
+          window.setTimeout(function () {
+            if (!window.closed) window.location.href = close.href;
+          }, 300);
+        });
       }
     })();
   </script>

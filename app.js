@@ -1362,7 +1362,7 @@
     renderDemoBanner(data);
     const stamped = formatUpdatedAtLabel(data.updated_at, data.schedule_date);
     const text = closed
-      ? `本日の予想公開は終了しました\n開催日 ${data.schedule_date || "-"}`
+      ? `本日の予想公開終了\n開催日 ${data.schedule_date || "-"}`
       : stamped || "更新時刻不明";
     el.textContent = text;
     if (flash && prevUpdated && data.updated_at && prevUpdated !== data.updated_at) {
