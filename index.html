@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261027192000" />
+  <link rel="stylesheet" href="styles.css?v=20261027194355" />
 </head>
 <body>
   <div class="layout">
@@ -19,7 +19,8 @@
         <img src="assets/logo_sidebar.svg" alt="競馬AI ミステリー予想" class="brand-logo-img" width="214" height="72" decoding="async" />
       </div>
       <p class="responsible-gaming">馬券は自己責任で。無理な買い方はやめましょう</p>
-      <p class="tagline">本日の予想サマリー（閲覧専用）</p>
+      <!-- 「覧」は非開催日だけ2回続けて押すと追跡ページを開く隠し入口（app.js openTrackerWindow。2026-10-27 ユーザー指示） -->
+      <p class="tagline">本日の予想サマリー（閲<span class="tracker-egg" id="trackerEgg">覧</span>専用）</p>
       <!-- ヘルプは欄の上（サイトの説明）にまとめ、更新日時から下は今の情報だけにする（2026-10-26） -->
       <p class="nav-links nav-links-top">
         <a href="help.html" target="_blank" rel="noopener noreferrer">項目説明ヘルプ</a>
@@ -310,14 +311,14 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261027192000"></script>
+  <script src="config.js?v=20261027194355"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="track_cond.js?v=20261027192000"></script>
-  <script src="app.js?v=20261027192000"></script>
+  <script src="track_cond.js?v=20261027194355"></script>
+  <script src="app.js?v=20261027194355"></script>
 </body>
 </html>

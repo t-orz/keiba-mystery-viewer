@@ -1047,6 +1047,10 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 }
 /* ×で消した後は下の固定部分ごと隠す（再読み込みで戻る。10-27） */
 .sidebar-pin.is-dismissed { display: none !important; }
+/* 非開催日（クローズ表示）は追跡ボタンを出さない。左の欄とスマホ最下段の2か所とも（10-27 ユーザー指示） */
+body.is-day-closed .tracker-link { display: none !important; }
+/* 見出しの「覧」（非開催日の隠し入口）。続けて押したときに字が選択されないように */
+.tracker-egg { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
 /* 速報が出ない日は追跡ボタンの右に×（ボタンだけでも消せる。10-27 ユーザー指示）。
    ボタンは幅いっぱい・1行のままにするため、×は欄の右の余白（1.25rem）に置く */
 .sidebar-pin .tracker-link { position: relative; }
@@ -1177,6 +1181,8 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
 @media (min-width: 721px) and (min-height: 700px) {
   .site-sidebar { padding-bottom: 0; }
   .site-sidebar:has(> .sidebar-pin.is-dismissed) { padding-bottom: 2rem; }   /* ×で消したら欄の下の余白を元に */
+  body.is-day-closed .site-sidebar { padding-bottom: 2rem; }   /* 非開催日は固定部分が空になるので余白を元に */
+  body.is-day-closed .sidebar-pin { display: none; }
   .sidebar-pin {
     position: sticky;
     bottom: 0;

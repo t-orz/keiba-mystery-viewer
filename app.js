@@ -2450,14 +2450,31 @@
   });
   // 追跡ページは別ウインドウで開く（2026-10-24 ユーザー指示。target だけだと多くのブラウザで別タブになる）。
   // 同じ名前の窓が開いていればそこに読み直して前に出す。ポップアップが止められた・スマホ等では従来どおり別タブ
+  function openTrackerWindow(href) {
+    const w = window.open(href, "holmesTracker", "popup=yes,width=1180,height=900");
+    if (w) {
+      trackerWin = w;
+      try { w.focus(); } catch (err) { /* noop */ }
+    }
+    return w;
+  }
   document.addEventListener("click", (e) => {
     const a = e.target && e.target.closest ? e.target.closest("a.tracker-btn") : null;
     if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
-    const w = window.open(a.href, "holmesTracker", "popup=yes,width=1180,height=900");
-    if (w) {
-      trackerWin = w;
-      e.preventDefault();
-      try { w.focus(); } catch (err) { /* noop */ }
-    }
+    if (openTrackerWindow(a.href)) e.preventDefault();
   });
+  // 非開催日は追跡ボタンを出さない（styles.css body.is-day-closed）。代わりに見出しの「覧」を
+  // 続けて2回押すと開く。スマホは dblclick が拡大に取られるので、押した間隔で数える（10-27 ユーザー指示）
+  const trackerEgg = $("trackerEgg");
+  if (trackerEgg) {
+    let lastTap = 0;
+    trackerEgg.addEventListener("click", () => {
+      const now = Date.now();
+      const twice = now - lastTap < 500;
+      lastTap = twice ? 0 : now;
+      if (!twice || !document.body.classList.contains("is-day-closed")) return;
+      const w = openTrackerWindow("tracker.html");
+      if (!w) window.location.href = "tracker.html";  // ポップアップが止められたらこの窓で開く
+    });
+  }
 })();
