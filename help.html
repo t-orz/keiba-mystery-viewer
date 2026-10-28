@@ -15,6 +15,43 @@
       html { height: auto; overflow: visible; }
       body.help-page { height: auto; overflow: visible; overflow-x: hidden; }
     }
+    /* 図解（2026-10-29）。色はサイト本体（styles.css）と同じ値を使う */
+    .help-fig { margin: 1rem 0 1.25rem; }
+    .help-fig figcaption { margin-top: 0.4rem; color: var(--muted); font-size: 0.85rem; }
+    .help-fig-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .help-fig svg { display: block; width: 100%; height: auto; }
+    .help-fig-scroll svg { min-width: 560px; }
+    .help-fig-pair { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+    .help-fig-pair > * { flex: 1 1 260px; min-width: 0; }
+    .help-fig-pair .help-fig-narrow { flex: 0 1 220px; }
+    .help-fig-pair > svg { max-width: 420px; }
+    .help-video { width: 100%; max-width: 960px; display: block; margin: 0 auto; border-radius: 10px; background: #000; aspect-ratio: 16 / 9; }
+    .help-video-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 0.5rem 0 0; }
+    .flow { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: stretch; list-style: none; margin: 0; padding: 0; }
+    .flow li { flex: 1 1 150px; border: 1px solid; border-radius: 8px; padding: 0.5rem 0.65rem; font-size: 0.88rem; position: relative; }
+    .flow .when { display: block; font-weight: 700; }
+    .flow .band { display: block; margin-top: 0.3rem; font-size: 0.8rem; }
+    .flow .morning { background: #f6ecd6; border-color: #c9a35a; color: #6b4500; }
+    .flow .weather { background: #e2eaf4; border-color: #7895bd; color: #23466f; }
+    .flow .graded { background: #ece5f2; border-color: #9a82b6; color: #4d3570; }
+    .flow .prerace { background: #e3efe6; border-color: #7fae8c; color: #0b3d2e; }
+    .flow .missed { background: #efeae2; border-color: #a39a8a; color: #333; }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
+    .chips > span { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; }
+    .chips .jump { display: inline-flex; align-items: center; justify-content: center; width: 3rem; min-height: 2.2rem; cursor: default; }
+    .scale { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.15); font-size: 0.85rem; text-align: center; }
+    .scale > div { padding: 0.45rem 0.25rem; min-width: 0; }
+    .scale b { display: block; font-size: 1rem; }
+    .scale small { display: block; font-size: 0.75rem; }
+    .scale-holmes .low { flex: 50; background: var(--holmes-low); }
+    .scale-holmes .edge { flex: 20; background: #ece4cf; }
+    .scale-holmes .ok { flex: 30; background: var(--gold); }
+    .scale-rank > div { flex: 1; }
+    .scale-rank .warn { background: repeating-linear-gradient(135deg, rgba(155,28,28,0.18) 0 3px, transparent 3px 7px), #fbeaea; color: #9b1c1c; }
+    @media (max-width: 560px) {
+      .scale-rank { flex-wrap: wrap; }
+      .scale-rank > div { flex: 1 1 33%; border-bottom: 1px solid rgba(0,0,0,0.08); }
+    }
   </style>
 </head>
 <body class="help-page">
@@ -32,7 +69,142 @@
   </section>
 
   <section class="card">
+    <h2>使い方動画（約2分30秒）</h2>
+    <video class="help-video" controls playsinline preload="none" poster="video/howto_poster.jpg">
+      <source src="video/howto.mp4" type="video/mp4" />
+      お使いのブラウザでは動画を再生できません。<a href="video/howto.mp4">動画ファイルを開く</a>
+    </video>
+    <p class="help-video-note">画面の全体、レースの選び方、出馬表と確定結果、スマホでの見え方をひととおり紹介します（字幕つき）。画面は2026年10月25日の開催日のものです。<br />音声：VOICEVOX:春日部つむぎ</p>
+  </section>
+
+  <section class="card">
     <h2>閲覧サイトの見方</h2>
+    <div class="help-fig-pair">
+      <figure class="help-fig">
+        <div class="help-fig-scroll">
+          <svg viewBox="0 0 720 420" role="img" aria-labelledby="figPcTitle" font-family="inherit">
+            <title id="figPcTitle">PC表示の画面の全体図。左の欄に開催日・最終更新、天候・馬場、レースジャンプ、配信、探偵印成績、下にホームズ指数速報。右側に上からホームズ指数上位、会場マトリクス、レース要約、確定結果、出馬表。</title>
+            <rect x="0" y="0" width="720" height="420" rx="10" fill="#f3f0e8"/>
+            <g fill="#fffcf5" stroke="rgba(0,0,0,0.16)">
+              <rect x="10" y="10" width="190" height="400" rx="8"/>
+              <rect x="212" y="10" width="498" height="62" rx="8"/>
+              <rect x="212" y="80" width="498" height="96" rx="8"/>
+              <rect x="212" y="184" width="498" height="96" rx="8"/>
+              <rect x="212" y="288" width="498" height="30" rx="8"/>
+              <rect x="212" y="324" width="498" height="30" rx="8"/>
+              <rect x="212" y="360" width="498" height="50" rx="8" stroke-dasharray="4 3"/>
+            </g>
+            <g fill="#e3efe6" stroke="#7fae8c">
+              <rect x="20" y="52" width="170" height="34" rx="5"/>
+            </g>
+            <g fill="#f7f4ee" stroke="rgba(0,0,0,0.12)">
+              <rect x="20" y="92" width="170" height="34" rx="5"/>
+              <rect x="20" y="132" width="170" height="70" rx="5"/>
+              <rect x="20" y="208" width="170" height="30" rx="5"/>
+              <rect x="20" y="244" width="170" height="30" rx="5"/>
+              <rect x="20" y="314" width="170" height="54" rx="5"/>
+              <rect x="20" y="374" width="170" height="26" rx="13" fill="#1f6f74" stroke="none"/>
+            </g>
+            <line x1="20" y1="302" x2="190" y2="302" stroke="#5c5c5c" stroke-dasharray="3 3"/>
+            <text x="105" y="298" font-size="10" fill="#5c5c5c" text-anchor="middle">ここから下は欄の下端に固定</text>
+            <!-- レースジャンプのボタン（色は styles.css と同じ） -->
+            <g stroke="rgba(0,0,0,0.15)">
+              <rect x="28" y="156" width="34" height="18" rx="3" fill="rgba(240,163,10,0.34)"/>
+              <rect x="68" y="156" width="34" height="18" rx="3" fill="rgba(66,133,244,0.22)"/>
+              <rect x="108" y="156" width="34" height="18" rx="3" fill="rgba(52,168,83,0.22)"/>
+              <rect x="148" y="156" width="34" height="18" rx="3" fill="#c9c9c9"/>
+              <rect x="28" y="178" width="34" height="18" rx="3" fill="#c9c9c9"/>
+              <rect x="68" y="178" width="34" height="18" rx="3" fill="rgba(66,133,244,0.22)" stroke="#d32f2f" stroke-width="2.5"/>
+              <rect x="108" y="178" width="34" height="18" rx="3" fill="#c9c9c9"/>
+              <rect x="148" y="178" width="34" height="18" rx="3" fill="rgba(52,168,83,0.22)"/>
+            </g>
+            <g font-size="13" font-weight="700" fill="#0b3d2e">
+              <text x="28" y="31" font-weight="400" font-size="11" fill="#5c5c5c">ロゴ・項目説明ヘルプ</text>
+              <text x="28" y="74">開催日・最終更新</text>
+              <text x="28" y="114">天候・馬場・直線の風</text>
+              <text x="28" y="149">レースジャンプ</text>
+              <text x="28" y="228">配信を受け取る</text>
+              <text x="28" y="264">探偵印成績・前日PDF</text>
+              <text x="28" y="334">ホームズ指数速報</text>
+              <text x="105" y="391" fill="#fff" font-size="11.5" text-anchor="middle">全レースのホームズ指数</text>
+              <text x="226" y="34" font-size="15">本日のホームズ指数上位</text>
+              <text x="226" y="104" font-size="15">会場マトリクス</text>
+              <text x="226" y="208" font-size="15">レース要約</text>
+              <text x="226" y="308">確定結果 ▾</text>
+              <text x="226" y="344">出馬表 ▾</text>
+            </g>
+            <g font-size="11.5" fill="#5c5c5c">
+              <text x="28" y="350" font-size="11">締切が近いレースの指数と</text>
+              <text x="28" y="364" font-size="11">残り時間。押すとそのレースへ</text>
+              <text x="226" y="54">指数の高い5レース＋「その他」（押すとそのレースへ）</text>
+              <text x="226" y="124">全レースの偏差・ホームズ推奨・ホームズ指数（当日順位）・各探偵</text>
+              <text x="226" y="140">行を押すとそのレースを選ぶ</text>
+              <text x="226" y="270">条件・天気馬場・ホームズ指数・推奨探偵・各探偵の印・PDFへのリンク</text>
+              <text x="330" y="308">結果が確定したら出る。見出しを押して開く</text>
+              <text x="330" y="344">馬ごとの推定勝率・3着内率・馬指数・印。見出しを押して開く</text>
+              <text x="226" y="390">このサイトの概要・登場人物の役割説明（初めての方向け）</text>
+            </g>
+            <!-- マトリクスの行のイメージ -->
+            <g stroke="rgba(0,0,0,0.10)">
+              <line x1="226" y1="152" x2="696" y2="152"/>
+              <line x1="226" y1="162" x2="696" y2="162"/>
+            </g>
+            <rect x="226" y="153" width="470" height="9" fill="rgba(11,61,46,0.10)"/>
+            <!-- 直前予想の帯 -->
+            <rect x="226" y="218" width="300" height="24" rx="5" fill="#e3efe6" stroke="#7fae8c"/>
+            <circle cx="240" cy="230" r="7" fill="#0b3d2e"/>
+            <path d="M236.5 230.2l2.4 2.4 4.4-4.8" stroke="#fffcf5" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <text x="253" y="234" font-size="12" font-weight="700" fill="#0b3d2e">直前予想済み</text>
+          </svg>
+        </div>
+        <figcaption>PC表示の全体図。右側は上から順に並び、見出しを押すと開いたり閉じたりできます（スマホでは横にスクロールして見られます）。</figcaption>
+      </figure>
+      <figure class="help-fig help-fig-narrow">
+        <svg viewBox="0 0 220 440" role="img" aria-labelledby="figSpTitle" font-family="inherit">
+          <title id="figSpTitle">スマホ表示の並び。上から、開催日・最終更新と天候・馬場、配信の案内、ホームズ指数上位、会場マトリクスとレースのボタン、レース要約、出馬表など。最下段にDiscordと全レースのホームズ指数のボタン。</title>
+          <rect x="6" y="4" width="208" height="432" rx="26" fill="#1a1a1a"/>
+          <rect x="16" y="16" width="188" height="408" rx="18" fill="#f3f0e8"/>
+          <g fill="#fffcf5" stroke="rgba(0,0,0,0.16)">
+            <rect x="24" y="28" width="172" height="46" rx="6" fill="#e3efe6" stroke="#7fae8c"/>
+            <rect x="24" y="80" width="172" height="30" rx="6"/>
+            <rect x="24" y="116" width="172" height="44" rx="6"/>
+            <rect x="24" y="166" width="172" height="72" rx="6"/>
+            <rect x="24" y="244" width="172" height="44" rx="6"/>
+            <rect x="24" y="294" width="172" height="40" rx="6"/>
+            <rect x="24" y="352" width="172" height="62" rx="6" fill="#ece5d6"/>
+          </g>
+          <g stroke="rgba(0,0,0,0.15)">
+            <rect x="32" y="206" width="34" height="14" rx="3" fill="rgba(240,163,10,0.34)"/>
+            <rect x="72" y="206" width="34" height="14" rx="3" fill="rgba(66,133,244,0.22)"/>
+            <rect x="112" y="206" width="34" height="14" rx="3" fill="rgba(52,168,83,0.22)"/>
+            <rect x="152" y="206" width="34" height="14" rx="3" fill="#c9c9c9"/>
+          </g>
+          <rect x="32" y="372" width="156" height="16" rx="4" fill="#5865f2"/>
+          <rect x="32" y="393" width="156" height="16" rx="8" fill="#1f6f74"/>
+          <g font-size="11.5" font-weight="700" fill="#0b3d2e">
+            <text x="32" y="46">開催日・最終更新</text>
+            <text x="32" y="99">配信の案内・更新タイミング</text>
+            <text x="32" y="134">ホームズ指数上位</text>
+            <text x="32" y="184">会場マトリクス</text>
+            <text x="32" y="262">レース要約</text>
+            <text x="32" y="312">出馬表・確定結果など</text>
+            <text x="32" y="366">ページの最下段</text>
+          </g>
+          <g font-size="10" fill="#5c5c5c">
+            <text x="32" y="62">天候・馬場・直線の風</text>
+            <text x="32" y="150">押すとそのレースへ</text>
+            <text x="32" y="200">会場を選んでRのボタンを押す</text>
+            <text x="32" y="232">レース一覧（開くと表で見られる）</text>
+            <text x="32" y="278">選んだレースの印・指数</text>
+            <text x="32" y="326">見出しを押して開く</text>
+            <text x="110" y="384" fill="#fff" text-anchor="middle">Discord配信に参加</text>
+            <text x="110" y="405" fill="#fff" text-anchor="middle">全レースのホームズ指数</text>
+          </g>
+          <text x="110" y="344" font-size="13" fill="#5c5c5c" text-anchor="middle">⋮</text>
+        </svg>
+        <figcaption>スマホでの並び（上から順）。</figcaption>
+      </figure>
+    </div>
     <dl class="help-dl">
       <dt>サイトのロゴ</dt>
       <dd>サイドバー上のロゴを押すと、最終更新時刻以降で発走が最も近いレースの予想に切り替わります。</dd>
@@ -45,7 +217,17 @@
       <dt>レースジャンプ</dt>
       <dd>レースを選ぶボタン。「場内」は選んだ会場のR順、「発走表」は全会場を発走時刻順に並べた表です。どちらを使うかはブラウザに記憶されます。</dd>
       <dt>ジャンプボタンの色</dt>
-      <dd>金＝ホームズ指数1位／青＝2〜5位／緑＝6〜10位／網掛け＝障害競走／灰＝ホームズ指数65未満の非推奨レース（順位が10位以内でも色を付けません）／赤枠＝最終更新に最も近い発走前のレース。</dd>
+      <dd>金＝ホームズ指数1位／青＝2〜5位／緑＝6〜10位／網掛け＝障害競走／灰＝ホームズ指数65未満の非推奨レース（順位が10位以内でも色を付けません）／赤枠＝最終更新に最も近い発走前のレース。
+        <figure class="help-fig">
+          <div class="chips" aria-label="ジャンプボタンの色の見本">
+            <span><span class="jump rank-top">11R</span>ホームズ指数1位</span>
+            <span><span class="jump rank-hi">5R</span>2〜5位</span>
+            <span><span class="jump rank-mid">2R</span>6〜10位</span>
+            <span><span class="jump is-obstacle">4R</span>障害競走</span>
+            <span><span class="jump is-holmes-low">1R</span>指数65未満（非推奨）</span>
+            <span><span class="jump is-nearest-prepost">9R</span>最終更新に最も近い発走前</span>
+          </div>
+        </figure></dd>
       <dt>会場マトリクス</dt>
       <dd>開催場ごとの一覧。行を選ぶとレース要約が表示されます。列は偏差・ホームズ推奨・ホームズ指数（見出しに当日の対象レース数を「35R中」の形で、欄には「57（21位）」のように指数と当日順位）・ワトソン・アイリーン・第3探偵です。</dd>
       <dt>偏差</dt>
@@ -53,7 +235,15 @@
       <dt>ホームズ推奨</dt>
       <dd>ホームズ（全体メタ）がそのレースで本線にする探偵ロジックの正式名称（ワトソン／アイリーン／モーリアティ／ハンター／ホプキンス／ベイカー／ウィギンズ）。障害競走はグレゴリーです。</dd>
       <dt>ホームズ指数</dt>
-      <dd>予想の信頼しやすさを表す0〜100の数値と、当日全レース内の順位。65未満は信頼しにくい（非推奨）レースで、ジャンプボタンを灰色にします。65〜69は境界域です。レース要約と予想詳細PDFでは、指数の横に65未満は「非推奨」、65〜69は「境界域：やや信頼しにくい」と添えます。推奨探偵の印の厚さ・期待値偏差・相手の数と、そのレースが混戦かどうか（単勝オッズのばらけ具合。1番人気でも勝つ見込みが低いほど混戦）から計算します。指数が低いレースは、これまでの実績で、推奨探偵の本命が3着内に来る割合がオッズから見込める値を下回りやすく、とくに複勝・ワイドなど3着内に絡む馬券は控える目安になります。指数が高いレースでも、儲かることを保証するものではありません。2026年10月24日・10月25日・10月31日に計算方法を変えました（それ以前の指数とは比べられません）。期待値偏差は過去12週を基準にした値をそのまま使うので、日によっては高い指数のレースが無いこともあります。障害競走は対象外なので順位を付けず「対象外（障害）」と表示します。</dd>
+      <dd>予想の信頼しやすさを表す0〜100の数値と、当日全レース内の順位。65未満は信頼しにくい（非推奨）レースで、ジャンプボタンを灰色にします。65〜69は境界域です。レース要約と予想詳細PDFでは、指数の横に65未満は「非推奨」、65〜69は「境界域：やや信頼しにくい」と添えます。推奨探偵の印の厚さ・期待値偏差・相手の数と、そのレースが混戦かどうか（単勝オッズのばらけ具合。1番人気でも勝つ見込みが低いほど混戦）から計算します。指数が低いレースは、これまでの実績で、推奨探偵の本命が3着内に来る割合がオッズから見込める値を下回りやすく、とくに複勝・ワイドなど3着内に絡む馬券は控える目安になります。指数が高いレースでも、儲かることを保証するものではありません。2026年10月24日・10月25日・10月31日に計算方法を変えました（それ以前の指数とは比べられません）。期待値偏差は過去12週を基準にした値をそのまま使うので、日によっては高い指数のレースが無いこともあります。障害競走は対象外なので順位を付けず「対象外（障害）」と表示します。
+        <figure class="help-fig">
+          <div class="scale scale-holmes">
+            <div class="low"><b>0〜64</b>非推奨<small>ジャンプボタンは灰色</small></div>
+            <div class="edge"><b>65〜69</b>境界域<small>やや信頼しにくい</small></div>
+            <div class="ok"><b>70〜100</b>6位以下でも「その他」に掲載</div>
+          </div>
+          <figcaption>ホームズ指数の目安（帯の幅は目盛りどおりではありません）。高い指数でも儲かることを保証するものではありません。</figcaption>
+        </figure></dd>
       <dt>朝一斉比</dt>
       <dd>レース要約のホームズ指数に添える「（朝一斉比 +6）」は、開催日早朝の全レース一斉予想の時点からの指数の増減です。朝一斉のあとに予想が更新されたレース（天候・馬場の変更、重賞1時間前、発走直前など）にだけ付きます。指数はそのレースだけで決まるので、増減はそのレースの評価の変化として読めます（当日レース内順位は他のレースの影響も受けます）。</dd>
       <dt>ワトソン／アイリーン／第3探偵</dt>
@@ -61,7 +251,16 @@
       <dt>レース要約</dt>
       <dd>発走・レース条件（芝／ダート／障害と距離）、天気・馬場、出走頭数、予想ペース、予想更新時間、期待値偏差とランク、ホームズ指数と当日レース内順位（朝一斉比の増減を添える場合あり）、推奨ロジック、各探偵の印摘要（ワトソン・アイリーンと、そのレースを担当する第3探偵の1つだけ。障害競走はグレゴリー）、予想詳細PDF／項目説明PDFへのリンクを表示します。条件は「ダート1000m（右）」、予想ペースは「やや遅」「中」「やや速」などの短表記です。予想更新時間はそのレースの予想が最後に更新された時刻です（先頭に直前予想の状態の帯が出ているレースでは、更新時刻は帯に出すので表示しません）。アイリーンの印馬番はレース評価（本勝負／見送りなど）に関係なく表示します。発走後、結果が確定したレースには「確定着順」として1〜5着の着順と馬番（①②…の丸数字）を添えます（詳しくは下の「確定結果」）。障害競走では「障害競走はグレゴリー（障害特化・開発初期の試験運用）のみの参考予想です（ホームズ指数・注目レース・成績集計の対象外）」の注記が付きます。</dd>
       <dt>直前予想が済んだか（帯）</dt>
-      <dd>レース要約の先頭には、予想が最後にどの段階で更新されたかを色付きの帯で出します：直前予想済み（緑・✓）／重賞1時間前予想済み（紫）／天候・馬場の変更で再予想（青。何が変わったかを添えます）／朝一斉の予想のまま（黄土色。直前予想が入るおおよその時刻を添えます）／直前予想は入りませんでした（灰。朝一斉の予想が最終）。朝一斉から◎・○が変わったときは「ワトソン◎ ③→⑦」のように添えます。</dd>
+      <dd>レース要約の先頭には、予想が最後にどの段階で更新されたかを色付きの帯で出します：直前予想済み（緑・✓）／重賞1時間前予想済み（紫）／天候・馬場の変更で再予想（青。何が変わったかを添えます）／朝一斉の予想のまま（黄土色。直前予想が入るおおよその時刻を添えます）／直前予想は入りませんでした（灰。朝一斉の予想が最終）。朝一斉から◎・○が変わったときは「ワトソン◎ ③→⑦」のように添えます。
+        <figure class="help-fig">
+          <ol class="flow" aria-label="予想が更新される順番と帯の色">
+            <li class="morning"><span class="when">6時頃　朝一斉（全レース）</span><span class="band">帯：朝一斉の予想のまま</span></li>
+            <li class="weather"><span class="when">8時頃　天候・馬場の変更</span><span class="band">帯：天候・馬場の変更で再予想（変わったレースだけ）</span></li>
+            <li class="graded"><span class="when">発走1時間前　重賞のみ</span><span class="band">帯：重賞1時間前予想済み</span></li>
+            <li class="prerace"><span class="when">発走10分前前後（全レース）</span><span class="band">帯：直前予想済み ✓</span></li>
+          </ol>
+          <figcaption>左から右へ、予想が新しくなるたびに帯の色が変わります。直前予想が入らなかったレースは灰色の帯（直前予想は入りませんでした）になります。</figcaption>
+        </figure></dd>
       <dt>確定結果</dt>
       <dd>結果が確定したレースの1〜5着（着順・枠番・馬番・馬名・着差・単勝人気と、その馬に付いていた各探偵の印）と、払戻金（単勝〜3連単の組番・金額・人気）。結果が確定するまでは見出しごと表示しません。最初は閉じてあり、見出しを押すと開きます。結果は主にJRA公式から取得するため、確定から表示まで20分ほど遅れることがあります。予想の印や指数は結果を見て書き換えることはありません。</dd>
       <dt>出馬表</dt>
@@ -79,7 +278,46 @@
       <dt>出馬表の並び</dt>
       <dd>「3着内率順」は推定3着内率の高い順。「馬番順」は馬番の小さい順。「人気順」は単勝人気の順。選択はブラウザに記憶されます。</dd>
       <dt>【天候・馬場・直線風向 m/s】（サイドバー）</dt>
-      <dd>開催中の競馬場ごとの天候と、芝・ダートの馬場状態です。末尾の小さな図と数字は、最後の直線に吹いている今の風と風速（m/s）です。図はテレビ中継の画面と同じ向き（スタンド側から見て、上の横線が奥の内ラチ）で、矢印は風が吹いていく向きです。右回りの場（京都・阪神・中山など）は馬が右から左へ走るので←が追い風・→が向かい風、左回りの場（東京・新潟・中京）は馬が左から右へ走るので→が追い風・←が向かい風です。↑はスタンド側から奥（内）へ吹く横風、↓は内から手前へ吹く横風です。色は向かい風が赤、追い風が緑、横風が灰です。スタンドはどの場も直線の外側にあるため、外から吹く横風は実際にはこれより弱いことがあります。風は気象庁アメダスの、競馬場に一番近い観測点の値です（例：東京は府中、京都は京田辺。ゴールから1〜12km離れています）。競馬場の中で測った風ではないので目安としてください。10分ごとに更新し、見出し右の「風11:40」が観測時刻です。図に指を置く（マウスを重ねる）と観測点と風向が出ます。風は表示するだけで、予想の計算には使っていません。</dd>
+      <dd>開催中の競馬場ごとの天候と、芝・ダートの馬場状態です。末尾の小さな図と数字は、最後の直線に吹いている今の風と風速（m/s）です。図はテレビ中継の画面と同じ向き（スタンド側から見て、上の横線が奥の内ラチ）で、矢印は風が吹いていく向きです。右回りの場（京都・阪神・中山など）は馬が右から左へ走るので←が追い風・→が向かい風、左回りの場（東京・新潟・中京）は馬が左から右へ走るので→が追い風・←が向かい風です。↑はスタンド側から奥（内）へ吹く横風、↓は内から手前へ吹く横風です。色は向かい風が赤、追い風が緑、横風が灰です。スタンドはどの場も直線の外側にあるため、外から吹く横風は実際にはこれより弱いことがあります。風は気象庁アメダスの、競馬場に一番近い観測点の値です（例：東京は府中、京都は京田辺。ゴールから1〜12km離れています）。競馬場の中で測った風ではないので目安としてください。10分ごとに更新し、見出し右の「風11:40」が観測時刻です。図に指を置く（マウスを重ねる）と観測点と風向が出ます。風は表示するだけで、予想の計算には使っていません。
+        <figure class="help-fig">
+          <div class="help-fig-pair">
+            <svg viewBox="0 0 320 190" role="img" aria-labelledby="figWindR" font-family="inherit">
+              <title id="figWindR">右回りの競馬場（京都・阪神・中山など）の直線。スタンドから見て馬は右から左へ走るので、左向きの矢印が追い風、右向きが向かい風。</title>
+              <rect x="0" y="0" width="320" height="190" rx="8" fill="#fffcf5" stroke="rgba(0,0,0,0.12)"/>
+              <text x="160" y="22" font-size="14" font-weight="700" fill="#0b3d2e" text-anchor="middle">右回り（京都・阪神・中山など）</text>
+              <line x1="30" y1="46" x2="290" y2="46" stroke="#1a1a1a" stroke-width="2"/>
+              <text x="290" y="40" font-size="10.5" fill="#5c5c5c" text-anchor="end">奥＝内ラチ</text>
+              <rect x="40" y="146" width="240" height="22" rx="3" fill="#e9e2d2"/>
+              <text x="160" y="161" font-size="11" fill="#5c5c5c" text-anchor="middle">スタンド（見ている側）</text>
+              <path d="M270 96 H70" stroke="#0b3d2e" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
+              <path d="M78 89 L64 96 L78 103" fill="#0b3d2e"/>
+              <text x="170" y="88" font-size="11.5" fill="#0b3d2e" text-anchor="middle">馬の進む向き</text>
+              <text x="44" y="100" font-size="11" fill="#0b3d2e" text-anchor="end">ゴール</text>
+              <g font-size="12" font-weight="700">
+                <text x="70" y="128" fill="#2e7d32">← 追い風</text>
+                <text x="190" y="128" fill="#c62828">→ 向かい風</text>
+              </g>
+            </svg>
+            <svg viewBox="0 0 320 190" role="img" aria-labelledby="figWindL" font-family="inherit">
+              <title id="figWindL">左回りの競馬場（東京・新潟・中京）の直線。スタンドから見て馬は左から右へ走るので、右向きの矢印が追い風、左向きが向かい風。</title>
+              <rect x="0" y="0" width="320" height="190" rx="8" fill="#fffcf5" stroke="rgba(0,0,0,0.12)"/>
+              <text x="160" y="22" font-size="14" font-weight="700" fill="#0b3d2e" text-anchor="middle">左回り（東京・新潟・中京）</text>
+              <line x1="30" y1="46" x2="290" y2="46" stroke="#1a1a1a" stroke-width="2"/>
+              <text x="30" y="40" font-size="10.5" fill="#5c5c5c">奥＝内ラチ</text>
+              <rect x="40" y="146" width="240" height="22" rx="3" fill="#e9e2d2"/>
+              <text x="160" y="161" font-size="11" fill="#5c5c5c" text-anchor="middle">スタンド（見ている側）</text>
+              <path d="M50 96 H250" stroke="#0b3d2e" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
+              <path d="M242 89 L256 96 L242 103" fill="#0b3d2e"/>
+              <text x="150" y="88" font-size="11.5" fill="#0b3d2e" text-anchor="middle">馬の進む向き</text>
+              <text x="276" y="100" font-size="11" fill="#0b3d2e">ゴール</text>
+              <g font-size="12" font-weight="700">
+                <text x="56" y="128" fill="#c62828">← 向かい風</text>
+                <text x="190" y="128" fill="#2e7d32">→ 追い風</text>
+              </g>
+            </svg>
+          </div>
+          <figcaption>サイドバーの風の図の読み方。どちらの図もテレビ中継と同じくスタンド側から見た向きです。↑（奥へ）・↓（手前へ）は横風で、灰色で表示します。</figcaption>
+        </figure></dd>
       <dt>【探偵印成績（前週・今開催）】（サイドバー）</dt>
       <dd>発走直前予想の印を、ロジックごと・印ごとに集計したものです。PDFの1ページ目は前週（1週間分）、2ページ目以降は今開催（対象週に行われた開催ごとに、開催初日から対象週の末日までの累計。例：4回東京 1〜5日目）です。サイドバーには対象週・今開催と「成績をPDFで見る」ボタンを出し、成績はPDFの表で見ます。表の列は探偵名・印・サンプル数・着順成績・平均人気・平均単勝オッズ・勝率・単勝回収率・複勝率・複勝回収率です。着順成績の「【20-10-7-41】」は1着20・2着10・3着7・着外41。回収率は各印の馬に100円ずつ買った場合の払戻合計÷購入額で、100%以上を赤字で示します。障害競走は集計に含めません。今開催のページはサンプル数30未満の行を灰色にしています（件数が少なく偶然のぶれが大きい参考値）。JRA-VANの結果到着を待つため対象週が1〜2週前になることがあるので、対象週を必ず出しています。開催中の今開催の成績も、前の週末までの分になります。</dd>
       <dt>【前日予想データPDF】（サイドバー）</dt>
@@ -141,6 +379,20 @@
       <dt>C+／C／D</dt>
       <dd>C+＝偏差40〜44、C＝35〜39、D＝35未満。</dd>
     </dl>
+    <figure class="help-fig">
+      <div class="scale scale-rank" aria-label="期待値ランクと偏差の対応">
+        <div style="background:#e7e3da"><b>D</b><small>35未満</small></div>
+        <div style="background:#e3e1d4"><b>C</b><small>35〜39</small></div>
+        <div style="background:#dde0cf"><b>C+</b><small>40〜44</small></div>
+        <div style="background:#d3ddc8"><b>B</b><small>45〜49</small></div>
+        <div style="background:#c6d7be"><b>B+</b><small>50〜54</small></div>
+        <div style="background:#b6cfb2"><b>A</b><small>55〜59</small></div>
+        <div style="background:#a3c4a4"><b>A+</b><small>60〜64</small></div>
+        <div style="background:#8fb995"><b>S</b><small>65〜69</small></div>
+        <div class="warn"><b>∞</b><small>70以上・過信禁物</small></div>
+      </div>
+      <figcaption>左ほど低く、右ほど高い評価。いちばん右の∞は額面どおりに受け取らず、慎重に扱います。</figcaption>
+    </figure>
   </section>
 
   <section class="card">
