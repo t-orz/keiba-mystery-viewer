@@ -1425,6 +1425,14 @@ table.matrix tr.selected td { background: rgba(11, 61, 46, 0.09); }
   vertical-align: middle;
   white-space: nowrap;
 }
+/* 海・地（近4走に海外・地方、2026-10-30）。JRA の発表ではなくこのサイトの判定なので枠で囲んで区別する */
+.horse-badge-box {
+  display: inline-block;
+  padding: 0.1em 0.2em;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-weight: 600;
+}
 .horse-badge-legend {
   margin: 0.4rem 0 0;
 }

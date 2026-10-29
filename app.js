@@ -1148,7 +1148,9 @@
         const color = String((b && b.color) || "");
         // 想定外の値を style に流さない
         const style = /^#[0-9a-fA-F]{3,8}$/.test(color) ? ` style="color:${color}"` : "";
-        return `<span class="horse-badge"${style}>${escapeHtml(label)}</span>`;
+        // 海・地はこのサイトの判定（JRA の記号ではない）なので枠で囲む
+        const box = b && b.box ? " horse-badge-box" : "";
+        return `<span class="horse-badge${box}"${style}>${escapeHtml(label)}</span>`;
       })
       .join("");
   }
