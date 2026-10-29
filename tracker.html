@@ -315,7 +315,7 @@
       <button type="button" id="soundTest">通知音テスト</button>
         <button type="button" id="speechTest">読み上げテスト</button>
       <label class="vol">音量 <input type="range" id="soundVol" min="0" max="100" step="5" value="80" aria-label="音量"><span id="soundVolTxt">80%</span></label>
-      <span class="sound-hint">重賞と、指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ／締切90秒前=117番の時報の音（プッ・プッ・プッ・ポーン）のあとに読み上げ</span>
+      <span class="sound-hint">重賞と、指数70以上か当日5位以内のレースは発売締切90秒前にもお知らせ／音のあとにログを読み上げ（<span class="voice-credit">VOICEVOX:春日部つむぎ</span>）／ログ更新=上がる2音／予想後2〜5位=ド・ミ・ソ＋和音／予想後1位=ファンファーレ／締切90秒前=177番の天気予報のチャイム（ピンポンパンポーン）のあとに読み上げ</span>
     </div>
   </header>
 
@@ -338,7 +338,7 @@
     <h2>ログ</h2>
     <ol class="log" id="log"></ol>
     <p class="log-more" id="logMore" hidden></p>
-    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、重賞（G1〜G3）と、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に、合図音（かつての電話の117番・時報の「プッ・プッ・プッ・ポーン」）のあと「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
+    <p class="note">音（右上で切り替え。開くたびにOFFから始まるので、使うときはその都度ONにしてください）は、新しいログが増えたときに鳴ります。予想後の当日順位が1位ならファンファーレ、2〜5位ならド・ミ・ソ＋和音、それ以外は上がる2音（すでに上位だったレースの予想し直しも、予想後の順位で鳴ります）。鳴り終わったあと、増えたログを短い言葉で読み上げます（音のON/OFFと連動。3件以上まとめて増えたときは件数と最上位だけ。重賞は競馬場とレース番号の代わりにレース名で読みます。ログには〔G1〕のように格だけ添えます）。音がONのときは、重賞（G1〜G3）と、ホームズ指数70以上か当日5位以内のレース（障害を除く）の発売締切90秒前に、合図音（かつての電話の177番・天気予報のような「ピンポンパンポーン」）のあと「東京11レース、日本ダービー、発売締め切り90秒前です。このレースのホームズ指数は88、当日順位は1位です」のようにお知らせします（重賞はレース名も読みます。読み上げテストで試聴できます）。読み上げの声は <span class="voice-credit">VOICEVOX:春日部つむぎ</span> です（用意していない言い回しのときだけブラウザの日本語の声で読みます）。PCの別窓で開いておく使い方向けです。スマホではこのページを画面に出している間だけ鳴り、消音モードでは鳴らないことがあります。</p>
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
@@ -440,29 +440,21 @@
       if (volume <= 0) return null;
       master.connect(comp).connect(c.destination);
       const t0 = at != null ? Math.max(at, c.currentTime + 0.03) : c.currentTime + 0.03;
-      if (kind === "close") chime117(c, master, t0);
+      if (kind === "close") chime177(c, master, t0);
       else for (const [n, dt, v, len] of PATTERNS[kind] || PATTERNS.normal) voice(c, master, NOTE[n], t0 + dt, v, len);
       return master;
     }
-    // 発売締切90秒前の合図（2026-10-29 ユーザー指示で「ピン・ポーン」から変更）: かつての電話の117番（時報）の
-    // 「プッ・プッ・プッ・ポーン」。1秒おきに 440Hz の短い音を3つ、3秒後に 880Hz の長い音。録音は使わず正弦波で作る
-    const CHIME_117_SEC = 3;   // 鳴らし始めから「ポーン」まで
-    function chime117(c, out, t0) {
-      const tone = (f, at, vol, hold, rel) => {
-        const o = c.createOscillator();
-        const g = c.createGain();
-        o.type = "sine";
-        o.frequency.value = f;
-        g.gain.setValueAtTime(0.0001, at);
-        g.gain.exponentialRampToValueAtTime(vol, at + 0.005);
-        g.gain.setValueAtTime(vol, at + hold);
-        g.gain.exponentialRampToValueAtTime(0.0001, at + hold + rel);
-        o.connect(g).connect(out);
-        o.start(at);
-        o.stop(at + hold + rel + 0.05);
-      };
-      for (let i = 0; i < 3; i++) tone(440, t0 + i, 0.3, 0.1, 0.02);
-      tone(880, t0 + CHIME_117_SEC, 0.3, 0.25, 2.2);
+    // 発売締切90秒前の合図（2026-10-29 ユーザー指示で「ピン・ポーン」から変更）: かつての電話の177番（天気予報）の
+    // 鉄琴の「ピンポンパンポーン」。音名は資料が見つからず、上がる4音（ファ・ラ・ド・ファ）で作る。録音は使わない
+    const CHIME_177_NOTES = [[698.46, 0, 1], [880.0, 0.32, 1], [1046.5, 0.64, 1], [1396.9, 0.96, 2.4]];   // [Hz, 秒, 余韻の倍率]
+    const CHIME_177_SEC = 0.96;   // 鳴らし始めから最後の音まで
+    function chime177(c, out, t0) {
+      // 鉄琴らしく、基音に高い倍音（約2.76倍・5.4倍）を少し足し、倍音ほど早く消す
+      for (const [f, dt, len] of CHIME_177_NOTES) {
+        partial(c, out, f, t0 + dt, { vol: 0.32, atk: 0.003, dec: 1.1 * len });
+        partial(c, out, f * 2.76, t0 + dt, { vol: 0.07, atk: 0.002, dec: 0.35 * len });
+        partial(c, out, f * 5.4, t0 + dt, { vol: 0.025, atk: 0.002, dec: 0.12 * len });
+      }
     }
     function renderSoundButton() {
       const b = document.getElementById("soundToggle");
@@ -902,7 +894,7 @@
     const ANNOUNCE_LATE_MS = 60 * 1000;
     const ANNOUNCE_INDEX_LINE = 70;
     const ANNOUNCE_RANK_LINE = 5;
-    const ANNOUNCE_CHIME_SEC = CHIME_117_SEC + 0.9;   // 合図音（117番の時報）の鳴らし始めから声まで。「ポーン」の余韻に声を重ねる
+    const ANNOUNCE_CHIME_SEC = CHIME_177_SEC + 1.0;   // 合図音（177番の天気予報）の鳴らし始めから声まで
     let annDay = "";
     let annRaces = [];
     let annEvents = [];
@@ -1167,7 +1159,7 @@
       setTimeout(() => play("hi", true), 1000);
       setTimeout(() => play("top", true), 2700);
       setTimeout(() => play("close", true), 2700 + SOUND_LEN_MS.top + 300);
-      await waitMs(2700 + SOUND_LEN_MS.top + 300 + CHIME_117_SEC * 1000 + 2500);
+      await waitMs(2700 + SOUND_LEN_MS.top + 300 + CHIME_177_SEC * 1000 + 2500);
     }));
     $("speechTest").addEventListener("click", () => runTest(async () => {
       // 読み上げの試聴（音がOFFでも聞ける）。日本語の声が無い環境ではその旨を出す
