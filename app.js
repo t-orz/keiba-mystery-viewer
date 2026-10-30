@@ -1508,9 +1508,9 @@
     }
   }
 
-  /** 速報と追跡ボタンの囲み（.sidebar-pin）の置き場所。高さ700px以上のPCでは左の欄の一番下に固定（CSS の sticky）、
+  /** 速報と追跡ボタンの囲み（.sidebar-pin）の置き場所。高さ480px以上のPCでは左の欄の一番下に固定（CSS の sticky）、
    *  それ以外は従来どおりレースジャンプの上へ戻す。CSS の @media と同じ条件で切り替える（2026-10-27 ユーザー決定） */
-  const SIDEBAR_PIN_MQ = "(min-width: 721px) and (min-height: 700px)";
+  const SIDEBAR_PIN_MQ = "(min-width: 721px) and (min-height: 480px)";   // styles.css の @media と同じ値にする（10-31 700→480）
   function placeSidebarPin() {
     const pin = document.querySelector(".sidebar-pin");
     const aside = pin && pin.closest(".site-sidebar");

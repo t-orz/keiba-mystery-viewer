@@ -1176,9 +1176,9 @@ body.is-day-closed .tracker-link { display: none !important; }
 }
 /* 左の欄では欄の幅いっぱいに置く */
 .tracker-link .tracker-btn { display: flex; width: 100%; text-align: center; }
-/* PC表示（高さ700px以上）では速報と追跡ボタンを左の欄の一番下に固定する。中身の高さぶんだけ（割合では決めない）。
+/* PC表示（高さ480px以上。10-31 ユーザー指示で700→480、ノートPCでも固定する）では速報と追跡ボタンを左の欄の一番下に固定する。中身の高さぶんだけ（割合では決めない）。
    上を流れる欄と分かるよう背景と上の境界線を付け、追跡ボタンは小さく（2026-10-27 ユーザー決定）。低い画面は従来どおり流れる */
-@media (min-width: 721px) and (min-height: 700px) {
+@media (min-width: 721px) and (min-height: 480px) {
   .site-sidebar { padding-bottom: 0; }
   .site-sidebar:has(> .sidebar-pin.is-dismissed) { padding-bottom: 2rem; }   /* ×で消したら欄の下の余白を元に */
   body.is-day-closed .site-sidebar { padding-bottom: 2rem; }   /* 非開催日は固定部分が空になるので余白を元に */
