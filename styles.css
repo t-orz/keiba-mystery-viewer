@@ -995,15 +995,6 @@ body.is-day-closed .btn-discord.btn-discord-dark:not([aria-disabled="true"]):act
   box-shadow: none;
 }
 
-.top5 { margin: 0; padding-left: 1.2rem; }
-.top5 li { margin: 0.25rem 0; }
-.top5 a {
-  display: inline-block;
-  padding: 0.35rem 0;
-  color: var(--accent);
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
 /* ホームズ指数速報（締切が最も近いレース。PC表示の左の欄、追跡ボタンの真上。2026-10-26 手書き図2枚目）
    左=指数(朝一斉比)と当日順位/対象レース数、右上=競馬場|レース番号、右下=締切までの秒数。
    締切90秒前から残り時間の欄だけ、左から1秒ごとに警戒色の赤で塗られていく（順位の金・青・緑と混同しない色、10-27 ユーザー指示）（幅は app.js が --nr-fill で渡す） */
@@ -1204,33 +1195,76 @@ body.is-day-closed .tracker-link { display: none !important; }
   }
 }
 /* 6位以下でホームズ指数70以上（「その他：京都3R・72　／　東京9R・71」） */
-.top5-others {
-  margin: 0.35rem 0 0;
-  font-size: 0.92em;
-  line-height: 2;
+/* 本日のホームズ指数のマス目。色は tracker.html の td.cell と同じ。
+   広い画面=1場1行、狭い画面=1場を6列×2段でR番号はマスの左上（2026-11-06） */
+.hgrid { display: grid; gap: 8px; --hgrid-up: #c62828; --hgrid-down: #1565c0; --hgrid-next: #d32f2f; }
+.hgrid-row { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 4px; align-items: center; }
+.hgrid-row + .hgrid-row:not(.hgrid-head + .hgrid-row) { border-top: 1px solid rgba(0, 0, 0, 0.14); padding-top: 8px; }
+.hgrid-head { display: none; }
+.hgrid-place { font-weight: 700; font-size: 0.92rem; color: var(--accent); }
+.hgrid-cells { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
+.hgrid-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
 }
-.top5-others a {
-  color: var(--accent);
-  font-weight: 600;
-  white-space: nowrap;
+.hgrid-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hgrid-cell.is-empty { background: transparent; border-style: dashed; cursor: default; }
+.hgrid-r { position: absolute; top: 0; left: 3px; font-size: 0.58rem; line-height: 1.3; color: var(--muted); }
+.hgrid-v { font-size: 1rem; font-weight: 700; line-height: 1.1; padding-top: 3px; }
+.hgrid-d { font-size: 0.62rem; line-height: 1.2; color: var(--muted); }
+.hgrid-d.up { color: var(--hgrid-up); }
+.hgrid-d.down { color: var(--hgrid-down); }
+.hgrid-cell.rank-top { background: var(--gold); border-color: var(--gold-b); }
+.hgrid-cell.rank-hi { background: var(--blue); border-color: var(--blue-b); }
+.hgrid-cell.rank-mid { background: var(--green); border-color: var(--green-b); }
+.hgrid-cell.is-low { background: var(--holmes-low); border-color: var(--holmes-low-b); }
+.hgrid-cell.is-obstacle {
+  background: repeating-linear-gradient(135deg, var(--obstacle-hatch) 0 2px, transparent 2px 6px), var(--card);
+  border-color: var(--obstacle-b);
 }
-/* 広いPC表示で「その他」があるときは左=上位5件・右=その他の2列。区切り線は出さない。
-   右は1件1行（上位5件の行と同じ間隔）、6件以上はさらに2列。狭い画面は従来の上下の並び（2026-10-27 ユーザー決定） */
+.hgrid-cell.is-obstacle .hgrid-v { font-size: 0.9rem; color: var(--muted); }
+.hgrid-cell.is-done { opacity: 0.6; }
+.hgrid-cell.is-next { outline: 3px solid var(--hgrid-next); outline-offset: 1px; z-index: 1; }
+.hgrid-cell.is-fresh::after {
+  content: "更新";
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  z-index: 2;
+  padding: 0 3px;
+  border-radius: 5px;
+  background: var(--hgrid-next);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.hgrid-empty { margin: 0; color: var(--muted); }
 @media (min-width: 1000px) {
-  .top5-wrap.is-split {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: 1.5rem;
-    align-items: start;
-  }
-  .top5-wrap.is-split .top5-others { margin: 0; padding-top: 0.25rem; line-height: normal; }
-  .top5-wrap.is-split .top5-others-label,
-  .top5-wrap.is-split .top5-others a { display: block; padding: 0.35rem 0; margin-bottom: 0.25rem; }
-  .top5-wrap.is-split .top5-others-label { color: var(--muted); font-weight: 600; }
-  .top5-wrap.is-split .top5-others-items { display: block; }
-  .top5-wrap.is-split .top5-others-items.is-many { columns: 2; column-gap: 1rem; }
-  .top5-wrap.is-split .top5-others-items a { break-inside: avoid; }
-  .top5-wrap.is-split .top5-others-sep { display: none; }
+  .hgrid { gap: 4px; }
+  .hgrid-row { grid-template-columns: 3rem minmax(0, 1fr); }
+  .hgrid-row + .hgrid-row:not(.hgrid-head + .hgrid-row) { border-top: 0; padding-top: 0; }
+  .hgrid-head { display: grid; }
+  .hgrid-head .hgrid-cells span { text-align: center; font-weight: 700; font-size: 0.85rem; color: var(--muted); }
+  .hgrid-cells { grid-template-columns: repeat(var(--hgrid-cols, 12), minmax(0, 1fr)); gap: 4px; }
+  .hgrid-cell { height: 3.4rem; border-radius: 8px; }
+  .hgrid-r { display: none; }
+  .hgrid-v { font-size: 1.2rem; padding-top: 0; }
+  .hgrid-d { font-size: 0.7rem; }
+  .hgrid-cell.is-obstacle .hgrid-v { font-size: 1rem; }
 }
 
 .tabs {

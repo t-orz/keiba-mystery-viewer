@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261031062117" />
+  <link rel="stylesheet" href="styles.css?v=20261106135542" />
 </head>
 <body>
   <div class="layout">
@@ -123,16 +123,12 @@
 
       <section class="card acc" data-acc="top5" data-default="open">
         <button type="button" class="acc-toggle" aria-expanded="true">
-          <span class="acc-title">本日のホームズ指数上位</span>
-          <span class="acc-hint">買う候補の入口</span>
+          <span class="acc-title">本日のホームズ指数</span>
           <span class="acc-chevron" aria-hidden="true"></span>
         </button>
         <div class="acc-body">
-          <!-- 「その他」があるときPC表示では左=上位5件・右=その他の2列（区切り線なし。2026-10-27） -->
-          <div class="top5-wrap" id="top5Wrap">
-            <ol id="top5List" class="top5"></ol>
-            <p id="top5Others" class="top5-others" hidden></p>
-          </div>
+          <div id="holmesGrid"></div>
+          <p class="hint jump-legend" id="holmesGridLegend" hidden>金=1位 / 青=2〜5位 / 緑=6〜10位 / 灰=ホームズ指数65未満（非推奨） / 網掛け=障害 / 赤枠=次の発走 / 薄い=発走済み / 小さい数字=朝一斉比</p>
         </div>
       </section>
 
@@ -229,7 +225,7 @@
               予想の作成・編集や馬券購入は行いません。
             </p>
             <p>
-              画面では、当日のホームズ指数上位、開催場ごとのマトリクス、レース要約、印付き出馬表などを表示します。
+              画面では、当日のホームズ指数、開催場ごとのマトリクス、レース要約、印付き出馬表などを表示します。
               各探偵（ホームズ／ワトソン／アイリーンほか）の役割や項目の意味は、下の「登場人物の役割説明」と
               <a href="help.html" target="_blank" rel="noopener noreferrer">項目説明ヘルプ</a>を参照してください。
             </p>
@@ -311,14 +307,14 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261031062117"></script>
+  <script src="config.js?v=20261106135542"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="track_cond.js?v=20261031062117"></script>
-  <script src="app.js?v=20261031062117"></script>
+  <script src="track_cond.js?v=20261106135542"></script>
+  <script src="app.js?v=20261106135542"></script>
 </body>
 </html>

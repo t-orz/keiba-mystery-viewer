@@ -161,87 +161,94 @@
     return `${latest}（朝一 ${morning}${dtxt}）`;
   }
 
-  function renderTop5() {
-    const ol = $("top5List");
-    ol.innerHTML = "";
-    const items = (state.data && state.data.top5) || [];
-    if (!items.length) {
-      ol.innerHTML = "<li>候補なし（予想済みレースを待ってください）</li>";
-      return;
-    }
-    for (const it of items) {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = "#raceDetailCard";
-      a.textContent = top5LineText(it);
-      const idxDisp = formatHolmesIndexDisplay(it);
-      if (idxDisp && idxDisp !== "-") a.title = `ホームズ指数 ${idxDisp}`;
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        selectRace(it.race_id, it.place);
-      });
-      li.appendChild(a);
-      ol.appendChild(li);
-    }
-    renderTop5Others(items);
+  /* ===== 本日のホームズ指数（競馬場×Rのマス目。2026-11-06 上位5件の一覧から入れ替え・試用中） =====
+     色と判定は tracker.html の renderGrid と同じ。変えるときは両方直す。
+     広い画面は1場1行、狭い画面は1場を6列×2段にする（styles.css .hgrid）。 */
+  const HOLMES_GRID_FRESH_MS = 10 * 60 * 1000;
+  const HOLMES_GRID_TICK_MS = 30 * 1000;
+  let holmesGridHtml = "";
+
+  function holmesGridRaceNo(r) {
+    return Number(String(r.R || "").replace(/[Rr]$/, "")) || 0;
   }
 
-  /** 上位欄の1行。探偵名の（）注釈はこの欄では出さない（2026-10-25 ユーザー指示）。
-   *  line は「東京 5R / ホプキンス（新馬戦特化） / ホームズ指数 86（1位/23レース中）」の形で、
-   *  2つ目の区切りが探偵名。順位は行の番号と同じなので「指数86」だけにする（2026-10-26）。 */
-  function top5LineText(it) {
-    if (!it.line) return `${it.place} ${it.R}R`;
-    const parts = String(it.line).split(" / ");
-    if (parts.length >= 2) parts[1] = parts[1].replace(/\s*[（(][^）)]*[）)]\s*$/, "");
-    return parts
-      .map((x) => x.replace(/^ホームズ指数\s*(\d+(?:\.\d+)?)\s*[（(]\d+位\/\d+レース中[）)]$/, "指数$1"))
-      .join(" / ");
+  function holmesGridParseTs(s) {
+    const m = String(s || "").match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}:\d{2})(?::(\d{2}))?/);
+    if (!m) return null;
+    const d = new Date(`${m[1]}T${m[2]}:${m[3] || "00"}+09:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
 
-  /** Top5 の外（6位以下）でホームズ指数が HOLMES_BORDER_TOP 以上のレースを
-   *  「その他：京都3R・72　／　東京9R・71」の1行で出す（2026-10-24 ユーザー決定で解禁）。
-   *  広いPC表示では上位5件の右に1件1行で並べ、6件以上はさらに2列（2026-10-27 ユーザー決定。並べ方は styles.css）。 */
-  function renderTop5Others(top5Items) {
-    const p = $("top5Others");
-    if (!p) return;
-    const wrap = $("top5Wrap");
-    p.innerHTML = "";
-    const inTop5 = new Set((top5Items || []).map((it) => String(it.race_id)));
-    const rows = allRaces()
-      .filter((r) => {
-        const v = holmesIndexValue(r);
-        const rank = Number(r.holmes_index_rank);
-        return v != null && v >= HOLMES_BORDER_TOP && Number.isFinite(rank) && rank >= 6
-          && !inTop5.has(String(r.race_id));
-      })
-      .sort((a, b) => Number(a.holmes_index_rank) - Number(b.holmes_index_rank));
-    p.hidden = !rows.length;
-    if (wrap) wrap.classList.toggle("is-split", rows.length > 0);
-    if (!rows.length) return;
-    const label = document.createElement("span");
-    label.className = "top5-others-label";
-    label.textContent = "その他：";
-    const list = document.createElement("span");
-    list.className = `top5-others-items${rows.length >= 6 ? " is-many" : ""}`;
-    p.append(label, list);
-    rows.forEach((r, i) => {
-      if (i) {
-        const sep = document.createElement("span");
-        sep.className = "top5-others-sep";
-        sep.textContent = "　／　";
-        list.appendChild(sep);
+  function holmesGridCell(r, no, nextId, now) {
+    const obstacle = isObstacleRace(r);
+    const pending = r.holmes_rank_text === "算出前" || !r.predicted;
+    const v = holmesIndexValue(r);
+    const rank = Number(r.holmes_index_rank);
+    const cls = ["hgrid-cell"];
+    if (obstacle) cls.push("is-obstacle");
+    else if (!pending && v != null && v < HOLMES_LOW_THRESHOLD) cls.push("is-low");
+    else if (!pending && rank === 1) cls.push("rank-top");
+    else if (!pending && rank >= 2 && rank <= 5) cls.push("rank-hi");
+    else if (!pending && rank >= 6 && rank <= 10) cls.push("rank-mid");
+    const st = raceStartDate(r);
+    if (st && st.getTime() <= now) cls.push("is-done");
+    if (nextId != null && String(r.race_id) === String(nextId)) cls.push("is-next");
+    const at = holmesGridParseTs(r.predicted_at);
+    if (at && r.update_kind && r.update_kind !== "morning" && now - at.getTime() < HOLMES_GRID_FRESH_MS) cls.push("is-fresh");
+
+    const dv = Number(r.holmes_morning_delta);
+    let delta = "";
+    if (!obstacle && !pending && r.holmes_morning_delta != null && r.holmes_morning_delta !== "" && Number.isFinite(dv)) {
+      const dc = dv > 0 ? " up" : dv < 0 ? " down" : "";
+      delta = `<span class="hgrid-d${dc}">${dv > 0 ? `+${dv}` : dv < 0 ? dv : "±0"}</span>`;
+    }
+    const shown = obstacle ? "障" : pending || v == null ? "-" : v;
+    const tip = [`${r.place || ""} ${no}R`, normalizeStartTime(r.start_time), r.name || "",
+      !obstacle && !pending && v != null ? `ホームズ指数 ${v}` : "", r.holmes_rank_text || "",
+      r.holmes_morning_delta_text || ""].filter(Boolean).join(" ");
+    return `<button type="button" class="${cls.join(" ")}" data-race="${escapeHtml(r.race_id)}" data-place="${escapeHtml(r.place)}" `
+      + `title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"><span class="hgrid-r">${no}</span>`
+      + `<span class="hgrid-v">${escapeHtml(shown)}</span>${delta}</button>`;
+  }
+
+  function renderHolmesGrid() {
+    const box = $("holmesGrid");
+    if (!box) return;
+    const races = allRaces();
+    const legend = $("holmesGridLegend");
+    if (legend) legend.hidden = !races.length;
+    let html;
+    if (!races.length) {
+      html = '<p class="hgrid-empty">候補なし（予想済みレースを待ってください）</p>';
+    } else {
+      const now = Date.now();
+      const places = [];
+      for (const r of races) if (r.place && !places.includes(r.place)) places.push(r.place);
+      // 列はその日の実際の最終レースまで。場ごとにレース数が違う日は足りない場の右端が空欄になる
+      const maxR = Math.max(1, ...races.map(holmesGridRaceNo));
+      let next = null;
+      let nextT = Infinity;
+      for (const r of races) {
+        const st = raceStartDate(r);
+        if (st && st.getTime() > now && st.getTime() < nextT) { nextT = st.getTime(); next = r.race_id; }
       }
-      const rn = String(r.R || "").replace(/[Rr]$/, "") || "-";
-      const a = document.createElement("a");
-      a.href = "#raceDetailCard";
-      a.textContent = `${r.place || ""}${rn}R・${holmesIndexValue(r)}`;
-      a.title = `ホームズ指数 ${holmesIndexValue(r)}（${r.holmes_index_rank}位）`;
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        selectRace(r.race_id, r.place);
-      });
-      list.appendChild(a);
-    });
+      const nums = Array.from({ length: maxR }, (_, i) => i + 1);
+      html = `<div class="hgrid" style="--hgrid-cols:${maxR}">`
+        + `<div class="hgrid-row hgrid-head"><span></span><div class="hgrid-cells">${nums.map((n) => `<span>${n}</span>`).join("")}</div></div>`;
+      for (const p of places) {
+        const cells = nums.map((n) => {
+          const r = races.find((x) => x.place === p && holmesGridRaceNo(x) === n);
+          return r ? holmesGridCell(r, n, next, now) : '<span class="hgrid-cell is-empty"></span>';
+        }).join("");
+        html += `<div class="hgrid-row"><span class="hgrid-place">${escapeHtml(p)}</span><div class="hgrid-cells">${cells}</div></div>`;
+      }
+      html += "</div>";
+    }
+    // 30秒ごとに呼ばれるので、変わらないときは触らない（押した直後のフォーカスを奪わない）
+    if (html !== holmesGridHtml) {
+      box.innerHTML = html;
+      holmesGridHtml = html;
+    }
   }
 
   function allRaces() {
@@ -1377,7 +1384,7 @@
     loadWind(data);
     renderMarkWeeklyStats(data);
     refreshPrevPdfBlock();
-    renderTop5();
+    renderHolmesGrid();
     renderTabs();
     renderMatrix();
     renderJumps();
@@ -2441,6 +2448,11 @@
   initPrevPdfBlock();
   initBrandJump();
   initNextRaceBox();
+  $("holmesGrid").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-race]");
+    if (b) selectRace(b.dataset.race, b.dataset.place);
+  });
+  window.setInterval(renderHolmesGrid, HOLMES_GRID_TICK_MS);   // 発走済み・赤枠・更新札は時刻で変わる
   loadSnapshot();
   const poll = Number(cfg.POLL_INTERVAL_MS) || 30000;
   if (poll > 0) {
