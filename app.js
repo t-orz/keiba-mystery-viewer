@@ -206,9 +206,8 @@
     const tip = [`${r.place || ""} ${no}R`, normalizeStartTime(r.start_time), r.name || "",
       !obstacle && !pending && v != null ? `ホームズ指数 ${v}` : "", r.holmes_rank_text || "",
       r.holmes_morning_delta_text || ""].filter(Boolean).join(" ");
-    return `<button type="button" class="${cls.join(" ")}" data-race="${escapeHtml(r.race_id)}" data-place="${escapeHtml(r.place)}" `
-      + `title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"><span class="hgrid-r">${no}</span>`
-      + `<span class="hgrid-v">${escapeHtml(shown)}</span>${delta}</button>`;
+    return `<div class="${cls.join(" ")}" role="img" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"><span class="hgrid-r">${no}</span>`
+      + `<span class="hgrid-v">${escapeHtml(shown)}</span>${delta}</div>`;
   }
 
   function renderHolmesGrid() {
@@ -2448,10 +2447,6 @@
   initPrevPdfBlock();
   initBrandJump();
   initNextRaceBox();
-  $("holmesGrid").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-race]");
-    if (b) selectRace(b.dataset.race, b.dataset.place);
-  });
   window.setInterval(renderHolmesGrid, HOLMES_GRID_TICK_MS);   // 発走済み・赤枠・更新札は時刻で変わる
   loadSnapshot();
   const poll = Number(cfg.POLL_INTERVAL_MS) || 30000;
