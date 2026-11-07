@@ -850,6 +850,18 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   display: inline-block;
   max-width: 100%;
 }
+.br-pc {
+  display: none;
+}
+/* PCの左の欄は3行で固定する: 馬券は20歳になってから。/自己責任で、無理のない範囲で/楽しみましょう */
+@media (min-width: 721px) {
+  .site-sidebar .keep-phrase {
+    display: inline;
+  }
+  .site-sidebar .br-pc {
+    display: inline;
+  }
+}
 
 .logic-blurbs {
   display: grid;
