@@ -845,6 +845,12 @@ body.is-day-closed .site-sidebar button:not([aria-disabled="true"]) {
   font-weight: 700;
 }
 
+/* 注意書きを語の途中で折り返さない。幅が足りないときはこの塊の前で改行する */
+.keep-phrase {
+  display: inline-block;
+  max-width: 100%;
+}
+
 .logic-blurbs {
   display: grid;
   gap: 0.55rem;
