@@ -2355,6 +2355,26 @@ table.shutuba td.rs-cell { text-align: center; }
 .prev-run-result {
   grid-column: 2;
 }
+/* レースレベル（相手関係）のランク（2026-11-11）。色だけに頼らず文字でも S〜D を出す */
+.prev-run-lvl {
+  display: inline-block;
+  margin-left: 0.3em;
+  padding: 0 0.35em;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.prev-run-lvl-S, .prev-run-lvl-A { color: var(--accent); }
+.prev-run-lvl-B { color: var(--muted); }
+.prev-run-lvl-C, .prev-run-lvl-D { color: var(--muted); font-weight: 400; }
+.prev-run-lvl-note {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.85em;
+}
 .prev-run-notes {
   margin: 0.45rem 0 0;
   padding-top: 0.35rem;
