@@ -1824,11 +1824,21 @@
     }
     // 馬体重（10-18 追加）。計量の無い走（海外など）は出さない
     if (Number.isFinite(Number(r.weight)) && Number(r.weight) > 0) result += `・${Number(r.weight)}kg`;
-    // レースレベル（相手関係）のランク S〜D（2026-11-11 追加、public_prev_runs.py → race_level_rank.py）
-    const lvl = /^[SABCD]$/.test(String(r.lvl || "")) ? String(r.lvl) : "";
-    const lvlHtml = lvl
-      ? ` <span class="prev-run-lvl prev-run-lvl-${lvl}" title="同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ（このサイトで計算）">レベル${lvl}</span>`
-      : "";
+    // レースレベル（相手関係）のランク（2026-11-11 追加、public_prev_runs.py → race_level_rank.py）
+    // "S"〜"D"＝判定済み、"(A)" など＝比べたレースが30〜49で参考値、"(-)"＝比べたレースが少なく判定できず
+    const lvlRaw = String(r.lvl || "");
+    const lvlM = /^(?:([SABCD])|\(([SABCD-])\))$/.exec(lvlRaw);
+    let lvlHtml = "";
+    if (lvlM) {
+      const letter = lvlM[1] || lvlM[2];
+      const cls = letter === "-" ? "prev-run-lvl-none" : `prev-run-lvl-${letter}${lvlM[1] ? "" : " prev-run-lvl-ref"}`;
+      const tip = letter === "-"
+        ? "同じ条件のレースが少なく、レベルを判定できません"
+        : lvlM[1]
+          ? "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ（このサイトで計算）"
+          : "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ。比べたレースが少ないため参考値";
+      lvlHtml = ` <span class="prev-run-lvl ${cls}" title="${tip}">レベル${escapeHtml(lvlRaw)}</span>`;
+    }
     return (
       `<li><span class="prev-run-label">${escapeHtml(r.label || "")}</span><span>${escapeHtml(head)}</span>` +
       `<span class="prev-run-result">${escapeHtml(result)}${lvlHtml}</span></li>`
@@ -1842,8 +1852,11 @@
     let html = `<p class="prev-run-head">${escapeHtml(name)}</p>`;
     if (runs.length) html += `<ul class="prev-run-list">${runs.map((r) => prevRunLineHtml(r, today)).join("")}</ul>`;
     if (notes.length) html += `<p class="prev-run-notes">${notes.map(escapeHtml).join("・")}</p>`;
-    if (runs.some((r) => /^[SABCD]$/.test(String(r.lvl || "")))) {
-      html += `<p class="prev-run-lvl-note">レベル＝同じクラスの中での相手関係の強さ（S＝上位2割〜D＝下位2割、このサイトで計算）</p>`;
+    const lvlOk = (r) => /^(?:[SABCD]|\([SABCD-]\))$/.test(String(r.lvl || ""));
+    if (runs.some(lvlOk)) {
+      let note = "レベル＝同じクラスの中での相手関係の強さ（S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
+      if (runs.some((r) => /^\(/.test(String(r.lvl || "")))) note += "。（ ）は比べたレースが少なく参考値、(-)は判定できず";
+      html += `<p class="prev-run-lvl-note">${note}</p>`;
     }
     return html;
   }

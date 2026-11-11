@@ -2370,6 +2370,9 @@ table.shutuba td.rs-cell { text-align: center; }
 .prev-run-lvl-S, .prev-run-lvl-A { color: var(--accent); }
 .prev-run-lvl-B { color: var(--muted); }
 .prev-run-lvl-C, .prev-run-lvl-D { color: var(--muted); font-weight: 400; }
+/* 参考値 "(A)"・判定できず "(-)" は点線の枠（11-11） */
+.prev-run-lvl-ref, .prev-run-lvl-none { border-style: dashed; }
+.prev-run-lvl-none { color: var(--muted); font-weight: 400; }
 .prev-run-lvl-note {
   margin: 0.35rem 0 0;
   color: var(--muted);
