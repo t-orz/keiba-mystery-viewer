@@ -1832,11 +1832,13 @@
     if (lvlM) {
       const letter = lvlM[1] || lvlM[2];
       // 新馬戦（r.lvl_debut）は「その後型」＝出ていた他の馬のその後の成績で判定。文字はそのまま二重の枠（11-11）
-      const debut = r.lvl_debut === true && !!lvlM[1];
-      let cls = letter === "-" ? "prev-run-lvl-none" : `prev-run-lvl-${letter}${lvlM[1] ? "" : " prev-run-lvl-ref"}`;
+      // 新馬戦の "(A)" は新馬戦から日が浅く（56日以内の材料）参考値。二重の枠のまま（ ）付きの文字
+      const debut = r.lvl_debut === true && letter !== "-";
+      let cls = letter === "-" ? "prev-run-lvl-none" : `prev-run-lvl-${letter}${lvlM[1] || debut ? "" : " prev-run-lvl-ref"}`;
       if (debut) cls += " prev-run-lvl-debut";
       const tip = debut
-        ? "新馬戦のレベル：このレースに出ていたほかの馬の、その後の成績（3着内率）で判定。ほかの馬が走るたびに変わります（このサイトで計算）"
+        ? "新馬戦のレベル：このレースに出ていたほかの馬の、その後の成績（3着内率）で判定。ほかの馬が走るたびに変わります（このサイトで計算）" +
+          (lvlM[1] ? "" : "。新馬戦から日が浅く材料が少ないため参考値")
         : letter === "-"
           ? "同じ条件のレースが少なく、レベルを判定できません"
           : lvlM[1]
@@ -1860,8 +1862,8 @@
     const lvlOk = (r) => /^(?:[SABCD]|\([SABCD-]\))$/.test(String(r.lvl || ""));
     if (runs.some(lvlOk)) {
       let note = "レベル＝同じクラスの中での相手関係の強さ（S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
-      if (runs.some((r) => /^\(/.test(String(r.lvl || "")))) note += "。（ ）は比べたレースが少なく参考値、(-)は判定できず";
-      if (runs.some((r) => r.lvl_debut === true && /^[SABCD]$/.test(String(r.lvl || "")))) note += "。二重の枠は新馬戦（出ていたほかの馬のその後の成績で判定）";
+      if (runs.some((r) => /^\(/.test(String(r.lvl || "")))) note += "。（ ）は材料が少なく参考値、(-)は判定できず";
+      if (runs.some((r) => r.lvl_debut === true && /^(?:[SABCD]|\([SABCD]\))$/.test(String(r.lvl || "")))) note += "。二重の枠は新馬戦（出ていたほかの馬のその後の成績で判定）";
       html += `<p class="prev-run-lvl-note">${note}</p>`;
     }
     return html;
