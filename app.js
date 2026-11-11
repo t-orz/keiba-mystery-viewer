@@ -1831,12 +1831,17 @@
     let lvlHtml = "";
     if (lvlM) {
       const letter = lvlM[1] || lvlM[2];
-      const cls = letter === "-" ? "prev-run-lvl-none" : `prev-run-lvl-${letter}${lvlM[1] ? "" : " prev-run-lvl-ref"}`;
-      const tip = letter === "-"
-        ? "同じ条件のレースが少なく、レベルを判定できません"
-        : lvlM[1]
-          ? "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ（このサイトで計算）"
-          : "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ。比べたレースが少ないため参考値";
+      // 新馬戦（r.lvl_debut）は「その後型」＝出ていた他の馬のその後の成績で判定。文字はそのまま二重の枠（11-11）
+      const debut = r.lvl_debut === true && !!lvlM[1];
+      let cls = letter === "-" ? "prev-run-lvl-none" : `prev-run-lvl-${letter}${lvlM[1] ? "" : " prev-run-lvl-ref"}`;
+      if (debut) cls += " prev-run-lvl-debut";
+      const tip = debut
+        ? "新馬戦のレベル：このレースに出ていたほかの馬の、その後の成績（3着内率）で判定。ほかの馬が走るたびに変わります（このサイトで計算）"
+        : letter === "-"
+          ? "同じ条件のレースが少なく、レベルを判定できません"
+          : lvlM[1]
+            ? "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ（このサイトで計算）"
+            : "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ。比べたレースが少ないため参考値";
       lvlHtml = ` <span class="prev-run-lvl ${cls}" title="${tip}">レベル${escapeHtml(lvlRaw)}</span>`;
     }
     return (
@@ -1856,6 +1861,7 @@
     if (runs.some(lvlOk)) {
       let note = "レベル＝同じクラスの中での相手関係の強さ（S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
       if (runs.some((r) => /^\(/.test(String(r.lvl || "")))) note += "。（ ）は比べたレースが少なく参考値、(-)は判定できず";
+      if (runs.some((r) => r.lvl_debut === true && /^[SABCD]$/.test(String(r.lvl || "")))) note += "。二重の枠は新馬戦（出ていたほかの馬のその後の成績で判定）";
       html += `<p class="prev-run-lvl-note">${note}</p>`;
     }
     return html;

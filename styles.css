@@ -2373,6 +2373,8 @@ table.shutuba td.rs-cell { text-align: center; }
 /* 参考値 "(A)"・判定できず "(-)" は点線の枠（11-11） */
 .prev-run-lvl-ref, .prev-run-lvl-none { border-style: dashed; }
 .prev-run-lvl-none { color: var(--muted); font-weight: 400; }
+/* 新馬戦の「その後型」は二重の枠（11-11）。文字は同じ S〜D */
+.prev-run-lvl-debut { border-style: double; border-width: 3px; }
 .prev-run-lvl-note {
   margin: 0.35rem 0 0;
   color: var(--muted);
