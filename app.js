@@ -1844,7 +1844,7 @@
           : lvlM[1]
             ? "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ（このサイトで計算）"
             : "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ。比べたレースが少ないため参考値";
-      lvlHtml = ` <span class="prev-run-lvl ${cls}" title="${tip}">レベル${escapeHtml(lvlRaw)}</span>`;
+      lvlHtml = ` <span class="prev-run-lvl ${cls}" title="${tip}">${escapeHtml(lvlRaw)}</span>`;
     }
     return (
       `<li><span class="prev-run-label">${escapeHtml(r.label || "")}</span><span>${escapeHtml(head)}</span>` +
@@ -1861,7 +1861,7 @@
     if (notes.length) html += `<p class="prev-run-notes">${notes.map(escapeHtml).join("・")}</p>`;
     const lvlOk = (r) => /^(?:[SABCD]|\([SABCD-]\))$/.test(String(r.lvl || ""));
     if (runs.some(lvlOk)) {
-      let note = "レベル＝同じクラスの中での相手関係の強さ（S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
+      let note = "枠付きの文字＝レースレベル（同じクラスの中での相手関係の強さ。S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
       if (runs.some((r) => /^\(/.test(String(r.lvl || "")))) note += "。（ ）は材料が少なく参考値、(-)は判定できず";
       if (runs.some((r) => r.lvl_debut === true && /^(?:[SABCD]|\([SABCD]\))$/.test(String(r.lvl || "")))) note += "。二重の枠は新馬戦（出ていたほかの馬のその後の成績で判定）";
       html += `<p class="prev-run-lvl-note">${note}</p>`;
