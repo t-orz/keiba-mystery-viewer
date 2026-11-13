@@ -1420,13 +1420,28 @@
     if (cfg.SNAPSHOT_URL !== SNAPSHOT_PRIMARY_URL && Date.now() >= snapshotPrimaryRetryAt) {
       cfg.SNAPSHOT_URL = SNAPSHOT_PRIMARY_URL;
     }
+    /* 2026-11-14: 予備も読めなかったら、次の読み込みはすぐ本命から（10分待たない）。
+       本命が一瞬だけ止まった（R2 見張りの停止の試験など）ときに、止まっている予備に張り付かないように。 */
+    const backToPrimary = () => {
+      cfg.SNAPSHOT_URL = SNAPSHOT_PRIMARY_URL;
+      snapshotPrimaryRetryAt = 0;
+    };
     try {
       return await fetchSnapshotJson(cfg.SNAPSHOT_URL);
     } catch (e) {
-      if (!fallback || cfg.SNAPSHOT_URL === fallback) throw e;
+      if (!fallback) throw e;
+      if (cfg.SNAPSHOT_URL === fallback) {
+        backToPrimary();
+        throw e;
+      }
       cfg.SNAPSHOT_URL = fallback;
       snapshotPrimaryRetryAt = Date.now() + SNAPSHOT_PRIMARY_RETRY_MS;
-      return fetchSnapshotJson(cfg.SNAPSHOT_URL);
+      try {
+        return await fetchSnapshotJson(cfg.SNAPSHOT_URL);
+      } catch (e2) {
+        backToPrimary();
+        throw e2;
+      }
     }
   }
 
