@@ -20,11 +20,6 @@ window.PUBLIC_VIEWER_CONFIG = {
   POLL_INTERVAL_MS: 30000,
   SHOW_CAST_ICONS: true,
   PRE_RACE_TRIGGER_MODE: "15",
-  /**
-   * 管理画面 API。空なら ADMIN_API_DISCOVERY_URL から base_url を取得。
-   * パスワードはここへ書かない（サーバー .env の ADMIN_PANEL_PASSWORD）。
-   */
-  ADMIN_API_BASE_URL: "",
-  ADMIN_API_DISCOVERY_URL:
-    "https://rathgwvfewasazxlpusx.supabase.co/storage/v1/object/public/public-viewer/admin_api.json",
+  /* 管理画面は 2026-11-13 に閲覧サイトから外した（公開トンネルは 08-11 に廃止済み）。
+     管理画面は自宅LAN / Tailscale の http://<サーバー>:8791/panel/ だけ。 */
 };
