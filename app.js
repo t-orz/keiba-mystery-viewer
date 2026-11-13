@@ -1400,6 +1400,36 @@
     }
   }
 
+  /* 2026-11-13: 公開先は R2（本命）、読めなければ Supabase（予備 cfg.SNAPSHOT_URL_FALLBACK）。
+     cfg.SNAPSHOT_URL を差し替えると日付別・確定結果・前走・お知らせの URL も一緒に切り替わる。
+     予備に移ったら10分ごとに本命へ戻れるか試す。 */
+  const SNAPSHOT_PRIMARY_URL = cfg.SNAPSHOT_URL;
+  const SNAPSHOT_PRIMARY_RETRY_MS = 10 * 60 * 1000;
+  let snapshotPrimaryRetryAt = 0;
+
+  async function fetchSnapshotJson(url) {
+    const resp = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {
+      cache: "no-store",
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return resp.json();
+  }
+
+  async function fetchSnapshotWithFallback() {
+    const fallback = cfg.SNAPSHOT_URL_FALLBACK;
+    if (cfg.SNAPSHOT_URL !== SNAPSHOT_PRIMARY_URL && Date.now() >= snapshotPrimaryRetryAt) {
+      cfg.SNAPSHOT_URL = SNAPSHOT_PRIMARY_URL;
+    }
+    try {
+      return await fetchSnapshotJson(cfg.SNAPSHOT_URL);
+    } catch (e) {
+      if (!fallback || cfg.SNAPSHOT_URL === fallback) throw e;
+      cfg.SNAPSHOT_URL = fallback;
+      snapshotPrimaryRetryAt = Date.now() + SNAPSHOT_PRIMARY_RETRY_MS;
+      return fetchSnapshotJson(cfg.SNAPSHOT_URL);
+    }
+  }
+
   async function loadSnapshot({ silent = false } = {}) {
     const url = cfg.SNAPSHOT_URL;
     if (!url || String(url).includes("YOUR_PROJECT")) {
@@ -1407,11 +1437,7 @@
       return;
     }
     try {
-      const resp = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), {
-        cache: "no-store",
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
+      const data = await fetchSnapshotWithFallback();
       applyData(data, { flash: silent });
       loadResults();
       loadPrevRuns();

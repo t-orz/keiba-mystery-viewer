@@ -342,8 +342,8 @@
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
-  <script src="config.js?v=20261113143309"></script>
-  <script src="track_cond.js?v=20261113143309"></script>
+  <script src="config.js?v=20261113163009"></script>
+  <script src="track_cond.js?v=20261113163009"></script>
   <script>
   (function () {
     "use strict";
@@ -1095,11 +1095,29 @@
         : "<li><span class='t'></span><span class='msg'>まだ予想がありません</span></li>");
     }
 
+    /* 2026-11-13: 公開先は R2（本命）、読めなければ Supabase（予備）。events/ も cfg.SNAPSHOT_URL から
+       作るので一緒に切り替わる。予備に移ったら10分ごとに本命へ戻れるか試す（app.js と同じ決まり） */
+    const SNAPSHOT_PRIMARY_URL = cfg.SNAPSHOT_URL;
+    let snapshotPrimaryRetryAt = 0;
+    async function fetchLatest() {
+      const get = (u) => fetch(`${String(u).split("?")[0]}?cb=${Date.now()}`, { cache: "no-store" }).catch(() => null);
+      if (cfg.SNAPSHOT_URL !== SNAPSHOT_PRIMARY_URL && Date.now() >= snapshotPrimaryRetryAt) cfg.SNAPSHOT_URL = SNAPSHOT_PRIMARY_URL;
+      let res = await get(cfg.SNAPSHOT_URL);
+      const fb = cfg.SNAPSHOT_URL_FALLBACK;
+      if ((!res || !res.ok) && fb && cfg.SNAPSHOT_URL !== fb) {
+        cfg.SNAPSHOT_URL = fb;
+        snapshotPrimaryRetryAt = Date.now() + 10 * 60 * 1000;
+        res = await get(fb);
+      }
+      if (!res) throw new Error("通信エラー");
+      return res;
+    }
+
     async function load() {
       const url = String(cfg.SNAPSHOT_URL || "").split("?")[0];
       if (!url) { $("meta").innerHTML = "<span class='err'>config.js の SNAPSHOT_URL がありません</span>"; return; }
       try {
-        const res = await fetch(`${url}?cb=${Date.now()}`, { cache: "no-store" });
+        const res = await fetchLatest();
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const races = [];
