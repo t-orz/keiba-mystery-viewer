@@ -328,6 +328,7 @@
       </details>
       </section>
       <h2>指数表示</h2>
+    <div id="errorCard" hidden></div>
     <div class="grid-wrap" id="grid"></div>
     <p class="legend">
       <span>金=1位</span>／<span>青=2〜5位</span>／<span>緑=6〜10位</span>／<span>灰=65未満（非推奨）</span>／<span>網掛け=障害（順位対象外）</span>／<span>赤枠=次に発走</span>／<span>薄い表示=発走済み</span>／<span>小さい数字=朝一斉からの増減</span>
@@ -342,8 +343,9 @@
     <p class="note" id="logNote">朝一斉・天候馬場変更の再予想・重賞1時間前予想・直前予想を、更新のたびに1行ずつ記録しています（指数・当日順位はその1つ前の値から。順位の↑は上がった数・↓は下がった数）。20秒ごとに自動で読み直します（ログを作る時刻に合わせて）。</p>
   </section>
 
-  <script src="config.js?v=20261114003718"></script>
-  <script src="track_cond.js?v=20261114003718"></script>
+  <script src="config.js?v=20261114005301"></script>
+  <script src="error_card.js?v=20261114005301"></script>
+  <script src="track_cond.js?v=20261114005301"></script>
   <script>
   (function () {
     "use strict";
@@ -1125,6 +1127,7 @@
         const res = await fetchLatest();
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        if (window.ErrorCard) window.ErrorCard.hide($("errorCard"));
         const races = [];
         for (const v of data.venues || []) for (const r of v.races || []) races.push(r.place ? r : { ...r, place: v.place });
         if (data.cleared || !races.length) {
@@ -1151,6 +1154,8 @@
         $("meta").textContent = `開催日 ${data.schedule_date}　公開データ更新 ${hhmm(upd)}　確認 ${hhmm(new Date())}`;
       } catch (e) {
         $("meta").innerHTML = `<span class='err'>読み込みに失敗しました（${esc(e.message)}）。20秒後に再試行します</span>`;
+        // 2026-11-14: 失敗の中身に応じたエラー案内（error_card.js・文言は error-pages/errors.json）
+        if (window.ErrorCard) window.ErrorCard.show($("errorCard"), e);
       }
     }
 

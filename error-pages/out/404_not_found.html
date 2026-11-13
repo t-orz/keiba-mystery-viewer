@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>404 データが見つかりません</title>
+<!-- 共通の土台。二重波かっこの差し込み口を errors.json の中身で差し替える（build.py）。形・色・鍵のマークは全エラー共通。 -->
+<style>
+  :root { --bg:#f4f1ea; --card:#ffffff; --ink:#1f2430; --sub:#5b6170; --accent:#b23a3a; --line:#e3ddd0; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:1200px; height:675px; }
+  body { background:var(--bg); font-family:"Yu Gothic UI","Meiryo","Noto Sans JP",sans-serif; color:var(--ink);
+         display:flex; align-items:center; justify-content:center; }
+  .card { width:1000px; min-height:474px; background:var(--card); border:1px solid var(--line); border-radius:20px;
+          box-shadow:0 12px 40px rgba(60,50,30,.10); display:flex; overflow:hidden; }
+  .left { width:330px; background:var(--ink); color:#fff; display:flex; flex-direction:column;
+          align-items:center; justify-content:center; padding:40px 20px; gap:18px; }
+  .code { font-size:120px; font-weight:800; letter-spacing:4px; line-height:1; }
+  .code span { color:#e8a0a0; }
+  .tag { font-size:18px; letter-spacing:6px; color:#c9ccd6; text-align:center; }
+  .lock { width:84px; height:84px; }
+  .right { flex:1; padding:52px 56px; display:flex; flex-direction:column; justify-content:center; gap:22px; }
+  h1 { font-size:36px; font-weight:800; color:var(--accent); }
+  p { font-size:20px; line-height:1.75; color:var(--sub); }
+  .rules { display:flex; gap:16px; }
+  .rules:empty { display:none; }
+  .rule { flex:1; border:1px solid var(--line); border-radius:12px; padding:16px 18px; background:#faf8f3; }
+  .rule b { display:block; font-size:16px; color:var(--sub); font-weight:600; margin-bottom:6px; }
+  .rule em { font-style:normal; font-size:24px; font-weight:800; color:var(--ink); }
+  .foot { font-size:15px; color:#8a8f9c; border-top:1px solid var(--line); padding-top:16px; }
+  .foot:empty { display:none; }
+</style></head>
+<body>
+  <div class="card">
+    <div class="left">
+      <svg class="lock" viewBox="0 0 64 64" fill="none" stroke="#e8a0a0" stroke-width="5" stroke-linecap="round">
+        <rect x="12" y="28" width="40" height="28" rx="6" fill="#2c3343"/>
+        <path d="M20 28v-8a12 12 0 0 1 24 0v8"/>
+        <circle cx="32" cy="41" r="3.5" fill="#e8a0a0" stroke="none"/>
+        <path d="M32 44v5"/>
+      </svg>
+      <div class="code">4<span>0</span>4</div>
+      <div class="tag">NOT FOUND</div>
+    </div>
+    <div class="right">
+      <h1>データが見つかりません</h1>
+      <p>お探しの予想・結果のデータは、まだ公開されていないか、<br>公開期間が終わって削除されています。<br>トップページから開き直してください。</p>
+      <div class="rules"></div>
+      <div class="foot"></div>
+    </div>
+  </div>
+</body></html>

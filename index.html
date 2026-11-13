@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261114003718" />
+  <link rel="stylesheet" href="styles.css?v=20261114005301" />
 </head>
 <body>
   <div class="layout">
@@ -26,6 +26,7 @@
         <a href="help.html" target="_blank" rel="noopener noreferrer">項目説明ヘルプ</a>
       </p>
       <p class="updated" id="updatedAt">更新を読み込み中…</p>
+      <section id="errorCard" hidden></section>
       <section class="incident-notice" id="incidentNotice" role="alert" hidden></section>
       <p class="update-note">※数値・印は更新ごとに変わります</p>
       <section class="track-cond" id="trackCond" aria-labelledby="trackCondTitle" hidden>
@@ -307,14 +308,15 @@
     </div>
   </div>
 
-  <script src="config.js?v=20261114003718"></script>
+  <script src="config.js?v=20261114005301"></script>
   <script>
     (function () {
       var hide = (window.PUBLIC_VIEWER_CONFIG || {}).SHOW_CAST_ICONS === false;
       document.documentElement.classList.toggle("hide-cast-icons", hide);
     })();
   </script>
-  <script src="track_cond.js?v=20261114003718"></script>
-  <script src="app.js?v=20261114003718"></script>
+  <script src="track_cond.js?v=20261114005301"></script>
+  <script src="error_card.js?v=20261114005301"></script>
+  <script src="app.js?v=20261114005301"></script>
 </body>
 </html>

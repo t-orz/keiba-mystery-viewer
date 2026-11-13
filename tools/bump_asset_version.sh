@@ -15,7 +15,7 @@ cd "$(git rev-parse --show-toplevel)"
 HTMLS=(index.html help.html tracker.html devnotes.html)
 
 if [[ "${1:-}" == "--staged" ]]; then
-  git diff --cached --name-only | grep -qxE "app\.js|styles\.css|config\.js|track_cond\.js" || exit 0
+  git diff --cached --name-only | grep -qxE "app\.js|styles\.css|config\.js|track_cond\.js|error_card\.js" || exit 0
 fi
 
 V="$(date +%Y%m%d%H%M%S)"
@@ -27,7 +27,7 @@ for f in "${HTMLS[@]}"; do
   fi
   sed -i -E \
     -e "s#(href=\"(\.\./)?styles\.css)(\?v=[0-9]+)?\"#\1?v=${V}\"#g" \
-    -e "s#(src=\"(\.\./)?(app|config|track_cond)\.js)(\?v=[0-9]+)?\"#\1?v=${V}\"#g" \
+    -e "s#(src=\"(\.\./)?(app|config|track_cond|error_card)\.js)(\?v=[0-9]+)?\"#\1?v=${V}\"#g" \
     "$f"
   [[ "${1:-}" == "--staged" ]] && git add -- "$f"
 done

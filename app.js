@@ -1453,13 +1453,18 @@
     }
     try {
       const data = await fetchSnapshotWithFallback();
+      if (window.ErrorCard) window.ErrorCard.hide($("errorCard"));
       applyData(data, { flash: silent });
       loadResults();
       loadPrevRuns();
     } catch (e) {
+      // 2026-11-14: 失敗の中身に応じたエラー案内（error_card.js・文言は error-pages/errors.json）。
+      // 自動更新（silent）の失敗では、すでに案内を出しているときだけ中身を更新する（表示中の予想は消さない）
+      const card = $("errorCard");
       if (!silent) {
-        $("updatedAt").innerHTML = `<span class="error">スナップショット取得失敗: ${escapeHtml(e.message || e)}</span>`;
+        $("updatedAt").innerHTML = `<span class="error">データを読み込めませんでした（${escapeHtml(e.message || e)}）</span>`;
       }
+      if (window.ErrorCard && card && (!silent || !card.hidden)) window.ErrorCard.show(card, e);
     }
   }
 
