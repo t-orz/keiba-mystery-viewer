@@ -1090,6 +1090,7 @@
     const markCols = new Set(Array.isArray(shutuba.mark_columns) ? shutuba.mark_columns : []);
     const badgeLegend = Array.isArray(shutuba.badge_legend) ? shutuba.badge_legend : [];
     let html = '<div class="table-wrap"><table class="shutuba"><thead><tr>';
+    let anyCloseLoss = false;
     for (const c of cols) {
       html += `<th>${escapeHtml(c)}</th>`;
     }
@@ -1109,7 +1110,15 @@
         if (markCols.has(c) && honmei[c]) classes.push(markHonmeiClass(c));
         if (c === "脚質") classes.push("rs-cell");
         const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
-        const badges = c === "馬名" ? horseBadgesHtml(row.badges) : "";
+        let badges = c === "馬名" ? horseBadgesHtml(row.badges) : "";
+        if (c === "馬名") {
+          // 前走高レベル戦で惜敗（2026-11-14）。判定はサーバーの前走データ（public_prev_runs.close_loss）
+          const cl = closeLossBadgeHtml(prevRunFor(found.race.race_id, row["馬番"]));
+          if (cl) {
+            badges += cl;
+            anyCloseLoss = true;
+          }
+        }
         const body =
           c === "脚質"
             ? runningStyleCellHtml(row[c])
@@ -1127,6 +1136,9 @@
         .map((b) => `${horseBadgesHtml([b])} ${escapeHtml(b && b.description ? b.description : "")}`)
         .join(" / ");
       html += `<p class="hint horse-badge-legend"><strong>${title}</strong>${items}</p>`;
+    }
+    if (anyCloseLoss) {
+      html += `<p class="hint horse-badge-legend"><span class="close-loss-badge">A</span> 赤枠のS・A＝前走が高レベル戦（レースレベルS・A）で、1着と0.2秒差以内の負け（馬番を押すと前走が出ます）</p>`;
     }
     // 列の説明（2026-11-12 RT＝自前レーティング）。文言はサーバー export_public_snapshot.py の column_notes
     for (const n of Array.isArray(shutuba.column_notes) ? shutuba.column_notes : []) {
@@ -1146,6 +1158,15 @@
     box.innerHTML = html;
     syncShutubaStickyOffset(box);
     syncPrevRunPopAfterRender(box);
+  }
+
+  /** 前走高レベル戦で惜敗の印（赤枠のレベル文字 S/A、2026-11-14）。pr は prevRunFor の戻り値 */
+  function closeLossBadgeHtml(pr) {
+    const cl = pr && pr.close_loss;
+    const lvl = cl && /^[SA]$/.test(String(cl.lvl || "")) ? String(cl.lvl) : "";
+    if (!lvl) return "";
+    const tip = `前走は高レベル戦（レースレベル${lvl}）で、1着と${escapeAttr(String(cl.margin || ""))}秒差の負け`;
+    return `<span class="close-loss-badge" title="${tip}">${lvl}</span>`;
   }
 
   /** 馬名欄の略号（D / B / NB）。判定も色もサーバー側 horse_name_badges が出所。
@@ -1860,7 +1881,7 @@
     );
   }
 
-  function prevRunLineHtml(r, today) {
+  function prevRunLineHtml(r, today, closeLoss) {
     const [y, m, d] = String(r.date || "").split("-").map((x) => Number.parseInt(x, 10));
     const date = y && m && d ? (String(today || "").startsWith(String(y)) ? `${m}/${d}` : `${y}/${m}/${d}`) : "";
     const race = [r.race, r.cls ? `(${r.cls})` : ""].join("");
@@ -1894,11 +1915,13 @@
           : lvlM[1]
             ? "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ（このサイトで計算）"
             : "同じクラス・芝ダート・年齢区分の過去2年のレースと比べた相手関係の強さ。比べたレースが少ないため参考値";
+      if (closeLoss) cls += " prev-run-lvl-cl";   // 前走高レベル戦で惜敗は赤枠（出馬表の印と同じ見た目、11-14）
       lvlHtml = ` <span class="prev-run-lvl ${cls}" title="${tip}">${escapeHtml(lvlRaw)}</span>`;
     }
+    const band = closeLoss ? '<span class="prev-run-result prev-run-cl-band">▶ 高レベル戦で惜敗</span>' : "";
     return (
       `<li><span class="prev-run-label">${escapeHtml(r.label || "")}</span><span>${escapeHtml(head)}</span>` +
-      `<span class="prev-run-result">${escapeHtml(result)}${lvlHtml}</span></li>`
+      `<span class="prev-run-result">${escapeHtml(result)}${lvlHtml}</span>${band}</li>`
     );
   }
 
@@ -1907,8 +1930,13 @@
     const runs = Array.isArray(pr.runs) ? pr.runs : [];
     const notes = Array.isArray(pr.notes) ? pr.notes.filter(Boolean) : [];
     let html = `<p class="prev-run-head">${escapeHtml(name)}</p>`;
-    if (runs.length) html += `<ul class="prev-run-list">${runs.map((r) => prevRunLineHtml(r, today)).join("")}</ul>`;
-    if (notes.length) html += `<p class="prev-run-notes">${notes.map(escapeHtml).join("・")}</p>`;
+    const cl = !!(pr.close_loss && /^[SA]$/.test(String(pr.close_loss.lvl || "")));
+    if (runs.length) html += `<ul class="prev-run-list">${runs.map((r) => prevRunLineHtml(r, today, cl && r.label === "前走")).join("")}</ul>`;
+    if (notes.length) {
+      // 先頭の「前走高レベル戦で惜敗」（サーバーが入れる）は赤字で
+      const nh = notes.map((n) => (cl && n === "前走高レベル戦で惜敗" ? `<b class="prev-run-cl-note">${escapeHtml(n)}</b>` : escapeHtml(n)));
+      html += `<p class="prev-run-notes">${nh.join("・")}</p>`;
+    }
     const lvlOk = (r) => /^(?:[SABCD]|\([SABCD-]\))$/.test(String(r.lvl || ""));
     if (runs.some(lvlOk)) {
       let note = "枠付きの文字＝レースレベル（同じクラスの中での相手関係の強さ。S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
