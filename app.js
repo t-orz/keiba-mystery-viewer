@@ -1090,9 +1090,21 @@
     const markCols = new Set(Array.isArray(shutuba.mark_columns) ? shutuba.mark_columns : []);
     const badgeLegend = Array.isArray(shutuba.badge_legend) ? shutuba.badge_legend : [];
     let html = '<div class="table-wrap"><table class="shutuba"><thead><tr>';
-    let anyCloseLoss = false;
+    // 注釈は表の下に並べず、要素を押すと小窓で出す（2026-11-15、前走の小窓と同じ方式）
+    const colNotes = {};
+    for (const n of Array.isArray(shutuba.column_notes) ? shutuba.column_notes : []) {
+      if (n && n.text && n.col) colNotes[n.col] = String(n.text);
+    }
+    const badgeNotes = {};
+    for (const b of badgeLegend) {
+      if (b && b.label && b.description) badgeNotes[String(b.label).trim()] = String(b.description);
+    }
+    let anyNote = false;
     for (const c of cols) {
-      html += `<th>${escapeHtml(c)}</th>`;
+      if (colNotes[c]) {
+        anyNote = true;
+        html += `<th>${noteTriggerHtml(escapeHtml(c), c, colNotes[c], "shutuba-col-trigger")}</th>`;
+      } else html += `<th>${escapeHtml(c)}</th>`;
     }
     html += "</tr></thead><tbody>";
     for (const row of shutubaRowsForDisplay(shutuba.rows)) {
@@ -1110,13 +1122,14 @@
         if (markCols.has(c) && honmei[c]) classes.push(markHonmeiClass(c));
         if (c === "脚質") classes.push("rs-cell");
         const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
-        let badges = c === "馬名" ? horseBadgesHtml(row.badges) : "";
+        let badges = c === "馬名" ? horseBadgesHtml(row.badges, badgeNotes) : "";
         if (c === "馬名") {
+          if (badges) anyNote = true;
           // 前走高レベル戦で惜敗（2026-11-14）。判定はサーバーの前走データ（public_prev_runs.close_loss）
           const cl = closeLossBadgeHtml(prevRunFor(found.race.race_id, row["馬番"]));
           if (cl) {
             badges += cl;
-            anyCloseLoss = true;
+            anyNote = true;
           }
         }
         const body =
@@ -1130,19 +1143,9 @@
       html += "</tr>";
     }
     html += "</tbody></table></div>";
-    if (badgeLegend.length) {
-      const title = escapeHtml(shutuba.badge_legend_title || "【馬名略号】");
-      const items = badgeLegend
-        .map((b) => `${horseBadgesHtml([b])} ${escapeHtml(b && b.description ? b.description : "")}`)
-        .join(" / ");
-      html += `<p class="hint horse-badge-legend"><strong>${title}</strong>${items}</p>`;
-    }
-    if (anyCloseLoss) {
-      html += `<p class="hint horse-badge-legend"><span class="close-loss-badge">A</span> 赤枠のS・A＝前走が高レベル戦（レースレベルS・A）で、1着と0.2秒差以内の負け（馬番を押すと前走が出ます）</p>`;
-    }
-    // 列の説明（2026-11-12 RT＝自前レーティング）。文言はサーバー export_public_snapshot.py の column_notes
-    for (const n of Array.isArray(shutuba.column_notes) ? shutuba.column_notes : []) {
-      if (n && n.text && cols.includes(n.col)) html += `<p class="hint shutuba-col-note">${escapeHtml(n.text)}</p>`;
+    // 馬名の略号・赤枠の S・A・列名（RT）の説明は、押すと小窓で出す（文言はサーバーの badge_legend / column_notes）
+    if (anyNote) {
+      html += '<p class="hint shutuba-note-hint">馬名の横の略号・赤枠の文字、見出しの RT は、マウスを重ねる（スマホはタップする）と説明が出ます。</p>';
     }
     // 枠番・馬名・騎手・斤量・性齢・馬体重を JRA 公式の値に差し替えたレース（auto-x jra_display_facts.py）
     if (shutuba.facts_source) {
@@ -1165,13 +1168,24 @@
     const cl = pr && pr.close_loss;
     const lvl = cl && /^[SA]$/.test(String(cl.lvl || "")) ? String(cl.lvl) : "";
     if (!lvl) return "";
-    const tip = `前走は高レベル戦（レースレベル${lvl}）で、1着と${escapeAttr(String(cl.margin || ""))}秒差の負け`;
-    return `<span class="close-loss-badge" title="${tip}">${lvl}</span>`;
+    const text =
+      `前走は高レベル戦（レースレベル${lvl}）で、1着と${String(cl.margin || "")}秒差の負け。` +
+      "赤枠のS・A＝前走のレースレベルがSかAで、1着と0.2秒差以内の負け（馬番を押すと前走が出ます）";
+    return noteTriggerHtml(escapeHtml(lvl), "前走高レベル戦で惜敗", text, "close-loss-badge");
+  }
+
+  /** 押すと説明の小窓が出る要素（前走の小窓と同じ出し方。2026-11-15）。label は HTML 済み、title・text は素の文字 */
+  function noteTriggerHtml(labelHtml, title, text, cls, styleAttr) {
+    return (
+      `<button type="button" class="note-trigger${cls ? ` ${cls}` : ""}"${styleAttr || ""}` +
+      ` data-note-title="${escapeAttr(title)}" data-note="${escapeAttr(text)}"` +
+      ` aria-label="${escapeAttr(`${title}の説明`)}" aria-haspopup="dialog" aria-expanded="false">${labelHtml}</button>`
+    );
   }
 
   /** 馬名欄の略号（D / B / NB）。判定も色もサーバー側 horse_name_badges が出所。
    *  色は公開JSONが持つ値をそのまま使うので、PDF と必ず同じになる。 */
-  function horseBadgesHtml(badges) {
+  function horseBadgesHtml(badges, notes) {
     if (!Array.isArray(badges) || !badges.length) return "";
     return badges
       .map((b) => {
@@ -1182,6 +1196,8 @@
         const style = /^#[0-9a-fA-F]{3,8}$/.test(color) ? ` style="color:${color}"` : "";
         // 海・地はこのサイトの判定（JRA の記号ではない）なので枠で囲む
         const box = b && b.box ? " horse-badge-box" : "";
+        const desc = (notes && notes[label]) || String((b && b.description) || "");
+        if (desc) return noteTriggerHtml(escapeHtml(label), `馬名略号 ${label}`, desc, `horse-badge${box}`, style);
         return `<span class="horse-badge${box}"${style}>${escapeHtml(label)}</span>`;
       })
       .join("");
@@ -1959,8 +1975,9 @@
   }
 
   function showPrevRunPop(btn) {
-    const pr = prevRunFor(btn.dataset.race, btn.dataset.umaban);
-    if (!pr) return hidePrevRunPop();
+    const isNote = btn.classList.contains("note-trigger");
+    const pr = isNote ? null : prevRunFor(btn.dataset.race, btn.dataset.umaban);
+    if (!isNote && !pr) return hidePrevRunPop();
     if (!prevRunPopEl) {
       prevRunPopEl = document.createElement("div");
       prevRunPopEl.className = "prev-run-pop";
@@ -1974,7 +1991,10 @@
     const gutter = 8;
     // 100vw はスクロールバーを含むので、実際の表示幅から決める（はみ出すと横スクロールが出る）
     prevRunPopEl.style.maxWidth = `${Math.min(384, vw - gutter * 2)}px`;
-    prevRunPopEl.innerHTML = prevRunPopHtml(btn.dataset.name || btn.textContent, pr);
+    prevRunPopEl.setAttribute("aria-label", isNote ? btn.dataset.noteTitle || "説明" : "前走・前々走");
+    prevRunPopEl.innerHTML = isNote
+      ? `<p class="prev-run-head">${escapeHtml(btn.dataset.noteTitle || "")}</p><p class="note-pop-text">${escapeHtml(btn.dataset.note || "")}</p>`
+      : prevRunPopHtml(btn.dataset.name || btn.textContent, pr);
     prevRunPopEl.hidden = false;
     const rect = btn.getBoundingClientRect();
     const pw = prevRunPopEl.offsetWidth;
@@ -1993,6 +2013,16 @@
   /** 出馬表はポーリングで描き直されるので、開いている小窓は同じ馬の新しいボタンに付け替える */
   function syncPrevRunPopAfterRender(box) {
     if (!prevRunAnchor || !prevRunPopEl || prevRunPopEl.hidden) return;
+    if (prevRunAnchor.classList.contains("note-trigger")) {
+      // 描き直しで元の要素が消えたら、同じ説明・同じ文字の要素に付け替える
+      if (document.body.contains(prevRunAnchor)) return;
+      const next = Array.from(box.querySelectorAll(".note-trigger")).find(
+        (b) => b.dataset.note === prevRunAnchor.dataset.note && b.textContent === prevRunAnchor.textContent
+      );
+      if (next) showPrevRunPop(next);
+      else hidePrevRunPop();
+      return;
+    }
     const { race, umaban } = prevRunAnchor.dataset;
     const next = Array.from(box.querySelectorAll(".prev-run-trigger")).find(
       (b) => b.dataset.race === race && b.dataset.umaban === umaban
@@ -2003,7 +2033,7 @@
 
   document.addEventListener("mouseover", (e) => {
     if (!prevRunCanHover() || !e.target.closest) return;
-    const btn = e.target.closest(".prev-run-trigger");
+    const btn = e.target.closest(".prev-run-trigger, .note-trigger");
     if (btn && btn !== prevRunAnchor) showPrevRunPop(btn);
   });
   document.addEventListener("mouseout", (e) => {
@@ -2014,7 +2044,7 @@
     if (prevRunAnchor.contains(from) || (prevRunPopEl && prevRunPopEl.contains(from))) hidePrevRunPop();
   });
   document.addEventListener("click", (e) => {
-    const btn = e.target.closest ? e.target.closest(".prev-run-trigger") : null;
+    const btn = e.target.closest ? e.target.closest(".prev-run-trigger, .note-trigger") : null;
     if (btn) {
       if (prevRunAnchor === btn && !prevRunCanHover()) hidePrevRunPop();
       else showPrevRunPop(btn);
