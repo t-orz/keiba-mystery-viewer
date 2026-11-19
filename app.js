@@ -1955,7 +1955,7 @@
     }
     const lvlOk = (r) => /^(?:[SABCD]|\([SABCD-]\))$/.test(String(r.lvl || ""));
     if (runs.some(lvlOk)) {
-      let note = "枠付きの文字＝レースレベル（同じクラスの中での相手関係の強さ。S＝上位1割・A・B・C・D＝下位1割、このサイトで計算）";
+      let note = "枠付きの文字＝レースレベル（同じクラスの中での相手関係の強さ。同じ条件の中での順位を偏差値にして、S＝65以上（上位約7%）・A＝55以上・B＝45以上・C＝35以上・D＝35未満（下位約7%）、このサイトで計算）";
       if (runs.some((r) => /^\(/.test(String(r.lvl || "")))) note += "。（ ）は材料が少なく参考値、(-)は判定できず";
       if (runs.some((r) => r.lvl_debut === true && /^(?:[SABCD]|\([SABCD]\))$/.test(String(r.lvl || "")))) note += "。二重の枠は新馬戦（出ていたほかの馬のその後の成績で判定）";
       html += `<p class="prev-run-lvl-note">${note}</p>`;
