@@ -2482,3 +2482,6 @@ table.shutuba td.rs-cell { text-align: center; }
 .prev-run-lvl.prev-run-lvl-cl { color: #c0392b; border-width: 1.5px; }
 .prev-run-cl-band { color: #c0392b; font-weight: 700; font-size: 0.85em; }
 .prev-run-cl-note { color: #c0392b; }
+
+/* 印対象外の外国調教馬（2026-11-19） */
+.mark-excl { font-size: 0.72em; color: #888; white-space: nowrap; }

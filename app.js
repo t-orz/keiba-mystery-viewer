@@ -1138,7 +1138,10 @@
             : c === "馬番"
               ? prevRunTriggerHtml(found.race.race_id, row)
               : escapeHtml(row[c] ?? "");
-        html += `<td${cls}${styleAttr}>${body}${badges}</td>`;
+        // 印対象外の外国調教馬（日本での同じ芝・ダートの出走が2走未満。2026-11-19）は印の列に「対象外」
+        const exclMark = markCols.has(c) && row["印対象外"] && !String(row[c] ?? "").trim()
+          ? '<span class="mark-excl">対象外</span>' : "";
+        html += `<td${cls}${styleAttr}>${exclMark || body}${badges}</td>`;
       }
       html += "</tr>";
     }
