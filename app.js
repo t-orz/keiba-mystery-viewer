@@ -51,6 +51,9 @@
     }
   }
 
+  // 印対象外の外国調教馬の推定勝率・推定3着内率を「-」にする最後の開催日（2026-11-22 ユーザー指示、今週だけ）
+  const EXCL_PROB_HIDE_UNTIL = "2026-11-22";
+
   function setShutubaSort(mode) {
     state.shutubaSort = mode === "umaban" || mode === "ninki" ? mode : "default";
     try {
@@ -1132,8 +1135,13 @@
             anyNote = true;
           }
         }
-        const body =
-          c === "脚質"
+        // 印対象外の外国調教馬の推定勝率・推定3着内率は出さない（2026-11-22 ユーザー指示「とりあえず今週は表示対象外」。
+        // 期限 EXCL_PROB_HIDE_UNTIL の開催日まで。サーバーの公開データも同じ期限で「-」にする＝foreign_rating.HIDE_PROB_UNTIL）
+        const hideProb = (c === "推定勝率" || c === "推定3着内率") && row["印対象外"] &&
+          String((state.data && state.data.schedule_date) || "") <= EXCL_PROB_HIDE_UNTIL;
+        const body = hideProb
+          ? "-"
+          : c === "脚質"
             ? runningStyleCellHtml(row[c])
             : c === "馬番"
               ? prevRunTriggerHtml(found.race.race_id, row)
