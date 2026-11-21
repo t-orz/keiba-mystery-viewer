@@ -1125,7 +1125,11 @@
         if (markCols.has(c) && honmei[c]) classes.push(markHonmeiClass(c));
         if (c === "脚質") classes.push("rs-cell");
         const cls = classes.length ? ` class="${classes.join(" ")}"` : "";
-        let badges = c === "馬名" ? horseBadgesHtml(row.badges, badgeNotes) : "";
+        // 前走から乗り替わり「替」（2026-11-22。判定はサーバーの前走データ jockey_switch、購入ツールと同じ印）
+        const swBadge = c === "馬名" && (prevRunFor(found.race.race_id, row["馬番"]) || {}).jockey_switch
+          ? [{ label: "替", color: "#D35400", description: "前走から乗り替わり（前走の騎手は、馬番を押すと出る小窓の前走の欄）" }]
+          : [];
+        let badges = c === "馬名" ? horseBadgesHtml([...(Array.isArray(row.badges) ? row.badges : []), ...swBadge], badgeNotes) : "";
         if (c === "馬名") {
           if (badges) anyNote = true;
           // 前走高レベル戦で惜敗（2026-11-14）。判定はサーバーの前走データ（public_prev_runs.close_loss）
@@ -1919,8 +1923,12 @@
     if (/^\d+$/.test(rank) && r.margin !== undefined && r.margin !== "") {
       result += rank === "1" ? ` 2着に${r.margin}秒差` : ` 1着と${r.margin}秒差`;
     }
-    // 馬体重（10-18 追加）。計量の無い走（海外など）は出さない
-    if (Number.isFinite(Number(r.weight)) && Number(r.weight) > 0) result += `・${Number(r.weight)}kg`;
+    // 当時の騎手・斤量（2026-11-22 追加、JRA の過去走欄）。長い名前は JRA 側で途中まで（「M.バルザロー」）
+    const jkName = String(r.jockey || "").trim();
+    const kin = Number(r.kinryo);
+    if (jkName) result += `・${jkName}${Number.isFinite(kin) && kin > 0 ? `（${kin % 1 ? kin.toFixed(1) : kin}kg）` : ""}`;
+    // 馬体重（10-18 追加）。計量の無い走（海外など）は出さない。斤量と紛れないよう「馬体重」と書く（11-22）
+    if (Number.isFinite(Number(r.weight)) && Number(r.weight) > 0) result += `・馬体重${Number(r.weight)}kg`;
     // レースレベル（相手関係）のランク（2026-11-11 追加、public_prev_runs.py → race_level_rank.py）
     // "S"〜"D"＝判定済み、"(A)" など＝比べたレースが30〜49で参考値、"(-)"＝比べたレースが少なく判定できず
     const lvlRaw = String(r.lvl || "");
