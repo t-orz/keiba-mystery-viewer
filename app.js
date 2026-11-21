@@ -1057,7 +1057,9 @@
         return va - vb;
       });
     }
-    return list;
+    // 推定3着内率の高い順（既定）では、評価外の馬（印対象外の外国調教馬）を一番上に（2026-11-22 ユーザー決定）。
+    // 下に埋もれると「一番弱い」と読まれ、見落としやすいため。区切りの行は renderShutuba で入れる
+    return [...list.filter((r) => r && r["印対象外"]), ...list.filter((r) => !(r && r["印対象外"]))];
   }
 
   function renderShutuba() {
@@ -1110,10 +1112,18 @@
       } else html += `<th>${escapeHtml(c)}</th>`;
     }
     html += "</tr></thead><tbody>";
+    const evalOutTop = state.shutubaSort === "default" && (shutuba.rows || []).some((r) => r && r["印対象外"]);
+    let evalOutSep = false;
     for (const row of shutubaRowsForDisplay(shutuba.rows)) {
       const st = row._style || {};
       const honmei = st.honmei || {};
-      html += `<tr${st.cancel ? ' class="is-cancel"' : ""}>`;
+      // 評価外の馬（一番上）と、その下の区切り（2026-11-22）
+      if (evalOutTop && !evalOutSep && !row["印対象外"]) {
+        html += `<tr class="evalout-sep"><td colspan="${cols.length}">↑　以上AI評価対象外　↑</td></tr>`;
+        evalOutSep = true;
+      }
+      const trCls = [st.cancel ? "is-cancel" : "", evalOutTop && row["印対象外"] ? "is-evalout" : ""].filter(Boolean).join(" ");
+      html += `<tr${trCls ? ` class="${trCls}"` : ""}>`;
       for (const c of cols) {
         const classes = [];
         let styleAttr = "";

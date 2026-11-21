@@ -2485,3 +2485,9 @@ table.shutuba td.rs-cell { text-align: center; }
 
 /* 印対象外の外国調教馬（2026-11-19） */
 .mark-excl { font-size: 0.72em; color: #888; white-space: nowrap; }
+
+/* 評価外の馬（印対象外の外国調教馬）を出馬表の一番上に（2026-11-22）。薄い灰色の地と、赤い太字の区切り */
+table.shutuba tbody tr.is-evalout > td:not(.frame-cell) { background: #e4e0d6 !important; color: #555 !important; }
+table.shutuba tbody tr.evalout-sep > td { background: transparent !important; border-top: 2px solid #8a8577 !important;
+  color: #c8102e !important; font-weight: 700 !important; font-size: .8rem !important; padding: 3px 10px !important;
+  text-align: center !important; }
