@@ -51,9 +51,6 @@
     }
   }
 
-  // 印対象外の外国調教馬の推定勝率・推定3着内率を「-」にする最後の開催日（2026-11-22 ユーザー指示、今週だけ）
-  const EXCL_PROB_HIDE_UNTIL = "2026-11-22";
-
   function setShutubaSort(mode) {
     state.shutubaSort = mode === "umaban" || mode === "ninki" ? mode : "default";
     try {
@@ -151,7 +148,9 @@
     if (typeof r.holmes_index_display === "string" && r.holmes_index_display.trim()) {
       return r.holmes_index_display.trim();
     }
-    const latest = r.holmes_index == null || r.holmes_index === "" ? "-" : String(r.holmes_index);
+    let latest = r.holmes_index == null || r.holmes_index === "" ? "-" : String(r.holmes_index);
+    // 評価外の馬（印対象外の外国調教馬）がいるレースは参考値（ ）（2026-11-22 仕様確定。サーバーの holmes_reference）
+    if (r.holmes_reference && latest !== "-") latest = `(${latest})`;
     const morning = r.morning_holmes_index;
     if (morning == null || morning === "") return latest;
     const d = r.holmes_index_delta;
@@ -979,6 +978,7 @@
       ${paceLine}
       <p class="meta">期待値偏差: <strong>${escapeHtml(r.dev)}</strong>（ランク ${escapeHtml(r.rank || "-")}）</p>
       <p class="meta">ホームズ指数: <strong>${escapeHtml(formatHolmesIndexDisplay(r))}</strong>${isHolmesLow(r) ? `<span class="holmes-band-note">（${HOLMES_LOW_NOTE}）</span>` : isHolmesBorder(r) ? `<span class="holmes-band-note">（${HOLMES_BORDER_NOTE}）</span>` : ""}${r.holmes_morning_delta_text ? `<span class="holmes-delta">${escapeHtml(r.holmes_morning_delta_text)}</span>` : ""} ／ 当日レース内順位: <strong>${escapeHtml(r.holmes_rank_text || "算出前")}</strong></p>
+      ${r.holmes_reference ? `<p class="meta race-reference-only">${escapeHtml(r.holmes_reference_reason || "ホームズ指数は参考値")}</p>` : ""}
       ${r.reference_only ? `<p class="meta race-reference-only">${escapeHtml(r.reference_only_reason || "学習・ホームズ指数の対象外（参考予想）")}</p>` : ""}
       <p class="meta">${formatHolmesRecommendHtml(r)}</p>
       <div class="marks">
@@ -1135,12 +1135,11 @@
             anyNote = true;
           }
         }
-        // 印対象外の外国調教馬の推定勝率・推定3着内率は出さない（2026-11-22 ユーザー指示「とりあえず今週は表示対象外」。
-        // 期限 EXCL_PROB_HIDE_UNTIL の開催日まで。サーバーの公開データも同じ期限で「-」にする＝foreign_rating.HIDE_PROB_UNTIL）
-        const hideProb = (c === "推定勝率" || c === "推定3着内率") && row["印対象外"] &&
-          String((state.data && state.data.schedule_date) || "") <= EXCL_PROB_HIDE_UNTIL;
-        const body = hideProb
-          ? "-"
+        // 印対象外の外国調教馬の推定勝率・推定3着内率は「評価外」（2026-11-22 仕様確定。サーバーが「評価外」で出す。
+        // 古い形の公開データで数字が入っていても出さない）
+        const evalOut = (c === "推定勝率" || c === "推定3着内率") && row["印対象外"];
+        const body = evalOut
+          ? "評価外"
           : c === "脚質"
             ? runningStyleCellHtml(row[c])
             : c === "馬番"
